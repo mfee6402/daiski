@@ -1,9 +1,11 @@
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+
 ## 命名規則
 
 變數名(Variable Names):
 
 - 只使用英文小寫字元、下底線、數字
-- 蛇形命名法 snake_case
+- 蛇形命名法snake_case
 - 名字要以字母開頭，不能以下底線結尾
 - 保證名字長度不超過 20 個字節
 - 避免使用縮寫詞
@@ -21,9 +23,9 @@
 
 ## 關聯表名稱(Relationship Table Names)
 
-這裡指的是多對多(n:m 或 many-to-many)的關聯表名稱命名風格。
+這裡指的是多對多(n:m或many-to-many)的關聯表名稱命名風格。
 
-關聯表名稱為兩個資料表的名稱的複數形式，並且以這兩個資料表的名稱按字母順序排列，並且以 `_` 分隔。
+關聯表名稱應該是兩個資料表的名稱的複數形式，並且以這兩個資料表的名稱按字母順序排列，並且以 `_` 分隔。
 
 盡量避免連接兩個表的名字作為關聯表（relationship table）的名字。與其使用 cars_mechanics 做表名不如使用 services。
 
@@ -33,7 +35,7 @@
 
 - 全英文小寫，無空白與數字
 - 選擇短名稱，不超過兩個單詞
-- 主鍵(Primary key)使用 id
+- 主鍵(Primary key)使用id
 - 避免使用縮寫或簡稱
 
 ## 外鍵名稱(Foreign Key Names)
@@ -42,6 +44,6 @@
 
 ## 時間戳記或日期欄位(Timestamp / Date Column Names)
 
-- 日期類型(Date-only)需要加上\_date 後綴字。例如 birth_date, report_date 等
-- 日期加時間(Date+time)類型應該加上\_at 後綴字。例如 created_at, posted_at 等
-- 時間戳記(Timestamps)應該加上\_at 後綴字，而且必須使用 UTC 時間。例如 created_at, updated_at 等。
+- 日期類型(Date-only)需要加上\_date後綴字。例如 birth_date, report_date 等
+- 日期加時間(Date+time)類型應該加上\_at後綴字。例如 created_at, posted_at 等
+- 時間戳記(Timestamps)應該加上\_at後綴字，而且必須使用 UTC 時間。例如 created_at, updated_at 等。
