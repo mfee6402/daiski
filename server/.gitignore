@@ -10,6 +10,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 /.temp
+/seeds-tmp
 /sessions
 /package-lock.json
 /config/development.json
