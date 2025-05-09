@@ -1,22 +1,22 @@
-'use client'
+'use client';
 
-import { Moon, Sun } from 'lucide-react'
+import { Moon, Sun } from 'lucide-react';
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@/components/ui/dropdown-menu';
 
-import { Button } from './ui/button'
-import { useTheme } from 'next-themes'
-import { Switch } from '@/components/ui/switch'
-import { Toggle } from './ui/toggle'
-import { useState, useEffect } from 'react'
+import { Button } from './ui/button';
+import { useTheme } from 'next-themes';
+import { Switch } from '@/components/ui/switch';
+import { Toggle } from './ui/toggle';
+import { useState, useEffect } from 'react';
 
 export default function DarkMode() {
-  const { theme, setTheme } = useTheme()
+  const { theme, setTheme } = useTheme();
 
   return (
     <>
@@ -76,7 +76,7 @@ export default function DarkMode() {
 
       <Toggle
         onPressedChange={() => {
-          setTheme(theme === 'light' ? 'dark' : 'light')
+          setTheme(theme === 'light' ? 'dark' : 'light');
         }}
         aria-label="Toggle theme"
         className="relative h-8 w-8 rounded-md border border-input bg-transparent p-0"
@@ -86,5 +86,5 @@ export default function DarkMode() {
         <span className="sr-only">Toggle theme</span>
       </Toggle>
     </>
-  )
+  );
 }

@@ -1,13 +1,13 @@
-'use client'
+'use client';
 
-import Link from 'next/link'
-import { ShoppingCart } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { useCart } from '@/hooks/use-cart'
+import Link from 'next/link';
+import { ShoppingCart } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { useCart } from '@/hooks/use-cart';
 
 export function CartIconWithBadge({ href = '/cart' }) {
-  const { items } = useCart()
-  const count = items.length
+  const { items } = useCart();
+  const count = items.length;
 
   return (
     <Link href={href} className=" rounded-full hover:bg-gray-100 transition">
@@ -27,5 +27,5 @@ export function CartIconWithBadge({ href = '/cart' }) {
         )}
       </div>
     </Link>
-  )
+  );
 }

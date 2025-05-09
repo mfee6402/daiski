@@ -1,6 +1,6 @@
-'use client'
+'use client';
 
-import { User } from 'lucide-react'
+import { User } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,14 +8,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@/components/ui/dropdown-menu';
 
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover'
-import { Button } from './ui/button'
+} from '@/components/ui/popover';
+import { Button } from './ui/button';
 
 export function AccountPopover() {
   return (
@@ -72,5 +72,5 @@ export function AccountPopover() {
         </div>
       </PopoverContent>
     </Popover>
-  )
+  );
 }
