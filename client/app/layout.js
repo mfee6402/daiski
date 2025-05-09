@@ -7,8 +7,8 @@ import Footer from '@/components/footer'
 import { ThemeProvider } from '@/components/theme-provider'
 
 export const metadata = {
-  title: 'rootLayout',
-  description: 'daiskiLayout',
+  title: 'DAISKI',
+  description: 'SKI!',
 }
 
 export default function RootLayout({ children }) {

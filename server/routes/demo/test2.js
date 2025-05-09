@@ -5,7 +5,7 @@ const router = express.Router()
 router.get('/', function (req, res) {
   res
     .status(200)
-    .json({ status: 'success', message: 'Express(path: /api/demo)' })
+    .json({ status: 'success', message: 'Express(path: /api/test2)' })
 })
 
 export default router
