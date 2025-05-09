@@ -5,9 +5,24 @@ import prisma from '../../lib/prisma.js'
 
 const router = express.Router()
 
-/* GET home page. */
+
+// 新增
+router.post('/', async function (req, res) {
+  const cart = await prisma.cart.create({
+  data: {
+    userId: 2,
+  },
+});
+
+  res
+    .status(200)
+    .json({ status: 'success',data:{cart}})
+})
+
+
+// 查詢
 router.get('/', async function (req, res) {
-  const user = await prisma.users.findUnique({
+  const cart = await prisma.cart.findUnique({
   where: {
     id: 1,
   },
@@ -15,7 +30,36 @@ router.get('/', async function (req, res) {
 
   res
     .status(200)
-    .json({ status: 'success',data:{user}})
+    .json({ status: 'success',data:{cart}})
+})
+
+// 更新
+router.put('/:itemId', async function (req, res) {
+  const cart = await prisma.cartProduct.update({
+  where: {
+    id: +req.params.itemId,
+  },
+  data: {
+    quantity: 3,
+  },
+});
+
+  res
+    .status(200)
+    .json({ status: 'success',data:{cart}})
+})
+
+// 刪除
+router.delete('/:itemId', async function (req, res) {
+  const cart = await prisma.cart.delete({
+  where: {
+    id: +req.params.itemId,
+  }
+});
+
+  res
+    .status(200)
+    .json({ status: 'success',data:{cart}})
 })
 
 export default router

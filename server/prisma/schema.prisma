@@ -73,8 +73,76 @@ model Coupon {
 
 // 購物車
 // #region 
+// cart
 model Cart {
-  id Int @id @default(autoincrement())
+  id     Int @id @default(autoincrement())
+  userId Int @map("user_id")
+
+  @@map("cart")
+}
+
+model CartProduct {
+  id        Int @id @default(autoincrement())
+  cartId    Int @map("cart_id")
+  productId Int @map("product_id")
+  quantity  Int
+
+  @@map("cart_product")
+}
+
+model CartCourse {
+  id       Int @id @default(autoincrement())
+  cartId   Int @map("cart_id")
+  courseId Int @map("course_id")
+
+  @@map("cart_course")
+}
+
+model CartGroup {
+  id      Int @id @default(autoincrement())
+  cartId  Int @map("cart_id")
+  groupId Int @map("group_id")
+
+  @@map("cart_group")
+}
+
+// order
+model Order {
+  id       Int    @id @default(autoincrement())
+  userId   Int    @map("user_id")
+  couponId Int?   @map("coupon_id")
+  amount   Int
+  payment  String
+  address  String
+  phone    String
+  name     String
+
+  @@map("order")
+}
+
+model orderProduct {
+  id        Int @id @default(autoincrement())
+  orderId   Int @map("order_id")
+  productId Int @map("product_id")
+  quantity  Int
+
+  @@map("order_product")
+}
+
+model orderCourse {
+  id       Int @id @default(autoincrement())
+  orderId  Int @map("order_id")
+  courseId Int @map("course_id")
+
+  @@map("order_course")
+}
+
+model orderGroup {
+  id      Int @id @default(autoincrement())
+  orderId Int @map("order_id")
+  groupId Int @map("group_id")
+
+  @@map("order_group")
 }
 
 // #endregion
