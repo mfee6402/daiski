@@ -10,13 +10,22 @@ import csv from 'csvtojson'
 import bcrypt from 'bcrypt'
 import { isDev } from '../lib/utils.js'
 
-// 定義表關聯在這裡，目的是按正確順序的匯入種子資料，否則會出現外鍵約束錯誤或無法匯入的問題
+// // 定義表關聯在這裡，目的是按正確順序的匯入種子資料，否則會出現外鍵約束錯誤或無法匯入的問題
+// // foreignKey is in the second table
+// const oneToOne = ['User:Profile']
+// // foreignKey is in the second table
+// const oneToMany = ['Category:Product', 'Brand:Product', 'Blog:BlogComment']
+// // foreignKey is in the third table
+// const manyToMany = ['User:Product:Favorite']
+
+
+//--------------------------------------------------------------------------
+const oneToOne = []
 // foreignKey is in the second table
-const oneToOne = ['User:Profile']
-// foreignKey is in the second table
-const oneToMany = ['Category:Product', 'Brand:Product', 'Blog:BlogComment']
+const oneToMany = []
 // foreignKey is in the third table
-const manyToMany = ['User:Product:Favorite']
+const manyToMany = []
+
 
 // seed檔案種類(副檔名)seed files extension (csv| json)
 const fileExtension = 'json'

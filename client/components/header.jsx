@@ -1,22 +1,22 @@
 // Header.jsx
-import Image from 'next/image'
-import Link from 'next/link'
+import Image from 'next/image';
+import Link from 'next/link';
 import {
   NavigationMenu,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
   navigationMenuTriggerStyle,
-} from '@/components/ui/navigation-menu'
+} from '@/components/ui/navigation-menu';
 
-import { CartIconWithBadge } from './cart-icon-with-badge'
-import { MobileHeaderMenu } from './mobile-header-menu'
-import { AccountPopover } from './account-popover'
-import DarkMode from './dark-mode'
+import { CartIconWithBadge } from './cart-icon-with-badge';
+import { MobileHeaderMenu } from './mobile-header-menu';
+import { AccountPopover } from './account-popover';
+import DarkMode from './dark-mode';
 
 export default function Header() {
   return (
-    <header className="w-full mx-auto px-10 py-8 flex items-center justify-between sticky top-0 shadow-md bg-white">
+    <header className="w-full mx-auto px-10 py-8 flex items-center justify-between sticky top-0 z-10 shadow-md bg-white">
       {/* 左側 Logo */}
       <div className="flex-shrink-0">
         <Link href="/">
@@ -97,5 +97,5 @@ export default function Header() {
       {/* 手機版選單 */}
       <MobileHeaderMenu />
     </header>
-  )
+  );
 }
