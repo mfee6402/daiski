@@ -15,6 +15,72 @@ datasource db {
 //   directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
 // }
 
+// 會員 
+// #region 
+model Users {
+  id        Int       @id @default(autoincrement())
+  account   String    @unique
+  password  String
+  name      String    @unique
+  phone     String
+  birthday  String
+  email     String    @unique
+  is_coach  String
+  avatar    String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deleteAt  DateTime? @map("delete_at")
+}
+
+// #endregion
+
+// 商品
+// #region 
+model Product {
+  id Int @id @default(autoincrement())
+}
+
+// #endregion
+
+// 揪團
+// #region 
+model Group {
+  id Int @id @default(autoincrement())
+}
+
+// #endregion
+
+// 師資與課程
+// #region 
+model Coach {
+  id Int @id @default(autoincrement())
+}
+
+model Course {
+  id Int @id @default(autoincrement())
+}
+
+// #endregion
+
+// 優惠券
+// #region 
+
+model Coupon {
+  id Int @id @default(autoincrement())
+}
+
+// #endregion
+
+// 購物車
+// #region 
+model Cart {
+  id Int @id @default(autoincrement())
+}
+
+// #endregion
+
+// -----------底下為範例--------------------------------------------------
+
 // 以下為資料表定義
 // https://www.prisma.io/docs/concepts/components/prisma-schema/data-model
 // 部落格CRUD範例
@@ -129,16 +195,6 @@ datasource db {
 //   // 關聯: User:Product = n:m 透過 Favorite
 //   favorites  Favorite[]
 // }
-
-model Users {
-  id       Int    @id @default(autoincrement())
-  account  String @unique
-  password String
-  name     String @unique
-  phone    String
-  birthday String
-  email    String @unique
-}
 
 // model User {
 //   id              Int        @id @default(autoincrement())
