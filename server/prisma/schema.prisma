@@ -2,155 +2,113 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// local dev with mysql
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-// vercel deploy with postgresql
-// datasource db {
-//   provider  = "postgresql"
-//   url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
-//   directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
-// }
+model product {
+  id               Int               @id @default(autoincrement())
+  name             String            @db.VarChar(255)
+  category_id      Int?
+  brand_id         Int?
+  introduction     String?           @db.Text
+  spec             String?           @db.Text
+  created_at       DateTime          @default(now()) @db.DateTime(0)
+  publish_at       DateTime?         @db.DateTime(0)
+  unpublish_at     DateTime?         @db.DateTime(0)
+  delete_at        DateTime?         @db.DateTime(0)
+  product_brand    product_brand?    @relation(fields: [brand_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_product_brand")
+  product_category product_category? @relation(fields: [category_id], references: [id], onUpdate: Restrict, map: "product_ibfk_1")
+  product_image    product_image[]
+  product_sku      product_sku[]
 
-// 以下為資料表定義
-// https://www.prisma.io/docs/concepts/components/prisma-schema/data-model
-// 部落格CRUD範例
-// model Blog {
-//   id        Int      @id @default(autoincrement())
-//   // DateTime 會轉換成資料庫的 timestamp，time zone 會自動轉換成 UTC
-//   // 格式: 2021-01-01T00:00:00.000Z
-//   createdAt DateTime @default(now()) @map("created_at")
-//   // 這個欄位會在每次更新時"自動"更新時間，不需要手動更新
-//   // DateTime 會轉換成資料庫的 timestamp，time zone 會自動轉換成 UTC
-//   updatedAt DateTime @updatedAt @map("updated_at")
-//   title     String   @db.VarChar(255)
-//   content   String?  @db.Text
-//   published Boolean  @default(false)
-
-//   // 關聯: User:Blog = 1:n 
-//   // author    User     @relation(fields: [authorId], references: [id])
-//   // authorId  Int
-//   // 關聯: Blog:BlogComment = 1:n 
-//   comments BlogComment[]
-
-//   @@map("blog")
-// }
-
-// model BlogComment {
-//   id        Int      @id @default(autoincrement())
-//   content   String   @db.Text
-//   // DateTime 會轉換成資料庫的 timestamp，time zone 會自動轉換成 UTC
-//   // 格式: 2021-01-01T00:00:00.000Z
-//   createdAt DateTime @default(now()) @map("created_at")
-//   // 這個欄位會在每次更新時"自動"更新時間，不需要手動更新
-//   // DateTime 會轉換成資料庫的 timestamp，time zone 會自動轉換成 UTC
-//   updatedAt DateTime @updatedAt @map("updated_at")
-//   author    String   @db.VarChar(255)
-//   // 關聯: Blog:BlogComment = 1:n 
-//   // Blog      Blog?    @relation(fields: [blogId], references: [id])
-//   blogId    Int?     @map("blog_id")
-//   Blog      Blog?    @relation(fields: [blogId], references: [id])
-
-//   // 強制定義資料表名稱
-//   @@map("blog_comment")
-// }
-
-// model Brand {
-//   id       Int       @id @default(autoincrement())
-//   name     String    @unique
-//   img      String?
-//   info     String    @db.Text
-//   // 關聯: Brand:Product = 1:n 
-//   products Product[]
-// }
-
-// model Category {
-//   id       Int       @id @default(autoincrement())
-//   name     String    @unique
-//   parentId Int?      @map("parent_id")
-//   // 關聯: Category:Product = 1:n 
-//   products Product[]
-// }
-
-// model Favorite {
-//   // 關聯: User:Favorite = 1:n 
-//   user      User    @relation(fields: [userId], references: [id])
-//   userId    Int     @map("user_id")
-//   // 關聯: Product:Favorite = 1:n 
-//   product   Product @relation(fields: [productId], references: [id])
-//   productId Int     @map("product_id")
-
-//   // 複合主鍵
-//   @@id([userId, productId])
-// }
-
-// model Otp {
-//   id        Int      @id @default(autoincrement())
-//   email     String
-//   token     String
-//   hash      String?
-//   createdAt DateTime @default(now()) @map("created_at")
-//   expiredAt DateTime @map("expired_at")
-// }
-
-// model Profile {
-//   id       Int       @id @default(autoincrement())
-//   name     String?
-//   bio      String?   @db.Text
-//   avatar   String?
-//   sex      String?
-//   // 日期格式: 2021-01-01
-//   birth    DateTime? @db.Date
-//   phone    String?
-//   postcode String?
-//   address  String?
-//   // 1:1 關聯
-//   user     User      @relation(fields: [userId], references: [id])
-//   userId   Int       @unique @map("user_id")
-// }
-
-// model Product {
-//   id         Int        @id @default(autoincrement())
-//   name       String
-//   sn         String     @unique
-//   photos     String?    @db.Text
-//   stock      Int        @default(0)
-//   price      Int        @default(0)
-//   info       String     @db.Text
-//   // 關聯: Brand:Product = 1:n 
-//   brand      Brand      @relation(fields: [brandId], references: [id])
-//   brandId    Int        @map("brand_id")
-//   // 關聯: Category:Product = 1:n 
-//   category   Category   @relation(fields: [categoryId], references: [id])
-//   categoryId Int        @map("category_id")
-//   // 關聯: User:Product = n:m 透過 Favorite
-//   favorites  Favorite[]
-// }
-
-model Users {
-  id       Int    @id @default(autoincrement())
-  account  String @unique
-  password String
-  name     String @unique
-  phone    String
-  birthday String
-  email    String @unique
+  @@index([category_id], map: "category_id")
+  @@index([brand_id], map: "fk_product_brand")
 }
 
-// model User {
-//   id              Int        @id @default(autoincrement())
-//   username        String     @unique
-//   password        String
-//   email           String     @unique
-//   // 關聯 User:Profile = 1:1 
-//   profile         Profile?
-//   emailValidated  Boolean    @default(false) @map("email_validated")
-//   googleUid       String?    @unique @map("google_uid")
-//   lineUid         String?    @unique @map("line_uid")
-//   lineAccessToken String?    @map("line_access_token") @db.Text
-//   // 關聯: User:Product = n:m 透過 Favorite
-//   favorites       Favorite[]
-// }
+model product_brand {
+  id         Int       @id @default(autoincrement())
+  name       String    @unique(map: "name") @db.VarChar(255)
+  sort_order Int?      @default(0)
+  created_at DateTime  @default(now()) @db.DateTime(0)
+  updated_at DateTime  @default(now()) @db.DateTime(0)
+  deleted_at DateTime? @db.DateTime(0)
+  product    product[]
+}
+
+model product_category {
+  id                                                                       Int                     @id @default(autoincrement())
+  name                                                                     String                  @db.VarChar(100)
+  parentId                                                                 Int?
+  gender                                                                   Int                     @default(0) @db.TinyInt
+  created_at                                                               DateTime                @default(now()) @db.Timestamp(0)
+  updated_at                                                               DateTime                @default(now()) @db.DateTime(0)
+  deleted_at                                                               DateTime?               @db.DateTime(0)
+  product                                                                  product[]
+  product_category                                                         product_category?       @relation("product_categoryToproduct_category", fields: [parentId], references: [id], onUpdate: Restrict, map: "product_category_ibfk_1")
+  other_product_category                                                   product_category[]      @relation("product_categoryToproduct_category")
+  product_category_path_product_category_path_ancestorToproduct_category   product_category_path[] @relation("product_category_path_ancestorToproduct_category")
+  product_category_path_product_category_path_descendantToproduct_category product_category_path[] @relation("product_category_path_descendantToproduct_category")
+
+  @@index([parentId], map: "parent_id")
+}
+
+model product_category_path {
+  ancestor                                                            Int
+  descendant                                                          Int
+  depth                                                               Int
+  product_category_product_category_path_ancestorToproduct_category   product_category @relation("product_category_path_ancestorToproduct_category", fields: [ancestor], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_ancestor")
+  product_category_product_category_path_descendantToproduct_category product_category @relation("product_category_path_descendantToproduct_category", fields: [descendant], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_descendant")
+
+  @@id([ancestor, descendant])
+  @@index([descendant], map: "idx_descendant")
+}
+
+model product_image {
+  id         Int      @id @default(autoincrement())
+  product_id Int
+  url        String   @db.VarChar(255)
+  sort_order Int?     @default(0)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  valid      Int      @default(1) @db.TinyInt
+  product    product  @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "product_image_ibfk_1")
+
+  @@index([product_id], map: "product_id")
+}
+
+model product_rating {
+  id          Int       @id @default(autoincrement())
+  user_id     Int
+  order_id    Int       @unique(map: "ux_order_rating")
+  product_id  Int
+  rating      Decimal   @db.Decimal(2, 1)
+  review_text String?   @db.Text
+  created_at  DateTime  @default(now()) @db.DateTime(0)
+  updated_at  DateTime  @default(now()) @db.DateTime(0)
+  deleted_at  DateTime? @db.DateTime(0)
+}
+
+model product_size {
+  id          Int           @id @default(autoincrement())
+  name        String        @unique(map: "name") @db.VarChar(10)
+  sort_order  Int           @default(0)
+  product_sku product_sku[]
+}
+
+model product_sku {
+  id           Int           @id @default(autoincrement())
+  product_id   Int
+  size_id      Int?
+  sku_code     String        @unique(map: "uq_sku_code") @db.VarChar(100)
+  stock        Int?          @default(0)
+  price        Int
+  created_at   DateTime?     @default(now()) @db.DateTime(0)
+  updated_at   DateTime?     @default(now()) @db.DateTime(0)
+  deleted_at   DateTime?     @db.DateTime(0)
+  product      product       @relation(fields: [product_id], references: [id], onUpdate: Restrict, map: "product_sku_ibfk_1")
+  product_size product_size? @relation(fields: [size_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "product_sku_ibfk_2")
+
+  @@unique([product_id, size_id], map: "uq_sku_unique")
+  @@index([size_id], map: "size_id")
+}

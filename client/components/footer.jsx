@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className=" flex flex-col">
       <main className="flex-1">{/* Your main content would go here */}</main>
 
       <footer className="bg-[#072136] text-[#ffffff] py-12 px-4 md:px-8">
