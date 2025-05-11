@@ -132,17 +132,110 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// GET /api/products — 支援 include=card 參數
+// // GET /api/products — 支援 include=card 參數
+// router.get('/', async (req, res, next) => {
+//   const { include } = req.query;
+
+//   try {
+//     // 如果有帶 include=card，回傳卡片需要的欄位
+//     if (include === 'card') {
+//       const raw = await prisma.product.findMany({
+//         where: {
+//           delete_at: null,
+//         },
+//         include: {
+//           product_image: {
+//             where: { sort_order: 0, valid: 1 },
+//             take: 1,
+//             select: { url: true },
+//           },
+//           product_sku: {
+//             where: { deleted_at: null },
+//             orderBy: { price: 'asc' },
+//             take: 1,
+//             select: { price: true },
+//           },
+//           product_category: {
+//             select: { name: true },
+//           },
+//           product_brand: {
+//             select: { name: true },
+//           },
+//           // product_rating: {
+//           //   select: { rating: true },
+//           // },
+//         },
+//       });
+
+//       const products = raw.map((p) => {
+//         // const ratings = p.product_rating.map((r) => Number(r.rating));
+//         // const avgRating =
+//         //   ratings.length > 0
+//         //     ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1)
+//         //     : null;
+
+//         return {
+//           id: p.id,
+//           name: p.name,
+//           // image: p.product_image[0]?.url || '/placeholder.jpg',
+//           image: p.product_image[0]
+//             ? `http://localhost:3005${p.product_image[0].url}`
+//             : 'http://localhost:3005/placeholder.jpg',
+//           price: p.product_sku[0]?.price ?? 0,
+//           category: p.product_category?.name ?? '無分類',
+//           brand: p.product_brand?.name ?? '無品牌',
+//           // rating: avgRating,
+//         };
+//       });
+
+//       return res.json(products);
+//     }
+
+//     // 預設查詢：只查基本欄位
+//     const products = await prisma.product.findMany({
+//       select: {
+//         id: true,
+//         name: true,
+//         category_id: true,
+//         brand_id: true,
+//         introduction: true,
+//         spec: true,
+//         created_at: true,
+//         publish_at: true,
+//         unpublish_at: true,
+//         delete_at: true,
+//       },
+//     });
+
+//     res.json(products);
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+
+// GET /api/products — 支援 include=card、page、limit 參數
 router.get('/', async (req, res, next) => {
-  const { include } = req.query;
+  const { include, page = '1', limit = '10' } = req.query;
+  // 轉成數字，並確保最小為 1
+  const pageNum = Math.max(parseInt(page, 10), 1);
+  const pageSize = Math.max(parseInt(limit, 10), 1);
 
   try {
+    // 分頁用的 Prisma 參數
+    const pagination = {
+      skip: (pageNum - 1) * pageSize,
+      take: pageSize,
+    };
+
+    const total = await prisma.product.count({
+      where: { delete_at: null },
+    });
+
     // 如果有帶 include=card，回傳卡片需要的欄位
     if (include === 'card') {
       const raw = await prisma.product.findMany({
-        where: {
-          delete_at: null,
-        },
+        where: { delete_at: null },
+        ...pagination,
         include: {
           product_image: {
             where: { sort_order: 0, valid: 1 },
@@ -155,44 +248,32 @@ router.get('/', async (req, res, next) => {
             take: 1,
             select: { price: true },
           },
-          product_category: {
-            select: { name: true },
-          },
-          product_brand: {
-            select: { name: true },
-          },
-          // product_rating: {
-          //   select: { rating: true },
-          // },
+          product_category: { select: { name: true } },
+          product_brand: { select: { name: true } },
         },
       });
 
-      const products = raw.map((p) => {
-        // const ratings = p.product_rating.map((r) => Number(r.rating));
-        // const avgRating =
-        //   ratings.length > 0
-        //     ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1)
-        //     : null;
+      const products = raw.map((p) => ({
+        id: p.id,
+        name: p.name,
+        image: p.product_image[0]
+          ? `http://localhost:3005${p.product_image[0].url}`
+          : 'http://localhost:3005/placeholder.jpg',
+        price: p.product_sku[0]?.price ?? 0,
+        category: p.product_category?.name ?? '無分類',
+        brand: p.product_brand?.name ?? '無品牌',
+      }));
 
-        return {
-          id: p.id,
-          name: p.name,
-          // image: p.product_image[0]?.url || '/placeholder.jpg',
-          image: p.product_image[0]
-            ? `http://localhost:3005${p.product_image[0].url}`
-            : 'http://localhost:3005/placeholder.jpg',
-          price: p.product_sku[0]?.price ?? 0,
-          category: p.product_category?.name ?? '無分類',
-          brand: p.product_brand?.name ?? '無品牌',
-          // rating: avgRating,
-        };
+      return res.json({
+        page: pageNum,
+        limit: pageSize,
+        total,
+        data: products,
       });
-
-      return res.json(products);
     }
 
-    // 預設查詢：只查基本欄位
-    const products = await prisma.product.findMany({
+    // 預設查詢：只查基本欄位 + 分頁
+    const basic = await prisma.product.findMany({
       select: {
         id: true,
         name: true,
@@ -205,9 +286,15 @@ router.get('/', async (req, res, next) => {
         unpublish_at: true,
         delete_at: true,
       },
+      ...pagination,
     });
 
-    res.json(products);
+    res.json({
+      page: pageNum,
+      limit: pageSize,
+      total,
+      data: basic,
+    });
   } catch (error) {
     next(error);
   }
