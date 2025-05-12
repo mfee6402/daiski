@@ -3,8 +3,9 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <div className="min-h-screen flex flex-col">
-      <main className="flex-1">{/* Your main content would go here */}</main>
+    // NOTE min-h-screen做什麼的?他導致我結帳明細sticky有問題
+    <div className="flex flex-col">
+      {/* <main className="flex-1">123456</main> */}
 
       <footer className="bg-[#072136] text-[#ffffff] py-12 px-4 md:px-8">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-5 gap-8">

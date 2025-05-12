@@ -9,8 +9,9 @@ const router = express.Router()
 // 新增
 router.post('/', async function (req, res) {
   const cart = await prisma.cart.create({
+  
   data: {
-    userId: 2,
+    userId: 1,
   },
 });
 
@@ -23,6 +24,25 @@ router.post('/', async function (req, res) {
 // 查詢
 router.get('/', async function (req, res) {
   const cart = await prisma.cart.findUnique({
+  include: {
+    // 相當於 JOIN cart ON cart.id = post.cart
+    CartProduct:{
+      select:{
+        productId:true,
+        quantity:true
+      }
+    },
+    CartCourse:{
+     select:{
+        courseId:true,
+      }
+    },
+    CartGroup:{
+     select:{
+        groupId:true,
+      }
+    },
+  },
   where: {
     id: 1,
   },
