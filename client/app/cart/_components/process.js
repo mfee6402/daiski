@@ -1,10 +1,9 @@
 'use client';
-import './style.css';
 import { ShoppingCart } from 'lucide-react';
 import { SquarePen } from 'lucide-react';
 import { CircleCheckBig } from 'lucide-react';
 import clsx from 'clsx';
-import { useState } from 'react';
+
 export default function Process({ step }) {
   const bgSize = 'flex items-center justify-center rounded-full w-25 h-25';
   const iconSize = 'h-16 w-16 p-0 flex items-center justify-center stroke-1';
