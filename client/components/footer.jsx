@@ -11,8 +11,17 @@ export default function Footer() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-5 gap-8">
           {/* Logo and Contact Info */}
           <div className="md:col-span-1">
-            <div className="mb-6">
-              <h2 className="text-3xl font-bold tracking-wider">DAISK!</h2>
+            {/* 左側 Logo */}
+            <div className="flex-shrink-0">
+              <Link href="/">
+                <Image
+                  src="/LOGO-white.svg"
+                  alt="DAISKI"
+                  width={150}
+                  height={40}
+                  className="h-10 w-auto"
+                />
+              </Link>
             </div>
             <div className="space-y-2 text-sm">
               <p>桃園市 32056 中壢區新生路二段421號</p>
