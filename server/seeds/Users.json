@@ -5,6 +5,8 @@
   "name"     : "123",
   "phone"    :"123",
   "birthday" :"123",
-  "email"    : "123"
+  "email"    : "123",
+  "is_coach" :"0",
+  "avatar" :"1"
   }
 ]
