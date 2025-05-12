@@ -1,11 +1,8 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
-
 ## 命名規則
 
 變數名(Variable Names):
 
-- 只使用英文小寫字元、下底線、數字
-- 蛇形命名法snake_case
+- 小駝峰命名法
 - 名字要以字母開頭，不能以下底線結尾
 - 保證名字長度不超過 20 個字節
 - 避免使用縮寫詞
@@ -20,6 +17,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 - 英文單數詞(Singular)
 - 全英文小寫(以下底線\_分隔字詞)
+- 蛇行命名法
 
 ## 關聯表名稱(Relationship Table Names)
 

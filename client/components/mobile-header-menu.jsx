@@ -1,8 +1,8 @@
-'use client'
-import { useState } from 'react'
-import { Menu, House, BookOpen, Users, ShoppingBasket } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import Link from 'next/link'
+'use client';
+import { useState } from 'react';
+import { Menu, House, BookOpen, Users, ShoppingBasket } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import {
   Sheet,
   SheetTrigger,
@@ -10,12 +10,12 @@ import {
   SheetClose,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet'
+} from '@/components/ui/sheet';
 
-import { CartIconWithBadge } from './cart-icon-with-badge'
-import { AccountPopover } from './account-popover'
-import { MobileAccountMenu } from './mobile-account-menu'
-import { motion } from 'framer-motion'
+import { CartIconWithBadge } from './cart-icon-with-badge';
+import { AccountPopover } from './account-popover';
+import { MobileAccountMenu } from './mobile-account-menu';
+import { motion } from 'framer-motion';
 
 // export function MobileHeaderMenu() {
 //   return (
@@ -75,7 +75,7 @@ import { motion } from 'framer-motion'
 // }
 
 export function MobileHeaderMenu() {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -100,7 +100,7 @@ export function MobileHeaderMenu() {
           onDragEnd={(_, info) => {
             if (info.offset.y < -50) {
               // 超過 50px 才真正關閉
-              setOpen(false)
+              setOpen(false);
             }
           }}
         >
@@ -148,5 +148,5 @@ export function MobileHeaderMenu() {
         </motion.div>
       </SheetContent>
     </Sheet>
-  )
+  );
 }
