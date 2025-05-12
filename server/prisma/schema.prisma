@@ -112,3 +112,140 @@ model product_sku {
   @@unique([product_id, size_id], map: "uq_sku_unique")
   @@index([size_id], map: "size_id")
 }
+/// 活動類型
+enum ActivityType {
+  SKI  @map("滑雪")
+  HIKE @map("登山")
+  CAMP @map("露營")
+}
+
+/// 滑雪難易度
+enum SkiDifficulty {
+  BEGINNER @map("初級")
+  INTER    @map("中級")
+  ADVANCE  @map("進階")
+}
+
+/// 訊息類型（文字／照片）
+enum MessageType {
+  TEXT  @map("text")
+  IMAGE @map("image")
+}
+
+model User {
+  id           Int             @id @default(autoincrement())
+  name         String          @db.VarChar(20)
+  account      String          @db.VarChar(20)
+  password     String          @db.VarChar(20)
+  phone        String?         @db.VarChar(10)
+  birthday     DateTime?
+  email        String?         @db.VarChar(255)
+  createdTime  DateTime        @default(now()) @map("createdtime")
+  isCoach      Boolean         @default(false)  @map("isCoach")
+  valid        Boolean         @default(true)
+
+  // relations
+  groups       Group[]         @relation("OrganizerGroups")
+  memberships  GroupMember[]
+  comments     GroupComment[]
+  messages     ChatMessage[]
+}
+
+model Location {
+  id         Int       @id @default(autoincrement())
+  name       String    @db.VarChar(255)
+  address    String    @db.VarChar(255)
+  city       String    @db.VarChar(100)
+  country    String    @db.VarChar(100)
+  latitude   Decimal   @db.Decimal(20,17)
+  longitude  Decimal   @db.Decimal(20,17)
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  // relations
+  groups     Group[]
+}
+
+model Group {
+  id           Int             @id @default(autoincrement())
+  userId       Int             @map("user_id")
+  user         User            @relation("OrganizerGroups", fields: [userId], references: [id])
+  locationId   Int             @map("location_id")
+  location     Location        @relation(fields: [locationId], references: [id])
+
+  title        String          @db.VarChar(100)
+  type         ActivityType
+  difficulty   SkiDifficulty?
+  startDate    DateTime        @map("start_date")
+  endDate      DateTime        @map("end_date")
+  minPeople    Int             @map("min_people")
+  maxPeople    Int             @map("max_people")
+  price        Int
+  description  String?         @db.Text
+  allowNewbie  Boolean         @default(false) @map("allow_newbie")
+
+  createdAt    DateTime        @default(now()) @map("created_at")
+  endAt        DateTime?       @map("end_at")
+  deletedAt    DateTime?       @map("deleted_at")
+
+  // relations
+  members      GroupMember[]
+  images       GroupImage[]
+  comments     GroupComment[]
+  chatRoom     ChatRoom?       // inverse side of ChatRoom.group
+}
+
+model GroupMember {
+  id        Int      @id @default(autoincrement())
+  groupId   Int
+  userId    Int
+  joinedAt  DateTime @default(now()) @map("joined_at")
+  paidAt    DateTime? @map("paid_at")
+
+  group     Group    @relation(fields: [groupId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+}
+
+model GroupImage {
+  id        Int      @id @default(autoincrement())
+  groupId   Int      @map("group_id")
+  imageUrl  String   @map("image_url")
+  sortOrder Int      @default(0) @map("sort_order")
+
+  group     Group    @relation(fields: [groupId], references: [id])
+}
+
+model GroupComment {
+  id         Int      @id @default(autoincrement())
+  groupId    Int      @map("group_id")
+  userId     Int      @map("user_id")
+  content    String
+  createdAt  DateTime @default(now()) @map("created_at")
+  replyId    Int?     @map("reply_id")
+
+  group      Group    @relation(fields: [groupId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model ChatRoom {
+  groupId       Int       @id @map("group_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  lastMessageAt DateTime? @map("last_message_at")
+
+  group         Group     @relation(fields: [groupId], references: [id])
+  messages      ChatMessage[]
+}
+
+model ChatMessage {
+  id          Int         @id @default(autoincrement())
+  groupId     Int         @map("group_id")
+  userId      Int         @map("user_id")
+  content     String
+  messageType MessageType @default(TEXT) @map("message_type")
+  sentAt      DateTime    @default(now()) @map("sent_at")
+  isRead      Boolean?    @map("is_read")
+
+  room        ChatRoom    @relation(fields: [groupId], references: [groupId])
+  user        User        @relation(fields: [userId],  references: [id])
+}
