@@ -7,6 +7,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
+// 會員 
+// #region 
+model Users {
+  id        Int       @id @default(autoincrement())
+  account   String    @unique
+  password  String
+  name      String    @unique
+  phone     String
+  birthday  String
+  email     String    @unique
+  is_coach  String
+  avatar    String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deleteAt  DateTime? @map("delete_at")
+}
+
+// #endregion
+
+// 商品
+// #region 
 model product {
   id               Int               @id @default(autoincrement())
   name             String            @db.VarChar(255)
@@ -112,29 +134,6 @@ model product_sku {
   @@unique([product_id, size_id], map: "uq_sku_unique")
   @@index([size_id], map: "size_id")
 }
-
-
-// 會員 
-// #region 
-model Users {
-  id        Int       @id @default(autoincrement())
-  account   String    @unique
-  password  String
-  name      String    @unique
-  phone     String
-  birthday  String
-  email     String    @unique
-  is_coach  String
-  avatar    String
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deleteAt  DateTime? @map("delete_at")
-}
-
-// #endregion
-
-// 商品
-// #region 
 
 
 // #endregion

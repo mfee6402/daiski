@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Pagination } from '@/components/ui/pagination';
 
-export default function GroupOverviewPage() {
+export default function GroupsPage() {
   const router = useRouter();
   const [groups, setGroups] = useState([]);
   const [filters, setFilters] = useState({
@@ -35,7 +35,7 @@ export default function GroupOverviewPage() {
     async function fetchGroups() {
       try {
         const res = await fetch(
-          `/api/groups?type=${filters.type}&date=${filters.date}&location=${filters.location}&keyword=${filters.keyword}&page=${page}`
+          `/api/group?type=${filters.type}&date=${filters.date}&location=${filters.location}&keyword=${filters.keyword}&page=${page}`
         );
         const data = await res.json();
         setGroups(data.groups);
@@ -95,7 +95,7 @@ export default function GroupOverviewPage() {
           </p>
           <div className="flex justify-center gap-6">
             <Button
-              onClick={() => router.push('/create-group')}
+              onClick={() => router.push('/groups/create')}
               className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow transition transform hover:scale-105"
             >
               立即開團
@@ -251,8 +251,8 @@ export default function GroupOverviewPage() {
         {/* Pagination */}
         <div className="max-w-screen-xl mx-auto px-4 py-8 flex justify-center">
           <Pagination
-            currentPage={page}
-            totalPages={totalPages}
+            currentpage={page}
+            totalpages={totalPages}
             onPageChange={(p) => setPage(p)}
           />
         </div>

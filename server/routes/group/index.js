@@ -1,102 +1,89 @@
-// routes/group/index.js
-import express from 'express'
-import prisma from '../../lib/prisma.js'   // 你建立的 PrismaClient 實例
+import express from 'express';
+import { PrismaClient } from '@prisma/client';
+import multer from 'multer';
+import path from 'path';
 
-const router = express.Router()
+const router = express.Router();
+const prisma = new PrismaClient();
 
-// 1. 列表：GET /api/groups
+// Multer 設定：把封面圖存到 public/uploads
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      const dir = path.join(process.cwd(), 'public', 'uploads');
+      cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+      cb(null, `${Date.now()}_${file.originalname}`);
+    },
+  }),
+});
+
+// GET /api/group?onlyTypes=true
+//   若帶 onlyTypes=true，回傳 ENUM('SKI','MEAL') 內所有值
+// GET /api/group
+//   預設回傳所有群組資料
 router.get('/', async (req, res, next) => {
   try {
+    if (req.query.onlyTypes === 'true') {
+      // 讀 MySQL ENUM 定義
+      const [col] = await prisma.$queryRaw`
+        SHOW COLUMNS FROM \`group\` LIKE 'type'
+      `;
+      const enumDef = col.Type;             // e.g. "enum('SKI','MEAL')"
+      const types = enumDef
+        .match(/'[^']+'/g)
+        .map(s => s.slice(1, -1));          // 去掉單引號
+      return res.json(types);
+    }
+
+    // 回傳所有 group
     const groups = await prisma.group.findMany({
-      include: {
-        user: true,
-        location: true,
-        images: { where: { sortOrder: 0 } },
-      }
-    })
-    res.json(groups)
-  } catch (err) {
-    next(err)
-  }
-})
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(groups);
 
-// 2. 詳細：GET /api/groups/:id
-router.get('/:id', async (req, res, next) => {
-  try {
-    const id = Number(req.params.id)
-    const group = await prisma.group.findUnique({
-      where: { id },
-      include: {
-        user: true,
-        location: true,
-        members: true,
-        images: { orderBy: { sortOrder: 'asc' } },
-        comments: { orderBy: { createdAt: 'desc' } },
-        chatRoom: { include: { messages: true } },
-      }
-    })
-    if (!group) return res.status(404).json({ error: 'Not Found' })
-    res.json(group)
   } catch (err) {
-    next(err)
+    next(err);
   }
-})
+});
 
-// 3. 建立：POST /api/groups
-router.post('/', async (req, res, next) => {
+// POST /api/group
+//   接收 multipart/form-data (cover 圖)，並新增一筆 group
+router.post('/', upload.single('cover'), async (req, res, next) => {
   try {
     const {
-      userId, locationId, title, type, difficulty,
-      startDate, endDate, minPeople, maxPeople,
-      price, description, allowNewbie
-    } = req.body
+      type, title, start_date, end_date,
+      location, min_people, max_people,
+      price, allow_newbie, description
+    } = req.body;
+
+    let cover_url = null;
+    if (req.file) {
+      cover_url = `/uploads/${req.file.filename}`;
+    }
 
     const newGroup = await prisma.group.create({
       data: {
-        userId,
-        locationId,
-        title,
         type,
-        difficulty,
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
-        minPeople,
-        maxPeople,
-        price,
+        title,
+        start_date: new Date(start_date),
+        end_date:   new Date(end_date),
+        location,
+        min_people: parseInt(min_people, 10),
+        max_people: parseInt(max_people, 10),
+        price:      parseInt(price, 10),
+        allow_newbie: allow_newbie === '1',
         description,
-        allowNewbie,
-      }
-    })
-    res.status(201).json(newGroup)
-  } catch (err) {
-    next(err)
-  }
-})
+        cover_image: cover_url,
+        created_at:  new Date(),
+      },
+    });
 
-// 4. 更新：PUT /api/groups/:id
-router.put('/:id', async (req, res, next) => {
-  try {
-    const id = Number(req.params.id)
-    const data = req.body
-    const updated = await prisma.group.update({
-      where: { id },
-      data,
-    })
-    res.json(updated)
+    res.status(201).json(newGroup);
   } catch (err) {
-    next(err)
+    next(err);
   }
-})
+});
 
-// 5. 刪除：DELETE /api/groups/:id
-router.delete('/:id', async (req, res, next) => {
-  try {
-    const id = Number(req.params.id)
-    await prisma.group.delete({ where: { id } })
-    res.status(204).end()
-  } catch (err) {
-    next(err)
-  }
-})
-
-export default router
+export default router;
