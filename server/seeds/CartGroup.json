@@ -2,5 +2,17 @@
   {
   "cartId"  : 1,
   "groupId" :1
+  },
+  {
+  "cartId"  : 2,
+  "groupId" :2
+  },
+  {
+  "cartId"  : 1,
+  "groupId" :3
+  },
+  {
+  "cartId"  : 3,
+  "groupId" :3
   }
 ]
