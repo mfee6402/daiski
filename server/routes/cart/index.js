@@ -42,6 +42,7 @@ router.get('/', async function (req, res) {
         groupId:true,
       }
     },
+    
   },
   where: {
     id: 1,

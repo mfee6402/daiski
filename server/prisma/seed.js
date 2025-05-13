@@ -22,7 +22,7 @@ import { isDev } from '../lib/utils.js'
 //--------------------------------------------------------------------------
 const oneToOne = []
 // foreignKey is in the second table
-const oneToMany = ['Cart:CartProduct','Cart:CartCourse','Cart:CartGroup','Order:OrderProduct','Order:CartCourse','Order:CartGroup']
+const oneToMany = ['Cart:CartProduct','Cart:CartCourse','Cart:CartGroup','Order:OrderProduct','Order:CartCourse','Order:CartGroup','ProductCategory:Product','ProductBrand:Product']
 // foreignKey is in the third table
 const manyToMany = []
 
