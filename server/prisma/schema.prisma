@@ -148,8 +148,7 @@ model ProductSku {
 /// 活動類型
 enum ActivityType {
   SKI  @map("滑雪")
-  HIKE @map("登山")
-  CAMP @map("露營")
+  MEAL @map("聚餐")
 }
 
 /// 滑雪難易度
