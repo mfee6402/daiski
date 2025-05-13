@@ -2,5 +2,17 @@
   {
   "cartId"  : 1,
   "courseId" :1
+  }, 
+  {
+  "cartId"  : 1,
+  "courseId" :2
+  }, 
+  {
+  "cartId"  : 2,
+  "courseId" :1
+  }, 
+  {
+  "cartId"  : 3,
+  "courseId" :1
   }
 ]

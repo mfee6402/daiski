@@ -73,14 +73,14 @@ export default function ProductList({ products }) {
                 <img
                   src={p.image || '/placeholder.jpg'}
                   alt={p.name}
-                  className="w-full h-full object-cover transition duration-300 hover:scale-105"
+                  className="w-full h-full object-cover transition duration-300 hover:scale-110"
                 />
               </CardHeader>
               <CardContent>
-                <CardTitle className="text-lg font-bold mt-2">
+                <CardTitle className="text-lg font-bold mt-2 line-clamp-2 hover:text-sky-600">
                   {p.name}
                 </CardTitle>
-                <CardDescription className="text-sm text-gray-600 mt-1">
+                <CardDescription className="text-sm text-gray-600 mt-1 line-clamp-1 hover:text-sky-600">
                   {p.category} / {p.brand}
                 </CardDescription>
                 <p className="text-red-500 font-semibold text-base mt-2">
