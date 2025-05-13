@@ -20,6 +20,13 @@ export default function CoachesPage() {
     boardType: '', // '' | '單板' | '雙板'
     language: '', // '' | '中文' | '日文' | '英文'
   });
+
+  // const searchBar = ({filters,setFilters}) => {
+  //   const [tempKeyword, setTempKeyword] = useState(filters.keyword || "")
+  //   const handleSearch = () => {
+  //     setFilters((f) => )
+  //   }
+  // }
   const [showFilter, setShowFilter] = useState();
   // 教練清單：可以後端拿或者寫成 props 傳進來
   const teachers = [
@@ -169,7 +176,7 @@ export default function CoachesPage() {
               className="w-32 h-32 rounded-full mx-auto object-cover"
             />
             <h2 className="mt-4 text-xl font-semibold flex items-center justify-center">
-              <span className="mr-2">🇹🇼</span>
+              <span className="mr-2"></span>
               {t.name}
             </h2>
             <p className="mt-2 text-gray-700">{t.boardType.join('、')}</p>
