@@ -176,6 +176,9 @@ model User {
   memberships GroupMember[]
   comments    GroupComment[]
   messages    ChatMessage[]
+  GameScore   GameScore[]
+
+  @@map("user")
 }
 
 model Location {
@@ -344,9 +347,66 @@ model Course {
 
 // 優惠券
 // #region 
-
+// coupon
 model Coupon {
-  id Int @id @default(autoincrement())
+  id             Int       @id @default(autoincrement())
+  name           String
+  typeId         Int       @map("type_id")
+  couponTargetId Int       @map("coupon_target_id")
+  startAt        DateTime  @map("start_at")
+  endAt          DateTime  @map("end_at")
+  usageLimit     Int       @map("usage_limit")
+  minPurchase    Int       @map("min_purchase")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  couponType   CouponType   @relation(fields: [typeId], references: [id])
+  couponTarget CouponTarget @relation(fields: [couponTargetId], references: [id])
+
+  @@map("coupon")
+}
+
+model CouponType {
+  id     Int    @id @default(autoincrement())
+  amount Int
+  type   String
+
+  Coupon Coupon[]
+
+  @@map("coupon_type")
+}
+
+model CouponTarget {
+  id     Int    @id @default(autoincrement())
+  target String
+
+  Coupon Coupon[]
+
+  @@map("coupon_target")
+}
+
+// game
+model Game {
+  id               Int @id @default(autoincrement())
+  scoreRequirement Int @map("score_requirement")
+
+  GameScore GameScore[]
+
+  @@map("game")
+}
+
+model GameScore {
+  id       Int      @id @default(autoincrement())
+  userId   Int      @map("user_id")
+  score    Int
+  playedAt DateTime @default(now()) @map("played_at")
+  gameId   Int      @map("game_id")
+
+  game Game @relation(fields: [gameId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("game_score")
 }
 
 // #endregion
