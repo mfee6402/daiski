@@ -10,18 +10,23 @@ datasource db {
 // 會員 
 // #region 
 model Users {
-  id        Int       @id @default(autoincrement())
-  account   String    @unique
-  password  String
-  name      String    @unique
-  phone     String
-  birthday  String
-  email     String    @unique
-  is_coach  String
-  avatar    String
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deleteAt  DateTime? @map("delete_at")
+  id           Int            @id @default(autoincrement())
+  account      String         @unique
+  password     String
+  name         String         @unique
+  phone        String
+  birthday     String
+  email        String         @unique
+  is_coach     String
+  avatar       String
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+  deleteAt     DateTime?      @map("delete_at")
+  Group        Group[]
+  GroupMember  GroupMember[]
+  GroupComment GroupComment[]
+  ChatMessage  ChatMessage[]
+  GameScore    GameScore[]
 }
 
 // #endregion
@@ -159,28 +164,6 @@ enum MessageType {
   IMAGE @map("image")
 }
 
-model User {
-  id          Int       @id @default(autoincrement())
-  name        String    @db.VarChar(20)
-  account     String    @db.VarChar(20)
-  password    String    @db.VarChar(20)
-  phone       String?   @db.VarChar(10)
-  birthday    DateTime?
-  email       String?   @db.VarChar(255)
-  createdTime DateTime  @default(now()) @map("createdtime")
-  isCoach     Boolean   @default(false) @map("isCoach")
-  valid       Boolean   @default(true)
-
-  // relations
-  groups      Group[]        @relation("OrganizerGroups")
-  memberships GroupMember[]
-  comments    GroupComment[]
-  messages    ChatMessage[]
-  GameScore   GameScore[]
-
-  @@map("user")
-}
-
 model Location {
   id        Int      @id @default(autoincrement())
   name      String   @db.VarChar(255)
@@ -198,7 +181,7 @@ model Location {
 model Group {
   id         Int      @id @default(autoincrement())
   userId     Int      @map("user_id")
-  user       User     @relation("OrganizerGroups", fields: [userId], references: [id])
+  users      Users    @relation(fields: [userId], references: [id])
   locationId Int      @map("location_id")
   location   Location @relation(fields: [locationId], references: [id])
 
@@ -232,7 +215,7 @@ model GroupMember {
   paidAt   DateTime? @map("paid_at")
 
   group Group @relation(fields: [groupId], references: [id])
-  user  User  @relation(fields: [userId], references: [id])
+  users Users @relation(fields: [userId], references: [id])
 
   @@unique([groupId, userId])
 }
@@ -255,7 +238,7 @@ model GroupComment {
   replyId   Int?     @map("reply_id")
 
   group Group @relation(fields: [groupId], references: [id])
-  user  User  @relation(fields: [userId], references: [id])
+  users Users @relation(fields: [userId], references: [id])
 }
 
 model ChatRoom {
@@ -276,8 +259,8 @@ model ChatMessage {
   sentAt      DateTime    @default(now()) @map("sent_at")
   isRead      Boolean?    @map("is_read")
 
-  room ChatRoom @relation(fields: [groupId], references: [groupId])
-  user User     @relation(fields: [userId], references: [id])
+  room  ChatRoom @relation(fields: [groupId], references: [groupId])
+  users Users    @relation(fields: [userId], references: [id])
 }
 
 // #endregion
@@ -388,10 +371,9 @@ model CouponTarget {
 
 // game
 model Game {
-  id               Int @id @default(autoincrement())
-  scoreRequirement Int @map("score_requirement")
-
-  GameScore GameScore[]
+  id               Int         @id @default(autoincrement())
+  scoreRequirement Int         @map("score_requirement")
+  GameScore        GameScore[]
 
   @@map("game")
 }
@@ -403,8 +385,8 @@ model GameScore {
   playedAt DateTime @default(now()) @map("played_at")
   gameId   Int      @map("game_id")
 
-  game Game @relation(fields: [gameId], references: [id])
-  user User @relation(fields: [userId], references: [id])
+  game  Game  @relation(fields: [gameId], references: [id])
+  users Users @relation(fields: [userId], references: [id])
 
   @@map("game_score")
 }
