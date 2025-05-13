@@ -50,7 +50,7 @@ router.get('/', async function (req, res) {
 
   res
     .status(200)
-    .json({ status: 'success',data:{cart}})
+    .json({ status: 'success',cart})
 })
 
 // 更新
