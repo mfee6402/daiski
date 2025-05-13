@@ -1,15 +1,15 @@
 // context套用第3步: 在最外(上)層包裹提供者元件
 // 建立P(Providers)到C(Consumer)的階層關係
-import Providers from './providers'
-import '@/styles/globals.css'
-import Header from '@/components/header'
-import Footer from '@/components/footer'
-import { ThemeProvider } from '@/components/theme-provider'
+import Providers from './providers';
+import '@/styles/globals.css';
+import Header from '@/components/header';
+import Footer from '@/components/footer';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata = {
-  title: 'rootLayout',
-  description: 'daiskiLayout',
-}
+  title: 'DAISKI',
+  description: 'SKI!',
+};
 
 export default function RootLayout({ children }) {
   return (
@@ -29,5 +29,5 @@ export default function RootLayout({ children }) {
         </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }

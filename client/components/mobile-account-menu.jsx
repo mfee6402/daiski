@@ -1,10 +1,10 @@
-import { User } from 'lucide-react'
+import { User } from 'lucide-react';
 import {
   Accordion,
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
-} from '@/components/ui/accordion'
+} from '@/components/ui/accordion';
 
 export function MobileAccountMenu() {
   return (
@@ -57,5 +57,5 @@ export function MobileAccountMenu() {
         </AccordionItem>
       </Accordion>
     </div>
-  )
+  );
 }
