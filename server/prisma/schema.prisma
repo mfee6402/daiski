@@ -248,4 +248,4 @@ model ChatMessage {
 
   room        ChatRoom    @relation(fields: [groupId], references: [groupId])
   user        User        @relation(fields: [userId],  references: [id])
-}
+} 
