@@ -66,18 +66,18 @@ model ProductBrand {
 model ProductCategory {
   id                                                                       Int                   @id @default(autoincrement())
   name                                                                     String                @db.VarChar(100)
-  parentId                                                                 Int?
+  parent_id                                                                 Int?
   gender                                                                   Int                   @default(0) @db.TinyInt
   created_at                                                               DateTime              @default(now()) @db.Timestamp(0)
   updated_at                                                               DateTime              @default(now()) @db.DateTime(0)
   deleted_at                                                               DateTime?             @db.DateTime(0)
   product                                                                  Product[]
-  product_category                                                         ProductCategory?      @relation("product_categoryToproduct_category", fields: [parentId], references: [id], onUpdate: Restrict, map: "product_category_ibfk_1")
+  product_category                                                         ProductCategory?      @relation("product_categoryToproduct_category", fields: [parent_id], references: [id], onUpdate: Restrict, map: "product_category_ibfk_1")
   other_product_category                                                   ProductCategory[]     @relation("product_categoryToproduct_category")
   product_category_path_product_category_path_ancestorToproduct_category   ProductCategoryPath[] @relation("product_category_path_ancestorToproduct_category")
   product_category_path_product_category_path_descendantToproduct_category ProductCategoryPath[] @relation("product_category_path_descendantToproduct_category")
 
-  @@index([parentId], map: "parent_id")
+  @@index([parent_id], map: "parent_id")
 }
 
 model ProductCategoryPath {
@@ -97,7 +97,8 @@ model ProductImage {
   url        String   @db.VarChar(255)
   sort_order Int?     @default(0)
   created_at DateTime @default(now()) @db.Timestamp(0)
-  valid      Int      @default(1) @db.TinyInt
+  updated_at  DateTime  @default(now()) @db.DateTime(0)
+  deleted_at  DateTime? @db.DateTime(0)
   product    Product  @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "product_image_ibfk_1")
 
   @@index([product_id], map: "product_id")
@@ -173,8 +174,17 @@ model Location {
   latitude  Decimal  @db.Decimal(20, 17)
   longitude Decimal  @db.Decimal(20, 17)
   createdAt DateTime @default(now()) @map("created_at")
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(255)
+  address   String   @db.VarChar(255)
+  city      String   @db.VarChar(100)
+  country   String   @db.VarChar(100)
+  latitude  Decimal  @db.Decimal(20, 17)
+  longitude Decimal  @db.Decimal(20, 17)
+  createdAt DateTime @default(now()) @map("created_at")
 
   // relations
+  groups Group[]
   groups Group[]
 }
 
@@ -195,7 +205,20 @@ model Group {
   price       Int
   description String?        @db.Text
   allowNewbie Boolean        @default(false) @map("allow_newbie")
+  title       String         @db.VarChar(100)
+  type        ActivityType
+  difficulty  SkiDifficulty?
+  startDate   DateTime       @map("start_date")
+  endDate     DateTime       @map("end_date")
+  minPeople   Int            @map("min_people")
+  maxPeople   Int            @map("max_people")
+  price       Int
+  description String?        @db.Text
+  allowNewbie Boolean        @default(false) @map("allow_newbie")
 
+  createdAt DateTime  @default(now()) @map("created_at")
+  endAt     DateTime? @map("end_at")
+  deletedAt DateTime? @map("deleted_at")
   createdAt DateTime  @default(now()) @map("created_at")
   endAt     DateTime? @map("end_at")
   deletedAt DateTime? @map("deleted_at")
@@ -205,9 +228,18 @@ model Group {
   images   GroupImage[]
   comments GroupComment[]
   chatRoom ChatRoom? // inverse side of ChatRoom.group
+  members  GroupMember[]
+  images   GroupImage[]
+  comments GroupComment[]
+  chatRoom ChatRoom? // inverse side of ChatRoom.group
 }
 
 model GroupMember {
+  id       Int       @id @default(autoincrement())
+  groupId  Int
+  userId   Int
+  joinedAt DateTime  @default(now()) @map("joined_at")
+  paidAt   DateTime? @map("paid_at")
   id       Int       @id @default(autoincrement())
   groupId  Int
   userId   Int
@@ -230,8 +262,21 @@ model GroupImage {
 }
 
 model GroupComment {
+  id        Int    @id @default(autoincrement())
+  groupId   Int    @map("group_id")
+  imageUrl  String @map("image_url")
+  sortOrder Int    @default(0) @map("sort_order")
+
+  group Group @relation(fields: [groupId], references: [id])
+}
+
+model GroupComment {
   id        Int      @id @default(autoincrement())
   groupId   Int      @map("group_id")
+  userId    Int      @map("user_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  replyId   Int?     @map("reply_id")
   userId    Int      @map("user_id")
   content   String
   createdAt DateTime @default(now()) @map("created_at")
@@ -246,6 +291,8 @@ model ChatRoom {
   createdAt     DateTime  @default(now()) @map("created_at")
   lastMessageAt DateTime? @map("last_message_at")
 
+  group    Group         @relation(fields: [groupId], references: [id])
+  messages ChatMessage[]
   group    Group         @relation(fields: [groupId], references: [id])
   messages ChatMessage[]
 }
