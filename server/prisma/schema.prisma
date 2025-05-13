@@ -112,6 +112,7 @@ model product_sku {
   @@unique([product_id, size_id], map: "uq_sku_unique")
   @@index([size_id], map: "size_id")
 }
+
 /// 活動類型
 enum ActivityType {
   SKI  @map("滑雪")
@@ -133,99 +134,99 @@ enum MessageType {
 }
 
 model User {
-  id           Int             @id @default(autoincrement())
-  name         String          @db.VarChar(20)
-  account      String          @db.VarChar(20)
-  password     String          @db.VarChar(20)
-  phone        String?         @db.VarChar(10)
-  birthday     DateTime?
-  email        String?         @db.VarChar(255)
-  createdTime  DateTime        @default(now()) @map("createdtime")
-  isCoach      Boolean         @default(false)  @map("isCoach")
-  valid        Boolean         @default(true)
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(20)
+  account     String    @db.VarChar(20)
+  password    String    @db.VarChar(20)
+  phone       String?   @db.VarChar(10)
+  birthday    DateTime?
+  email       String?   @db.VarChar(255)
+  createdTime DateTime  @default(now()) @map("createdtime")
+  isCoach     Boolean   @default(false) @map("isCoach")
+  valid       Boolean   @default(true)
 
   // relations
-  groups       Group[]         @relation("OrganizerGroups")
-  memberships  GroupMember[]
-  comments     GroupComment[]
-  messages     ChatMessage[]
+  groups      Group[]        @relation("OrganizerGroups")
+  memberships GroupMember[]
+  comments    GroupComment[]
+  messages    ChatMessage[]
 }
 
 model Location {
-  id         Int       @id @default(autoincrement())
-  name       String    @db.VarChar(255)
-  address    String    @db.VarChar(255)
-  city       String    @db.VarChar(100)
-  country    String    @db.VarChar(100)
-  latitude   Decimal   @db.Decimal(20,17)
-  longitude  Decimal   @db.Decimal(20,17)
-  createdAt  DateTime  @default(now()) @map("created_at")
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(255)
+  address   String   @db.VarChar(255)
+  city      String   @db.VarChar(100)
+  country   String   @db.VarChar(100)
+  latitude  Decimal  @db.Decimal(20, 17)
+  longitude Decimal  @db.Decimal(20, 17)
+  createdAt DateTime @default(now()) @map("created_at")
 
   // relations
-  groups     Group[]
+  groups Group[]
 }
 
 model Group {
-  id           Int             @id @default(autoincrement())
-  userId       Int             @map("user_id")
-  user         User            @relation("OrganizerGroups", fields: [userId], references: [id])
-  locationId   Int             @map("location_id")
-  location     Location        @relation(fields: [locationId], references: [id])
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  user       User     @relation("OrganizerGroups", fields: [userId], references: [id])
+  locationId Int      @map("location_id")
+  location   Location @relation(fields: [locationId], references: [id])
 
-  title        String          @db.VarChar(100)
-  type         ActivityType
-  difficulty   SkiDifficulty?
-  startDate    DateTime        @map("start_date")
-  endDate      DateTime        @map("end_date")
-  minPeople    Int             @map("min_people")
-  maxPeople    Int             @map("max_people")
-  price        Int
-  description  String?         @db.Text
-  allowNewbie  Boolean         @default(false) @map("allow_newbie")
+  title       String         @db.VarChar(100)
+  type        ActivityType
+  difficulty  SkiDifficulty?
+  startDate   DateTime       @map("start_date")
+  endDate     DateTime       @map("end_date")
+  minPeople   Int            @map("min_people")
+  maxPeople   Int            @map("max_people")
+  price       Int
+  description String?        @db.Text
+  allowNewbie Boolean        @default(false) @map("allow_newbie")
 
-  createdAt    DateTime        @default(now()) @map("created_at")
-  endAt        DateTime?       @map("end_at")
-  deletedAt    DateTime?       @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  endAt     DateTime? @map("end_at")
+  deletedAt DateTime? @map("deleted_at")
 
   // relations
-  members      GroupMember[]
-  images       GroupImage[]
-  comments     GroupComment[]
-  chatRoom     ChatRoom?       // inverse side of ChatRoom.group
+  members  GroupMember[]
+  images   GroupImage[]
+  comments GroupComment[]
+  chatRoom ChatRoom? // inverse side of ChatRoom.group
 }
 
 model GroupMember {
-  id        Int      @id @default(autoincrement())
-  groupId   Int
-  userId    Int
-  joinedAt  DateTime @default(now()) @map("joined_at")
-  paidAt    DateTime? @map("paid_at")
+  id       Int       @id @default(autoincrement())
+  groupId  Int
+  userId   Int
+  joinedAt DateTime  @default(now()) @map("joined_at")
+  paidAt   DateTime? @map("paid_at")
 
-  group     Group    @relation(fields: [groupId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
+  group Group @relation(fields: [groupId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
 
   @@unique([groupId, userId])
 }
 
 model GroupImage {
-  id        Int      @id @default(autoincrement())
-  groupId   Int      @map("group_id")
-  imageUrl  String   @map("image_url")
-  sortOrder Int      @default(0) @map("sort_order")
+  id        Int    @id @default(autoincrement())
+  groupId   Int    @map("group_id")
+  imageUrl  String @map("image_url")
+  sortOrder Int    @default(0) @map("sort_order")
 
-  group     Group    @relation(fields: [groupId], references: [id])
+  group Group @relation(fields: [groupId], references: [id])
 }
 
 model GroupComment {
-  id         Int      @id @default(autoincrement())
-  groupId    Int      @map("group_id")
-  userId     Int      @map("user_id")
-  content    String
-  createdAt  DateTime @default(now()) @map("created_at")
-  replyId    Int?     @map("reply_id")
+  id        Int      @id @default(autoincrement())
+  groupId   Int      @map("group_id")
+  userId    Int      @map("user_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  replyId   Int?     @map("reply_id")
 
-  group      Group    @relation(fields: [groupId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
+  group Group @relation(fields: [groupId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
 }
 
 model ChatRoom {
@@ -233,8 +234,8 @@ model ChatRoom {
   createdAt     DateTime  @default(now()) @map("created_at")
   lastMessageAt DateTime? @map("last_message_at")
 
-  group         Group     @relation(fields: [groupId], references: [id])
-  messages      ChatMessage[]
+  group    Group         @relation(fields: [groupId], references: [id])
+  messages ChatMessage[]
 }
 
 model ChatMessage {
@@ -246,10 +247,9 @@ model ChatMessage {
   sentAt      DateTime    @default(now()) @map("sent_at")
   isRead      Boolean?    @map("is_read")
 
-  room        ChatRoom    @relation(fields: [groupId], references: [groupId])
-  user        User        @relation(fields: [userId],  references: [id])
+  room ChatRoom @relation(fields: [groupId], references: [groupId])
+  user User     @relation(fields: [userId], references: [id])
 }
-
 
 // 會員 
 // #region 
@@ -272,7 +272,6 @@ model Users {
 
 // 商品
 // #region 
-
 
 // #endregion
 
@@ -526,4 +525,4 @@ model orderGroup {
 //   lineAccessToken String?    @map("line_access_token") @db.Text
 //   // 關聯: User:Product = n:m 透過 Favorite
 //   favorites       Favorite[]
-// }
+// } 
