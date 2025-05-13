@@ -32,6 +32,9 @@ const oneToMany = [
   'ProductBrand:Product',
   'Coach:LanguageCoach',
   'Coach:LicenseCoach',
+  'Coupon:CouponType',
+  'Coupon:CouponTarget',
+  'Game:GameScore',
 ];
 // foreignKey is in the third table
 const manyToMany = [];
