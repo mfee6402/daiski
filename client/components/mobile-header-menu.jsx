@@ -125,22 +125,22 @@ export function MobileHeaderMenu() {
 
           <ul className="flex flex-col space-y-4 pl-8 pb-8">
             <li className="w-full active:bg-gray-200 p-2 rounded">
-              <Link href="/home" className="text-base flex flex-row gap-3">
+              <Link href="/" className="text-base flex flex-row gap-3">
                 <House /> 主頁
               </Link>
             </li>
             <li className="w-full active:bg-gray-200 p-2 rounded">
-              <Link href="/course" className="text-base flex flex-row gap-3">
+              <Link href="/courses" className="text-base flex flex-row gap-3">
                 <BookOpen /> 滑雪課程
               </Link>
             </li>
             <li className="w-full active:bg-gray-200 p-2 rounded">
-              <Link href="/group" className="text-base flex flex-row gap-3">
+              <Link href="/groups" className="text-base flex flex-row gap-3">
                 <Users /> 揪團滑雪
               </Link>
             </li>
             <li className="w-full active:bg-gray-200 p-2 rounded">
-              <Link href="/products" className="text-base flex flex-row gap-3">
+              <Link href="/product" className="text-base flex flex-row gap-3">
                 <ShoppingBasket /> 商品
               </Link>
             </li>

@@ -1,204 +1,354 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { FaFacebookF } from 'react-icons/fa';
+import { BsLine } from 'react-icons/bs';
+import { FaInstagram } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 export default function Footer() {
   return (
-    // NOTE min-h-screen做什麼的?他導致我結帳明細sticky有問題
-    <div className="flex flex-col">
-      {/* <main className="flex-1">123456</main> */}
-
-      <footer className="bg-[#072136] text-[#ffffff] py-12 px-4 md:px-8">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-5 gap-8">
-          {/* Logo and Contact Info */}
-          <div className="md:col-span-1">
-            {/* 左側 Logo */}
-            <div className="flex-shrink-0">
-              <Link href="/">
-                <Image
-                  src="/LOGO-white.svg"
-                  alt="DAISKI"
-                  width={150}
-                  height={40}
-                  className="h-10 w-auto"
-                />
-              </Link>
-            </div>
-            <div className="space-y-2 text-sm">
-              <p>桃園市 32056 中壢區新生路二段421號</p>
-              <p>Mail: DAISKI@gmail.com</p>
-              <p>Tel: +886 0912-345-678</p>
-              <p>© 2025 by DAISKI</p>
-            </div>
+    <footer className="bg-[#072136] text-[#ffffff] py-12 px-4 md:px-8">
+      <div className="hidden md:flex flex-col gap-8 md:flex-row md:gap-8 xl:gap-32 mx-auto justify-center">
+        {/* Logo and Contact Info */}
+        <div className="">
+          {/* 左側 Logo */}
+          <div className=" m-4">
+            <Link href="/">
+              <Image
+                src="/LOGO-white.svg"
+                alt="DAISKI"
+                width={150}
+                height={40}
+                className=""
+              />
+            </Link>
           </div>
-
-          {/* Navigation Columns */}
-          <div className="md:col-span-1">
-            <h3 className="font-medium mb-4 text-lg">關於DAISKI</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="#" className="hover:text-[#eef2f8]">
-                  榮譽時刻
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-[#eef2f8]">
-                  大事記
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-[#eef2f8]">
-                  人才招募
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-[#eef2f8]">
-                  隱私權申明
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-[#eef2f8]">
-                  服務條款
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-[#eef2f8]">
-                  商品專櫃總覽
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div className="md:col-span-1">
-            <h3 className="font-medium mb-4 text-lg">顧客權益</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="#" className="hover:text-[#eef2f8]">
-                  聯絡我們
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-[#eef2f8]">
-                  常見Q&A
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-[#eef2f8]">
-                  防詐騙宣導
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-[#eef2f8]">
-                  退換貨說明
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-[#eef2f8]">
-                  24h到貨說明
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-[#eef2f8]">
-                  政令宣導
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div className="md:col-span-1">
-            <h3 className="font-medium mb-4 text-lg">其他服務</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="#" className="hover:text-[#eef2f8]">
-                  旅遊
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-[#eef2f8]">
-                  美食
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-[#eef2f8]">
-                  觀光
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div className="md:col-span-1">
-            <h3 className="font-medium mb-4 text-lg">企業合作</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="#" className="hover:text-[#eef2f8]">
-                  招商專區
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-[#eef2f8]">
-                  媒體聯繫
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-[#eef2f8]">
-                  大型預約
-                </Link>
-              </li>
-            </ul>
-
-            {/* Social Media Icons */}
-            <div className="mt-6 grid grid-cols-2 gap-4">
-              <Link
-                href="#"
-                className="flex items-center justify-center bg-[#ffffff] p-2 rounded-md"
-              >
-                <Image
-                  src="/placeholder.svg?height=24&width=24"
-                  alt="Facebook"
-                  width={24}
-                  height={24}
-                  className="text-[#072136]"
-                />
-              </Link>
-              <Link
-                href="#"
-                className="flex items-center justify-center bg-[#ffffff] p-2 rounded-md"
-              >
-                <Image
-                  src="/placeholder.svg?height=24&width=24"
-                  alt="LINE"
-                  width={24}
-                  height={24}
-                  className="text-[#072136]"
-                />
-              </Link>
-              <Link
-                href="#"
-                className="flex items-center justify-center bg-[#ffffff] p-2 rounded-md"
-              >
-                <Image
-                  src="/placeholder.svg?height=24&width=24"
-                  alt="Instagram"
-                  width={24}
-                  height={24}
-                  className="text-[#072136]"
-                />
-              </Link>
-              <Link
-                href="#"
-                className="flex items-center justify-center bg-[#ffffff] p-2 rounded-md"
-              >
-                <Image
-                  src="/placeholder.svg?height=24&width=24"
-                  alt="Twitter"
-                  width={24}
-                  height={24}
-                  className="text-[#072136]"
-                />
-              </Link>
-            </div>
+          <div className="space-y-2 text-base">
+            <p>桃園市 32056 中壢區新生路二段421號</p>
+            <p className="font-en">Mail: DAISKI@gmail.com</p>
+            <p>Tel: +886 0912-345-678</p>
+            <p>© 2025 by DAISKI</p>
           </div>
         </div>
-      </footer>
-    </div>
+
+        {/* Navigation Columns */}
+        <div className="">
+          <h3 className="font-medium mb-4 text-2xl">關於DAISKI</h3>
+          <ul className="space-y-2 text-base">
+            <li>
+              <Link href="#" className="hover:underline">
+                榮譽時刻
+              </Link>
+            </li>
+            <li>
+              <Link href="#" className="hover:underline">
+                大事記
+              </Link>
+            </li>
+            <li>
+              <Link href="#" className="hover:underline">
+                人才招募
+              </Link>
+            </li>
+            <li>
+              <Link href="#" className="hover:underline">
+                隱私權申明
+              </Link>
+            </li>
+            <li>
+              <Link href="#" className="hover:underline">
+                服務條款
+              </Link>
+            </li>
+            <li>
+              <Link href="#" className="hover:underline">
+                商品專櫃總覽
+              </Link>
+            </li>
+          </ul>
+        </div>
+
+        <div className="">
+          <h3 className="font-medium mb-4 text-2xl">顧客權益</h3>
+          <ul className="space-y-2 text-base">
+            <li>
+              <Link href="#" className="hover:underline">
+                聯絡我們
+              </Link>
+            </li>
+            <li>
+              <Link href="#" className="hover:underline">
+                常見Q&A
+              </Link>
+            </li>
+            <li>
+              <Link href="#" className="hover:underline">
+                防詐騙宣導
+              </Link>
+            </li>
+            <li>
+              <Link href="#" className="hover:underline">
+                退換貨說明
+              </Link>
+            </li>
+            <li>
+              <Link href="#" className="hover:underline">
+                24h到貨說明
+              </Link>
+            </li>
+            <li>
+              <Link href="#" className="hover:underline">
+                政令宣導
+              </Link>
+            </li>
+          </ul>
+        </div>
+
+        <div className="">
+          <h3 className="font-medium mb-4 text-2xl">其他服務</h3>
+          <ul className="space-y-2 text-base">
+            <li>
+              <Link href="#" className="hover:underline">
+                旅遊
+              </Link>
+            </li>
+            <li>
+              <Link href="#" className="hover:underline">
+                美食
+              </Link>
+            </li>
+            <li>
+              <Link href="#" className="hover:underline">
+                觀光
+              </Link>
+            </li>
+          </ul>
+        </div>
+
+        <div className="">
+          <h3 className="font-medium mb-4 text-2xl">企業合作</h3>
+          <ul className="space-y-2 text-base">
+            <li>
+              <Link href="#" className="hover:underline">
+                招商專區
+              </Link>
+            </li>
+            <li>
+              <Link href="#" className="hover:underline">
+                媒體聯繫
+              </Link>
+            </li>
+            <li>
+              <Link href="#" className="hover:underline">
+                大型預約
+              </Link>
+            </li>
+          </ul>
+        </div>
+
+        {/* Social Media Icons */}
+        <div>
+          <div className="mt-6 grid grid-cols-2 gap-4 max-w-36">
+            <Link
+              href="https://www.facebook.com/"
+              className="flex items-center justify-center "
+            >
+              <FaFacebookF className="size-12 bg-[#ffffff] text-primary-800 p-2 rounded-md" />
+            </Link>
+            <Link
+              href="https://www.line.me/tw/"
+              className="flex items-center justify-center "
+            >
+              <BsLine className="size-12 bg-[#ffffff] text-primary-800 p-2 rounded-md" />
+            </Link>
+            <Link
+              href="https://www.instagram.com/"
+              className="flex items-center justify-center"
+            >
+              <FaInstagram className="size-12 bg-[#ffffff] text-primary-800 p-2 rounded-md" />
+            </Link>
+            <Link
+              href="https://x.com/"
+              className="flex items-center justify-center "
+            >
+              <FaXTwitter className="size-12 bg-[#ffffff] text-primary-800 p-2 rounded-md" />
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col md:hidden">
+        <Accordion type="single" collapsible className="w-full space-y-4">
+          {/* 關於 DAISKI */}
+          <AccordionItem value="about-daiski">
+            <AccordionTrigger className="font-medium text-2xl cursor-pointer">
+              關於DAISKI
+            </AccordionTrigger>
+            <AccordionContent className="pt-2">
+              <ul className="space-y-2 text-base">
+                <li>
+                  <Link href="#" className="hover:underline">
+                    榮譽時刻
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:underline">
+                    大事記
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:underline">
+                    人才招募
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:underline">
+                    隱私權申明
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:underline">
+                    服務條款
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:underline">
+                    商品專櫃總覽
+                  </Link>
+                </li>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* 顧客權益 */}
+          <AccordionItem value="customer-rights">
+            <AccordionTrigger className="font-medium text-2xl cursor-pointer">
+              顧客權益
+            </AccordionTrigger>
+            <AccordionContent className="pt-2">
+              <ul className="space-y-2 text-base">
+                <li>
+                  <Link href="#" className="hover:underline">
+                    聯絡我們
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:underline">
+                    常見Q&A
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:underline">
+                    防詐騙宣導
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:underline">
+                    退換貨說明
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:underline">
+                    24h到貨說明
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:underline">
+                    政令宣導
+                  </Link>
+                </li>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* 其他服務 */}
+          <AccordionItem value="other-services">
+            <AccordionTrigger className="font-medium text-2xl cursor-pointer">
+              其他服務
+            </AccordionTrigger>
+            <AccordionContent className="pt-2">
+              <ul className="space-y-2 text-base">
+                <li>
+                  <Link href="#" className="hover:underline">
+                    旅遊
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:underline">
+                    美食
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:underline">
+                    觀光
+                  </Link>
+                </li>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* 企業合作 */}
+          <AccordionItem value="corporate-partnership">
+            <AccordionTrigger className="font-medium text-2xl cursor-pointer">
+              企業合作
+            </AccordionTrigger>
+            <AccordionContent className="pt-2">
+              <ul className="space-y-2 text-base">
+                <li>
+                  <Link href="#" className="hover:underline">
+                    招商專區
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:underline">
+                    媒體聯繫
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#" className="hover:underline">
+                    大型預約
+                  </Link>
+                </li>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
+        <div>
+          <div className="flex flex-row justify-center gap-8 mt-8">
+            <Link
+              href="https://www.facebook.com/"
+              className="flex items-center justify-center "
+            >
+              <FaFacebookF className="size-10 bg-[#ffffff] text-primary-800 p-2 rounded-md" />
+            </Link>
+            <Link
+              href="https://www.line.me/tw/"
+              className="flex items-center justify-center "
+            >
+              <BsLine className="size-10 bg-[#ffffff] text-primary-800 p-2 rounded-md" />
+            </Link>
+            <Link
+              href="https://www.instagram.com/"
+              className="flex items-center justify-center"
+            >
+              <FaInstagram className="size-10 bg-[#ffffff] text-primary-800 p-2 rounded-md" />
+            </Link>
+            <Link
+              href="https://x.com/"
+              className="flex items-center justify-center "
+            >
+              <FaXTwitter className="size-10 bg-[#ffffff] text-primary-800 p-2 rounded-md" />
+            </Link>
+          </div>
+        </div>
+      </div>
+    </footer>
   );
 }

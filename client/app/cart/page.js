@@ -67,9 +67,9 @@ export default function CartPage(props) {
   // }
 
   // 以上測試區
-  // if (loading) {
-  //   return <p>載入中</p>;
-  // }
+  if (loading) {
+    return <p>載入中</p>;
+  }
 
   return (
     <>
