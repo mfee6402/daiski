@@ -7,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 /// 活動類型
 enum ActivityType {
   SKI  @map("滑雪")
@@ -283,7 +282,36 @@ model product_sku {
 // 師資與課程
 // #region 
 model Coach {
-  id Int @id @default(autoincrement())
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String
+  bio          String
+  experience   String
+  profilephoto String
+  createdat    DateTime @default(now()) @map("created_at")
+  valid        Int
+}
+
+model Language {
+  id   Int    @id @default(autoincrement())
+  name String
+}
+
+model Language_Coach {
+  id          Int @id @default(autoincrement())
+  language_id Int
+  coach_id    Int
+}
+
+model License {
+  id   Int    @id @default(autoincrement())
+  name String
+}
+
+model License_Coach {
+  id         Int @id @default(autoincrement())
+  license_id Int
+  coach_id   Int
 }
 
 model Course {
