@@ -6,14 +6,19 @@
   "scripts": {
     "start": "node ./api/index.js",
     "dev": "nodemon ./api/index.js",
+    "build": "prisma generate && prisma db push --force-reset && prisma db seed",
     "debug": "DEBUG=express:* node ./api/index.js",
     "debug-win": "set DEBUG=express:* & node ./api/index.js",
     "lint-js": "export TIMING=1 || set TIMING=1&& eslint --ext .js,.jsx,.ts,.tsx prisma/seed.js --cache --cache-strategy metadata"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   },
   "keywords": [],
   "author": "Eddy Chang",
   "license": "ISC",
   "dependencies": {
+    "@prisma/client": "^6.0.1",
     "@vercel/blob": "^0.26.0",
     "@vercel/postgres": "^0.10.0",
     "bcrypt": "^5.1.1",
@@ -47,11 +52,13 @@
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-node": "^11.1.0",
-    "nodemon": "^3.1.7"
+    "nodemon": "^3.1.7",
+    "prisma": "^6.0.1"
   },
   "type": "module",
   "nodemonConfig": {
     "ignore": [
+      "prisma/*",
       "data/*",
       "seeds/*",
       "public/*",
