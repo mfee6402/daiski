@@ -7,6 +7,166 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
+/// 活動類型
+enum ActivityType {
+  SKI  @map("滑雪")
+  HIKE @map("登山")
+  CAMP @map("露營")
+}
+
+/// 滑雪難易度
+enum SkiDifficulty {
+  BEGINNER @map("初級")
+  INTER    @map("中級")
+  ADVANCE  @map("進階")
+}
+
+/// 訊息類型（文字／照片）
+enum MessageType {
+  TEXT  @map("text")
+  IMAGE @map("image")
+}
+
+model User {
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(20)
+  account     String    @db.VarChar(20)
+  password    String    @db.VarChar(20)
+  phone       String?   @db.VarChar(10)
+  birthday    DateTime?
+  email       String?   @db.VarChar(255)
+  createdTime DateTime  @default(now()) @map("createdtime")
+  isCoach     Boolean   @default(false) @map("isCoach")
+  valid       Boolean   @default(true)
+
+  // relations
+  groups      Group[]        @relation("OrganizerGroups")
+  memberships GroupMember[]
+  comments    GroupComment[]
+  messages    ChatMessage[]
+}
+
+model Location {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(255)
+  address   String   @db.VarChar(255)
+  city      String   @db.VarChar(100)
+  country   String   @db.VarChar(100)
+  latitude  Decimal  @db.Decimal(20, 17)
+  longitude Decimal  @db.Decimal(20, 17)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // relations
+  groups Group[]
+}
+
+model Group {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  user       User     @relation("OrganizerGroups", fields: [userId], references: [id])
+  locationId Int      @map("location_id")
+  location   Location @relation(fields: [locationId], references: [id])
+
+  title       String         @db.VarChar(100)
+  type        ActivityType
+  difficulty  SkiDifficulty?
+  startDate   DateTime       @map("start_date")
+  endDate     DateTime       @map("end_date")
+  minPeople   Int            @map("min_people")
+  maxPeople   Int            @map("max_people")
+  price       Int
+  description String?        @db.Text
+  allowNewbie Boolean        @default(false) @map("allow_newbie")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  endAt     DateTime? @map("end_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // relations
+  members  GroupMember[]
+  images   GroupImage[]
+  comments GroupComment[]
+  chatRoom ChatRoom? // inverse side of ChatRoom.group
+}
+
+model GroupMember {
+  id       Int       @id @default(autoincrement())
+  groupId  Int
+  userId   Int
+  joinedAt DateTime  @default(now()) @map("joined_at")
+  paidAt   DateTime? @map("paid_at")
+
+  group Group @relation(fields: [groupId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+}
+
+model GroupImage {
+  id        Int    @id @default(autoincrement())
+  groupId   Int    @map("group_id")
+  imageUrl  String @map("image_url")
+  sortOrder Int    @default(0) @map("sort_order")
+
+  group Group @relation(fields: [groupId], references: [id])
+}
+
+model GroupComment {
+  id        Int      @id @default(autoincrement())
+  groupId   Int      @map("group_id")
+  userId    Int      @map("user_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  replyId   Int?     @map("reply_id")
+
+  group Group @relation(fields: [groupId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+}
+
+model ChatRoom {
+  groupId       Int       @id @map("group_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  lastMessageAt DateTime? @map("last_message_at")
+
+  group    Group         @relation(fields: [groupId], references: [id])
+  messages ChatMessage[]
+}
+
+model ChatMessage {
+  id          Int         @id @default(autoincrement())
+  groupId     Int         @map("group_id")
+  userId      Int         @map("user_id")
+  content     String
+  messageType MessageType @default(TEXT) @map("message_type")
+  sentAt      DateTime    @default(now()) @map("sent_at")
+  isRead      Boolean?    @map("is_read")
+
+  room ChatRoom @relation(fields: [groupId], references: [groupId])
+  user User     @relation(fields: [userId], references: [id])
+}
+
+// 會員 
+// #region 
+model Users {
+  id        Int       @id @default(autoincrement())
+  account   String    @unique
+  password  String
+  name      String    @unique
+  phone     String
+  birthday  String
+  email     String    @unique
+  is_coach  String
+  avatar    String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deleteAt  DateTime? @map("delete_at")
+}
+
+// #endregion
+
+// 商品
+// #region 
 model product {
   id               Int               @id @default(autoincrement())
   name             String            @db.VarChar(255)
@@ -112,140 +272,257 @@ model product_sku {
   @@unique([product_id, size_id], map: "uq_sku_unique")
   @@index([size_id], map: "size_id")
 }
-/// 活動類型
-enum ActivityType {
-  SKI  @map("滑雪")
-  HIKE @map("登山")
-  CAMP @map("露營")
+
+// #endregion
+
+// 揪團
+// #region 
+
+// #endregion
+
+// 師資與課程
+// #region 
+model Coach {
+  id Int @id @default(autoincrement())
 }
 
-/// 滑雪難易度
-enum SkiDifficulty {
-  BEGINNER @map("初級")
-  INTER    @map("中級")
-  ADVANCE  @map("進階")
+model Course {
+  id Int @id @default(autoincrement())
 }
 
-/// 訊息類型（文字／照片）
-enum MessageType {
-  TEXT  @map("text")
-  IMAGE @map("image")
+// #endregion
+
+// 優惠券
+// #region 
+
+model Coupon {
+  id Int @id @default(autoincrement())
 }
 
-model User {
-  id           Int             @id @default(autoincrement())
-  name         String          @db.VarChar(20)
-  account      String          @db.VarChar(20)
-  password     String          @db.VarChar(20)
-  phone        String?         @db.VarChar(10)
-  birthday     DateTime?
-  email        String?         @db.VarChar(255)
-  createdTime  DateTime        @default(now()) @map("createdtime")
-  isCoach      Boolean         @default(false)  @map("isCoach")
-  valid        Boolean         @default(true)
+// #endregion
 
-  // relations
-  groups       Group[]         @relation("OrganizerGroups")
-  memberships  GroupMember[]
-  comments     GroupComment[]
-  messages     ChatMessage[]
+// 購物車
+// #region 
+// cart
+model Cart {
+  id          Int           @id @default(autoincrement())
+  userId      Int           @map("user_id")
+  CartProduct CartProduct[]
+  CartCourse  CartCourse[]
+  CartGroup   CartGroup[]
+
+  @@map("cart")
 }
 
-model Location {
-  id         Int       @id @default(autoincrement())
-  name       String    @db.VarChar(255)
-  address    String    @db.VarChar(255)
-  city       String    @db.VarChar(100)
-  country    String    @db.VarChar(100)
-  latitude   Decimal   @db.Decimal(20,17)
-  longitude  Decimal   @db.Decimal(20,17)
-  createdAt  DateTime  @default(now()) @map("created_at")
+model CartProduct {
+  id        Int @id @default(autoincrement())
+  cartId    Int @map("cart_id")
+  productId Int @map("product_id")
+  quantity  Int
 
-  // relations
-  groups     Group[]
+  cart Cart @relation(fields: [cartId], references: [id])
+
+  @@map("cart_product")
 }
 
-model Group {
-  id           Int             @id @default(autoincrement())
-  userId       Int             @map("user_id")
-  user         User            @relation("OrganizerGroups", fields: [userId], references: [id])
-  locationId   Int             @map("location_id")
-  location     Location        @relation(fields: [locationId], references: [id])
+model CartCourse {
+  id       Int @id @default(autoincrement())
+  cartId   Int @map("cart_id")
+  courseId Int @map("course_id")
 
-  title        String          @db.VarChar(100)
-  type         ActivityType
-  difficulty   SkiDifficulty?
-  startDate    DateTime        @map("start_date")
-  endDate      DateTime        @map("end_date")
-  minPeople    Int             @map("min_people")
-  maxPeople    Int             @map("max_people")
-  price        Int
-  description  String?         @db.Text
-  allowNewbie  Boolean         @default(false) @map("allow_newbie")
+  cart Cart @relation(fields: [cartId], references: [id])
 
-  createdAt    DateTime        @default(now()) @map("created_at")
-  endAt        DateTime?       @map("end_at")
-  deletedAt    DateTime?       @map("deleted_at")
-
-  // relations
-  members      GroupMember[]
-  images       GroupImage[]
-  comments     GroupComment[]
-  chatRoom     ChatRoom?       // inverse side of ChatRoom.group
+  @@map("cart_course")
 }
 
-model GroupMember {
-  id        Int      @id @default(autoincrement())
-  groupId   Int
-  userId    Int
-  joinedAt  DateTime @default(now()) @map("joined_at")
-  paidAt    DateTime? @map("paid_at")
+model CartGroup {
+  id      Int @id @default(autoincrement())
+  cartId  Int @map("cart_id")
+  groupId Int @map("group_id")
 
-  group     Group    @relation(fields: [groupId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
+  cart Cart @relation(fields: [cartId], references: [id])
 
-  @@unique([groupId, userId])
+  @@map("cart_group")
 }
 
-model GroupImage {
-  id        Int      @id @default(autoincrement())
-  groupId   Int      @map("group_id")
-  imageUrl  String   @map("image_url")
-  sortOrder Int      @default(0) @map("sort_order")
+// order
+model Order {
+  id           Int            @id @default(autoincrement())
+  userId       Int            @map("user_id")
+  couponId     Int?           @map("coupon_id")
+  amount       Int
+  payment      String
+  address      String
+  phone        String
+  name         String
+  orderProduct orderProduct[]
+  orderCourse  orderCourse[]
+  orderGroup   orderGroup[]
 
-  group     Group    @relation(fields: [groupId], references: [id])
+  @@map("order")
 }
 
-model GroupComment {
-  id         Int      @id @default(autoincrement())
-  groupId    Int      @map("group_id")
-  userId     Int      @map("user_id")
-  content    String
-  createdAt  DateTime @default(now()) @map("created_at")
-  replyId    Int?     @map("reply_id")
+model orderProduct {
+  id        Int @id @default(autoincrement())
+  orderId   Int @map("order_id")
+  productId Int @map("product_id")
+  quantity  Int
 
-  group      Group    @relation(fields: [groupId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@map("order_product")
 }
 
-model ChatRoom {
-  groupId       Int       @id @map("group_id")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  lastMessageAt DateTime? @map("last_message_at")
+model orderCourse {
+  id       Int @id @default(autoincrement())
+  orderId  Int @map("order_id")
+  courseId Int @map("course_id")
 
-  group         Group     @relation(fields: [groupId], references: [id])
-  messages      ChatMessage[]
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@map("order_course")
 }
 
-model ChatMessage {
-  id          Int         @id @default(autoincrement())
-  groupId     Int         @map("group_id")
-  userId      Int         @map("user_id")
-  content     String
-  messageType MessageType @default(TEXT) @map("message_type")
-  sentAt      DateTime    @default(now()) @map("sent_at")
-  isRead      Boolean?    @map("is_read")
+model orderGroup {
+  id      Int @id @default(autoincrement())
+  orderId Int @map("order_id")
+  groupId Int @map("group_id")
 
-  room        ChatRoom    @relation(fields: [groupId], references: [groupId])
-  user        User        @relation(fields: [userId],  references: [id])
-} 
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@map("order_group")
+}
+
+// #endregion
+
+// -----------底下為範例--------------------------------------------------
+
+// 以下為資料表定義
+// https://www.prisma.io/docs/concepts/components/prisma-schema/data-model
+// 部落格CRUD範例
+// model Blog {
+//   id        Int      @id @default(autoincrement())
+//   // DateTime 會轉換成資料庫的 timestamp，time zone 會自動轉換成 UTC
+//   // 格式: 2021-01-01T00:00:00.000Z
+//   createdAt DateTime @default(now()) @map("created_at")
+//   // 這個欄位會在每次更新時"自動"更新時間，不需要手動更新
+//   // DateTime 會轉換成資料庫的 timestamp，time zone 會自動轉換成 UTC
+//   updatedAt DateTime @updatedAt @map("updated_at")
+//   title     String   @db.VarChar(255)
+//   content   String?  @db.Text
+//   published Boolean  @default(false)
+
+//   // 關聯: User:Blog = 1:n 
+//   // author    User     @relation(fields: [authorId], references: [id])
+//   // authorId  Int
+//   // 關聯: Blog:BlogComment = 1:n 
+//   comments BlogComment[]
+
+//   @@map("blog")
+// }
+
+// model BlogComment {
+//   id        Int      @id @default(autoincrement())
+//   content   String   @db.Text
+//   // DateTime 會轉換成資料庫的 timestamp，time zone 會自動轉換成 UTC
+//   // 格式: 2021-01-01T00:00:00.000Z
+//   createdAt DateTime @default(now()) @map("created_at")
+//   // 這個欄位會在每次更新時"自動"更新時間，不需要手動更新
+//   // DateTime 會轉換成資料庫的 timestamp，time zone 會自動轉換成 UTC
+//   updatedAt DateTime @updatedAt @map("updated_at")
+//   author    String   @db.VarChar(255)
+//   // 關聯: Blog:BlogComment = 1:n 
+//   // Blog      Blog?    @relation(fields: [blogId], references: [id])
+//   blogId    Int?     @map("blog_id")
+//   Blog      Blog?    @relation(fields: [blogId], references: [id])
+
+//   // 強制定義資料表名稱
+//   @@map("blog_comment")
+// }
+
+// model Brand {
+//   id       Int       @id @default(autoincrement())
+//   name     String    @unique
+//   img      String?
+//   info     String    @db.Text
+//   // 關聯: Brand:Product = 1:n 
+//   products Product[]
+// }
+
+// model Category {
+//   id       Int       @id @default(autoincrement())
+//   name     String    @unique
+//   parentId Int?      @map("parent_id")
+//   // 關聯: Category:Product = 1:n 
+//   products Product[]
+// }
+
+// model Favorite {
+//   // 關聯: User:Favorite = 1:n 
+//   user      User    @relation(fields: [userId], references: [id])
+//   userId    Int     @map("user_id")
+//   // 關聯: Product:Favorite = 1:n 
+//   product   Product @relation(fields: [productId], references: [id])
+//   productId Int     @map("product_id")
+
+//   // 複合主鍵
+//   @@id([userId, productId])
+// }
+
+// model Otp {
+//   id        Int      @id @default(autoincrement())
+//   email     String
+//   token     String
+//   hash      String?
+//   createdAt DateTime @default(now()) @map("created_at")
+//   expiredAt DateTime @map("expired_at")
+// }
+
+// model Profile {
+//   id       Int       @id @default(autoincrement())
+//   name     String?
+//   bio      String?   @db.Text
+//   avatar   String?
+//   sex      String?
+//   // 日期格式: 2021-01-01
+//   birth    DateTime? @db.Date
+//   phone    String?
+//   postcode String?
+//   address  String?
+//   // 1:1 關聯
+//   user     User      @relation(fields: [userId], references: [id])
+//   userId   Int       @unique @map("user_id")
+// }
+
+// model Product {
+//   id         Int        @id @default(autoincrement())
+//   name       String
+//   sn         String     @unique
+//   photos     String?    @db.Text
+//   stock      Int        @default(0)
+//   price      Int        @default(0)
+//   info       String     @db.Text
+//   // 關聯: Brand:Product = 1:n 
+//   brand      Brand      @relation(fields: [brandId], references: [id])
+//   brandId    Int        @map("brand_id")
+//   // 關聯: Category:Product = 1:n 
+//   category   Category   @relation(fields: [categoryId], references: [id])
+//   categoryId Int        @map("category_id")
+//   // 關聯: User:Product = n:m 透過 Favorite
+//   favorites  Favorite[]
+// }
+
+// model User {
+//   id              Int        @id @default(autoincrement())
+//   username        String     @unique
+//   password        String
+//   email           String     @unique
+//   // 關聯 User:Profile = 1:1 
+//   profile         Profile?
+//   emailValidated  Boolean    @default(false) @map("email_validated")
+//   googleUid       String?    @unique @map("google_uid")
+//   lineUid         String?    @unique @map("line_uid")
+//   lineAccessToken String?    @map("line_access_token") @db.Text
+//   // 關聯: User:Product = n:m 透過 Favorite
+//   favorites       Favorite[]
+// } 
