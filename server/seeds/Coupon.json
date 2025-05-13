@@ -10,7 +10,8 @@
     "minPurchase": 1000,
     "createdAt": "2025-05-01T10:00:00.000Z",
     "updatedAt": "2025-05-01T10:00:00.000Z",
-    "deletedAt": null
+    "deletedAt": null,
+    "code": "GDVkpAWwPblj"
   },
   {
     "id": 2,
@@ -23,7 +24,8 @@
     "minPurchase": 2000,
     "createdAt": "2025-02-20T09:30:00.000Z",
     "updatedAt": "2025-02-20T09:30:00.000Z",
-    "deletedAt": null
+    "deletedAt": null,
+    "code": "GDVkpAWwPbld"
   },
   {
     "id": 3,
@@ -36,7 +38,8 @@
     "minPurchase": 3000,
     "createdAt": "2025-05-10T14:45:00.000Z",
     "updatedAt": "2025-05-10T14:45:00.000Z",
-    "deletedAt": null
+    "deletedAt": null,
+    "code": "GDVkpAWwPblw"
   },
   {
     "id": 4,
@@ -49,6 +52,7 @@
     "minPurchase": 1500,
     "createdAt": "2025-05-13T08:00:00.000Z",
     "updatedAt": "2025-05-13T08:00:00.000Z",
-    "deletedAt": null
+    "deletedAt": null,
+    "code": "GDVkpAWwPbla"
   }
 ]

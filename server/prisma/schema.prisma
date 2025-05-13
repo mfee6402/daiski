@@ -343,6 +343,7 @@ model Coupon {
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
   deletedAt      DateTime? @map("deleted_at")
+  code           String
 
   couponType   CouponType   @relation(fields: [typeId], references: [id])
   couponTarget CouponTarget @relation(fields: [couponTargetId], references: [id])
