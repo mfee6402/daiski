@@ -1,10 +1,10 @@
 'use client';
 import Container from '@/components/container';
 import ProductList from './_components/product-list';
-import ProductFilter from './_components/product-filter';
 import ProductPagination from './_components/product-pagination';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import ProductSidebar from './_components/product-sidebar';
 
 // 1. Next.js Server Component（可直接 await fetch）
 // export default async function ProductsPage() {
@@ -34,26 +34,34 @@ export default function ProductPage() {
     page: parseInt(searchParams.get('page') || '1', 10),
     limit: parseInt(searchParams.get('limit') || '12', 10),
     total: 0,
+    category_id: parseInt(searchParams.get('category_id') || '1', 10),
   });
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
 
   // 監聽 URL 上的 page & limit 變化，更新 state
   useEffect(() => {
     const currentPage = parseInt(searchParams.get('page') || '1', 10);
     const currentLimit = parseInt(searchParams.get('limit') || '12', 10);
+    const currentCategory = parseInt(
+      searchParams.get('category_id') || '1',
+      10
+    );
     setPageInfo((prev) => ({
       ...prev,
       page: currentPage,
       limit: currentLimit,
+      category_id: currentCategory,
     }));
   }, [searchParams]);
 
   useEffect(() => {
-    const { page, limit } = pageInfo;
+    const { page, limit, category_id } = pageInfo;
     const url = new URL('http://localhost:3005/api/products');
     url.searchParams.set('include', 'card');
     url.searchParams.set('page', page);
     url.searchParams.set('limit', limit);
+    url.searchParams.set('category_id', category_id);
 
     fetch(url.toString())
       .then((res) => res.json())
@@ -62,7 +70,14 @@ export default function ProductPage() {
         setPageInfo((prev) => ({ ...prev, page: p, limit: l, total }));
       })
       .catch(console.error);
-  }, [pageInfo.page, pageInfo.limit]);
+  }, [pageInfo.page, pageInfo.limit, pageInfo.category_id]);
+
+  useEffect(() => {
+    fetch('http://localhost:3005/api/products/categories')
+      .then((res) => res.json())
+      .then((data) => setCategories(data))
+      .catch(console.error);
+  }, []);
 
   const goToPage = (newPage) => {
     const current = new URLSearchParams(Array.from(searchParams.entries()));
@@ -82,12 +97,24 @@ export default function ProductPage() {
     }));
   };
 
+  const handleCategorySelect = (category_id) => {
+    const current = new URLSearchParams(Array.from(searchParams.entries()));
+    current.set('category_id', category_id);
+    current.set('page', '1'); // 選分類後常見做法：跳回第 1 頁
+    router.push(`?${current.toString()}`);
+  };
+
   const totalPages = Math.max(1, Math.ceil(pageInfo.total / pageInfo.limit));
 
   return (
     <Container className="z-10 pt-10 pb-20">
       <main className="flex flex-row min-h-1/2 gap-20">
-        <ProductFilter limit={pageInfo.limit} onChangeLimit={changeLimit} />
+        <ProductSidebar
+          limit={pageInfo.limit}
+          onChangeLimit={changeLimit}
+          categories={categories}
+          onSelectCategory={handleCategorySelect}
+        />
         <div className="flex flex-col gap-10">
           <ProductList products={products} />
           <ProductPagination

@@ -31,7 +31,7 @@ export default function Footer() {
           </div>
           <div className="space-y-2 text-base">
             <p>桃園市 32056 中壢區新生路二段421號</p>
-            <p>Mail: DAISKI@gmail.com</p>
+            <p className="font-en">Mail: DAISKI@gmail.com</p>
             <p>Tel: +886 0912-345-678</p>
             <p>© 2025 by DAISKI</p>
           </div>
