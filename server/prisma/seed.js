@@ -34,7 +34,7 @@ const oneToMany = [
   'Coach:LicenseCoach',
   'CouponType:Coupon',
   'CouponTarget:Coupon',
-  'Users:GameScore',
+  'User:GameScore',
   'Game:GameScore',
 ];
 // foreignKey is in the third table
