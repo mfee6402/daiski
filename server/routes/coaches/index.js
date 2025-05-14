@@ -14,4 +14,5 @@ router.get('/:id', function (req, res) {
 //   const coaches = await prisma.coach.find({});
 //   res.json(coaches);
 // });
-// export default router;
+
+export default router;
