@@ -55,6 +55,7 @@ import {
   CardContent,
   CardFooter,
 } from '@/components/ui/card';
+import Image from 'next/image';
 
 export default function ProductList({ products }) {
   return (
@@ -70,9 +71,11 @@ export default function ProductList({ products }) {
           <Link href={`/product/${p.id}`}>
             <Card>
               <CardHeader className="w-full aspect-[4/3] overflow-hidden rounded-xl">
-                <img
+                <Image
                   src={p.image || '/placeholder.jpg'}
                   alt={p.name}
+                  width={10}
+                  height={10}
                   className="w-full h-full object-cover transition duration-300 hover:scale-110"
                 />
               </CardHeader>
