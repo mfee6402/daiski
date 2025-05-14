@@ -26,15 +26,15 @@ const oneToMany = [
   'Cart:CartCourse',
   'Cart:CartGroup',
   'Order:OrderProduct',
-  'Order:CartCourse',
-  'Order:CartGroup',
+  'Order:OrderCourse',
+  'Order:OrderGroup',
   'ProductCategory:Product',
   'ProductBrand:Product',
   'Coach:LanguageCoach',
   'Coach:LicenseCoach',
   'CouponType:Coupon',
   'CouponTarget:Coupon',
-  'Users:GameScore',
+  'User:GameScore',
   'Game:GameScore',
 ];
 // foreignKey is in the third table
