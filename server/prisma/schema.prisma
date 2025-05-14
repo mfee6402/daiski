@@ -183,10 +183,10 @@ model Group {
   id         Int      @id @default(autoincrement())
   userId     Int      @map("user_id")
   user       User     @relation(fields: [userId], references: [id])
-  locationId Int      @map("location_id")
-  location   Location @relation(fields: [locationId], references: [id])
+  locationId Int?      @map("location_id")
+  location   Location? @relation(fields: [locationId], references: [id])
 
-  customLocation String?
+  customLocation String? @map("custom_location")
   title       String         @db.VarChar(100)
   type        ActivityType
   difficulty  SkiDifficulty?
