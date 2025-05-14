@@ -243,7 +243,6 @@ model GroupComment {
   replyId   Int?     @map("reply_id")
 
   group Group @relation(fields: [groupId], references: [id])
-  users Users @relation(fields: [userId], references: [id])
   @@map("groupcomment")
   user  User  @relation(fields: [userId], references: [id])
 }
@@ -267,8 +266,6 @@ model ChatMessage {
   sentAt      DateTime    @default(now()) @map("sent_at")
   isRead      Boolean?    @map("is_read")
 
-  room  ChatRoom @relation(fields: [groupId], references: [groupId])
-  users Users    @relation(fields: [userId], references: [id])
   @@map("chatmessage")
   room ChatRoom @relation(fields: [groupId], references: [groupId])
   user User     @relation(fields: [userId], references: [id])
