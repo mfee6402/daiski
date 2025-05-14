@@ -148,8 +148,7 @@ model ProductSku {
 /// 活動類型
 enum ActivityType {
   SKI  @map("滑雪")
-  HIKE @map("登山")
-  CAMP @map("露營")
+  MEAL @map("聚餐")
 }
 
 /// 滑雪難易度
@@ -177,6 +176,7 @@ model Location {
 
   // relations
   groups Group[]
+  @@map("location")
 }
 
 model Group {
@@ -186,6 +186,7 @@ model Group {
   locationId Int      @map("location_id")
   location   Location @relation(fields: [locationId], references: [id])
 
+  customLocation String?
   title       String         @db.VarChar(100)
   type        ActivityType
   difficulty  SkiDifficulty?
@@ -196,7 +197,6 @@ model Group {
   price       Int
   description String?        @db.Text
   allowNewbie Boolean        @default(false) @map("allow_newbie")
-
   createdAt DateTime  @default(now()) @map("created_at")
   endAt     DateTime? @map("end_at")
   deletedAt DateTime? @map("deleted_at")
@@ -206,6 +206,7 @@ model Group {
   images   GroupImage[]
   comments GroupComment[]
   chatRoom ChatRoom? // inverse side of ChatRoom.group
+  @@map("group")
 }
 
 model GroupMember {
@@ -215,10 +216,12 @@ model GroupMember {
   joinedAt DateTime  @default(now()) @map("joined_at")
   paidAt   DateTime? @map("paid_at")
 
+
   group Group @relation(fields: [groupId], references: [id])
   user  User  @relation(fields: [userId], references: [id])
 
   @@unique([groupId, userId])
+  @@map("groupmember")
 }
 
 model GroupImage {
@@ -228,6 +231,7 @@ model GroupImage {
   sortOrder Int    @default(0) @map("sort_order")
 
   group Group @relation(fields: [groupId], references: [id])
+  @@map("groupimage")
 }
 
 model GroupComment {
@@ -239,6 +243,7 @@ model GroupComment {
   replyId   Int?     @map("reply_id")
 
   group Group @relation(fields: [groupId], references: [id])
+  @@map("groupcomment")
   user  User  @relation(fields: [userId], references: [id])
 }
 
@@ -249,6 +254,7 @@ model ChatRoom {
 
   group    Group         @relation(fields: [groupId], references: [id])
   messages ChatMessage[]
+  @@map("chatroom")
 }
 
 model ChatMessage {
@@ -260,6 +266,7 @@ model ChatMessage {
   sentAt      DateTime    @default(now()) @map("sent_at")
   isRead      Boolean?    @map("is_read")
 
+  @@map("chatmessage")
   room ChatRoom @relation(fields: [groupId], references: [groupId])
   user User     @relation(fields: [userId], references: [id])
 }
