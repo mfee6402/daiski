@@ -8,22 +8,44 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Card } from '@/components/ui/card';
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from '@/components/ui/popover';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function CreateGroupPage() {
   const router = useRouter();
   const [step, setStep] = useState('step1');
 
-  // 下拉選單：從 /api/group?onlyTypes=true 取得
+  // **後端在 3005，前端要指定完整 URL**
+  const API_BASE = 'http://localhost:3005';
+
+  // 活動類型下拉
   const [typeOptions, setTypeOptions] = useState([]);
   const [type, setType] = useState('');
 
-  // 表單欄位
+  useEffect(() => {
+    async function loadTypes() {
+      try {
+        const res = await fetch(`${API_BASE}/api/group?onlyTypes=true`);
+        if (!res.ok) throw new Error(`狀態 ${res.status}`);
+        const keys = await res.json(); // e.g. ["SKI","MEAL"]
+        const keyToLabel = { SKI: '滑雪', MEAL: '聚餐' };
+        const opts = keys.map(k => ({ value: k, label: keyToLabel[k] || k }));
+        setTypeOptions(opts);
+        setType(opts[0]?.value || '');
+      } catch (err) {
+        console.warn('載入類型失敗，使用預設', err);
+        const fallback = [
+          { value: 'SKI', label: '滑雪' },
+          { value: 'MEAL', label: '聚餐' },
+        ];
+        setTypeOptions(fallback);
+        setType(fallback[0].value);
+      }
+    }
+    loadTypes();
+  }, []);
+
+  // 其他表單狀態
   const [title, setTitle] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -37,48 +59,31 @@ export default function CreateGroupPage() {
   const [coverPreview, setCoverPreview] = useState('');
   const fileInputRef = useRef(null);
 
-  // 載入 type 列舉
-  useEffect(() => {
-    async function loadTypes() {
-      try {
-        const res = await fetch(
-          'http://localhost:3005/api/group?onlyTypes=true'
-        );
-        if (!res.ok) throw new Error('載入類型失敗');
-        const types = await res.json();
-        setTypeOptions(types);
-        setType(types[0]);
-      } catch (err) {
-        console.warn('Type 載入失敗，改用預設', err);
-        setTypeOptions(['SKI', 'MEAL']);
-        setType('SKI');
-      }
-    }
-    loadTypes();
-  }, []);
-
-  // 封面圖片預覽
-  const handleCoverChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setCoverFile(file);
-      setCoverPreview(URL.createObjectURL(file));
+  const handleCoverChange = e => {
+    const f = e.target.files?.[0];
+    if (f) {
+      setCoverFile(f);
+      setCoverPreview(URL.createObjectURL(f));
     }
   };
-  const handleDrop = (e) => {
+  const handleDrop = e => {
     e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      setCoverFile(file);
-      setCoverPreview(URL.createObjectURL(file));
+    const f = e.dataTransfer.files?.[0];
+    if (f) {
+      setCoverFile(f);
+      setCoverPreview(URL.createObjectURL(f));
     }
   };
 
   const handleCancel = () => router.push('/groups');
 
-  // 提交表單
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
+    if (!title || !startDate || !endDate || !location) {
+      alert('請填寫標題、日期與地點');
+      return;
+    }
+
     const formData = new FormData();
     formData.append('type', type);
     formData.append('title', title);
@@ -93,27 +98,24 @@ export default function CreateGroupPage() {
     if (coverFile) formData.append('cover', coverFile);
 
     try {
-      const base = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-      const res = await fetch(`${base}/api/group`, {
+      const res = await fetch(`${API_BASE}/api/group`, {
         method: 'POST',
         body: formData,
       });
-      if (!res.ok) throw new Error('建立失敗');
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `狀態 ${res.status}`);
+      }
       router.push('/groups');
     } catch (err) {
-      console.error('建立活動失敗', err);
-      alert('建立失敗，請稍後再試');
+      console.error(err);
+      alert('建立失敗：' + err.message);
     }
   };
 
   return (
     <main className="min-h-screen bg-slate-50 p-6">
-      {/* 分步導覽 */}
-      <Tabs
-        value={step}
-        onValueChange={setStep}
-        className="max-w-3xl mx-auto mb-8"
-      >
+      <Tabs value={step} onValueChange={setStep} className="max-w-3xl mx-auto mb-8">
         <TabsList className="grid grid-cols-2">
           <TabsTrigger value="step1">基本資訊</TabsTrigger>
           <TabsTrigger value="step2">確認 & 發佈</TabsTrigger>
@@ -135,42 +137,43 @@ export default function CreateGroupPage() {
                       className="w-full justify-between"
                       disabled={!typeOptions.length}
                     >
-                      {type || '載入中...'}
-                      <span className="ml-2">▾</span>
+                      {typeOptions.find(o => o.value === type)?.label || '載入中…'} ▾
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[160px]">
-                    {typeOptions.map((opt) => (
+                    {typeOptions.map(opt => (
                       <Button
-                        key={opt}
-                        variant={opt === type ? 'secondary' : 'ghost'}
+                        key={opt.value}
+                        variant={opt.value === type ? 'secondary' : 'ghost'}
                         className="w-full text-left"
-                        onClick={() => setType(opt)}
+                        onClick={() => setType(opt.value)}
                       >
-                        {opt}
+                        {opt.label}
                       </Button>
                     ))}
                   </PopoverContent>
                 </Popover>
               </div>
+
               {/* 標題 */}
               <div>
                 <Label htmlFor="title">揪團標題</Label>
                 <Input
                   id="title"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={e => setTitle(e.target.value)}
                   placeholder="例如：北海道雙板初學團"
                 />
               </div>
-              {/* 開始／結束日期 */}
+
+              {/* 開始/結束日期 */}
               <div>
                 <Label htmlFor="start_date">開始日期</Label>
                 <Input
                   id="start_date"
                   type="date"
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={e => setStartDate(e.target.value)}
                 />
               </div>
               <div>
@@ -179,28 +182,30 @@ export default function CreateGroupPage() {
                   id="end_date"
                   type="date"
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  onChange={e => setEndDate(e.target.value)}
                 />
               </div>
-              {/* 地點 */}
+
+              {/* 活動地點 */}
               <div className="md:col-span-2">
                 <Label htmlFor="location">活動地點</Label>
                 <Input
                   id="location"
                   value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  onChange={e => setLocation(e.target.value)}
                   placeholder="例如：二世谷滑雪場"
                 />
               </div>
+
               {/* 人數 */}
               <div>
                 <Label htmlFor="min_people">最少人數</Label>
                 <Input
                   id="min_people"
                   type="number"
-                  value={minPeople}
                   min={1}
-                  onChange={(e) => setMinPeople(+e.target.value)}
+                  value={minPeople}
+                  onChange={e => setMinPeople(+e.target.value)}
                 />
               </div>
               <div>
@@ -208,46 +213,47 @@ export default function CreateGroupPage() {
                 <Input
                   id="max_people"
                   type="number"
-                  value={maxPeople}
                   min={1}
-                  onChange={(e) => setMaxPeople(+e.target.value)}
+                  value={maxPeople}
+                  onChange={e => setMaxPeople(+e.target.value)}
                 />
               </div>
+
               {/* 費用 */}
               <div className="md:col-span-2">
                 <Label htmlFor="price">費用 (每人 TWD)</Label>
                 <Input
                   id="price"
                   type="number"
-                  value={price}
                   min={0}
-                  onChange={(e) => setPrice(+e.target.value)}
+                  value={price}
+                  onChange={e => setPrice(+e.target.value)}
                 />
               </div>
+
               {/* 新手開關 */}
               <div className="md:col-span-2 flex items-center space-x-4">
                 <Label>歡迎新手參加</Label>
-                <Switch
-                  checked={allowNewbie}
-                  onCheckedChange={setAllowNewbie}
-                />
+                <Switch checked={allowNewbie} onCheckedChange={setAllowNewbie} />
               </div>
-              {/* 描述 */}
+
+              {/* 活動描述 */}
               <div className="md:col-span-2">
                 <Label htmlFor="description">活動描述</Label>
                 <Textarea
                   id="description"
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={e => setDescription(e.target.value)}
                   placeholder="請輸入活動詳情與注意事項"
                 />
               </div>
-              {/* 封面圖片 */}
+
+              {/* 封面圖片上傳 */}
               <div className="md:col-span-2">
                 <Label>封面圖片上傳</Label>
                 <div
                   onDrop={handleDrop}
-                  onDragOver={(e) => e.preventDefault()}
+                  onDragOver={e => e.preventDefault()}
                   onClick={() => fileInputRef.current.click()}
                   className="flex h-52 cursor-pointer flex-col items-center justify-center border-2 border-dashed border-slate-300 bg-sky-50/40 hover:border-sky-500 transition"
                 >
@@ -269,10 +275,9 @@ export default function CreateGroupPage() {
                 </div>
               </div>
             </div>
+
             <div className="flex justify-end space-x-4">
-              <Button variant="outline" onClick={handleCancel}>
-                放棄
-              </Button>
+              <Button variant="outline" onClick={handleCancel}>放棄</Button>
               <Button onClick={() => setStep('step2')}>下一步</Button>
             </div>
           </Card>
@@ -282,15 +287,11 @@ export default function CreateGroupPage() {
           <Card className="p-8 space-y-4">
             <h2 className="text-lg font-semibold">確認 & 發佈</h2>
             <div className="space-y-2">
-              <p>類型：{type}</p>
+              <p>類型：{typeOptions.find(o => o.value === type)?.label}</p>
               <p>標題：{title}</p>
-              <p>
-                日期：{startDate} ~ {endDate}
-              </p>
+              <p>日期：{startDate} ~ {endDate}</p>
               <p>地點：{location}</p>
-              <p>
-                人數：{minPeople} - {maxPeople} 人
-              </p>
+              <p>人數：{minPeople} - {maxPeople} 人</p>
               <p>費用：NT$ {price}</p>
               <p>新手：{allowNewbie ? '允許' : '不允許'}</p>
               <p>描述：{description}</p>
@@ -303,9 +304,7 @@ export default function CreateGroupPage() {
               )}
             </div>
             <div className="flex justify-end space-x-4">
-              <Button variant="outline" onClick={() => setStep('step1')}>
-                上一步
-              </Button>
+              <Button variant="outline" onClick={() => setStep('step1')}>上一步</Button>
               <Button type="submit">發布</Button>
             </div>
           </Card>

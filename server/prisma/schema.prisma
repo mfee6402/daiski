@@ -183,9 +183,10 @@ model Group {
   id         Int      @id @default(autoincrement())
   userId     Int      @map("user_id")
   users      Users    @relation(fields: [userId], references: [id])
-  locationId Int      @map("location_id")
-  location   Location @relation(fields: [locationId], references: [id])
+  locationId Int?      @map("location_id")
+  location   Location? @relation(fields: [locationId], references: [id])
 
+  customLocation String?
   title       String         @db.VarChar(100)
   type        ActivityType
   difficulty  SkiDifficulty?
@@ -220,7 +221,7 @@ model GroupMember {
   users Users @relation(fields: [userId], references: [id])
 
   @@unique([groupId, userId])
-  @@map("group_member")
+  @@map("groupmember")
 }
 
 model GroupImage {
