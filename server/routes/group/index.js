@@ -1,3 +1,4 @@
+// server/routes/group/index.js
 import express from 'express';
 import { PrismaClient, ActivityType } from '@prisma/client';
 import multer from 'multer';
@@ -6,29 +7,26 @@ import path from 'path';
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// ── Multer 設定：把封面圖存到 public/uploads ───────────
+// Multer：把上傳檔存到 public/uploads
 const upload = multer({
   storage: multer.diskStorage({
     destination(req, file, cb) {
-      const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-      cb(null, uploadDir);
+      cb(null, path.join(process.cwd(), 'public', 'uploads'));
     },
     filename(req, file, cb) {
       cb(null, `${Date.now()}_${file.originalname}`);
     },
   }),
 });
-// ─────────────────────────────────────────────────────────
 
-// YYYY-MM-DD → JS Date；格式錯誤回 null
+// YYYY-MM-DD → JS Date
 function parseYMD(str) {
-  if (typeof str !== 'string') return null;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return null;
+  if (typeof str !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(str)) return null;
   const d = new Date(str + 'T00:00:00Z');
   return isNaN(d.getTime()) ? null : d;
 }
 
-// GET /api/group?onlyTypes=true
+// GET /api/group?onlyTypes=true  或  GET /api/group
 router.get('/', async (req, res, next) => {
   try {
     if (req.query.onlyTypes === 'true') {
@@ -38,12 +36,8 @@ router.get('/', async (req, res, next) => {
       const types = col.Type.match(/'[^']+'/g).map(s => s.slice(1, -1));
       return res.json(types);
     }
-
-    const groups = await prisma.group.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+    const groups = await prisma.group.findMany({ orderBy: { createdAt: 'desc' } });
     res.json(groups);
-
   } catch (err) {
     next(err);
   }
@@ -53,11 +47,12 @@ router.get('/', async (req, res, next) => {
 router.post('/', upload.single('cover'), async (req, res, next) => {
   try {
     const {
-      type: rawType,     // 可能是 enum key 或中文 label
+      type: rawType,
       title,
-      start_date,        // "YYYY-MM-DD"
+      start_date,
       end_date,
-      location,
+      location,       // 滑雪時傳 location_id
+      customLocation, // 聚餐時傳文字
       min_people,
       max_people,
       price,
@@ -65,54 +60,62 @@ router.post('/', upload.single('cover'), async (req, res, next) => {
       description,
     } = req.body;
 
-    // 1. 支援中文 label → enum key；2. 支援直接傳 key
+    // 1. 支援 中文 label 或 SKI/MEAL
     const labelToKey = { 滑雪: 'SKI', 聚餐: 'MEAL' };
-    let typeKey = null;
-
+    let typeKey;
     if (labelToKey[rawType]) {
       typeKey = labelToKey[rawType];
     } else if (Object.values(ActivityType).includes(rawType)) {
       typeKey = rawType;
     } else {
-      return res.status(400).json({
-        error: `無效的類型 ${rawType}，有效值：${Object.values(ActivityType).join(
-          ', '
-        )}`,
-      });
+      return res.status(400).json({ error: `無效的活動類型：${rawType}` });
     }
 
-    // 解析 & 驗證日期
+    // 2. 解析 & 驗證日期
     const sd = parseYMD(start_date);
     const ed = parseYMD(end_date);
     if (!sd || !ed) {
-      return res.status(400).json({
-        error: `日期格式錯誤：start_date=${start_date}, end_date=${end_date}`,
-      });
+      return res.status(400).json({ error: '日期格式錯誤，請用 YYYY-MM-DD' });
     }
 
-    // 處理封面路徑
-    const coverImage = req.file ? `/uploads/${req.file.filename}` : null;
+    // 3. 處理 cover 路徑
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
-    // 建立
-    const newGroup = await prisma.group.create({
-      data: {
-        type:        typeKey,      // SKI 或 MEAL
-        title,
-        startDate:   sd,
-        endDate:     ed,
-        location,
-        minPeople:   parseInt(min_people, 10),
-        maxPeople:   parseInt(max_people, 10),
-        price:       parseInt(price, 10),
-        allowNewbie: allow_newbie === '1',
-        description,
-        coverImage,               // 對應 schema 中的 coverImage
-        // 如果你想連 user：
-        users: {
-          connect: { id: 1 }      // 臨時測試用，之後改成你的 req.user.id
-        },
-      },
-    });
+    // 4. 組 data
+    const data = {
+      type:        typeKey,
+      title,
+      startDate:   sd,
+      endDate:     ed,
+      minPeople:   Number(min_people),
+      maxPeople:   Number(max_people),
+      price:       Number(price),
+      allowNewbie: allow_newbie === '1',
+      description,
+      createdAt:   new Date(),
+      user:        { connect: { id: 1 } }, // 測試用，正式可改 session
+    };
+
+    // 5. 根據 typeKey 塞入不同欄位
+    if (typeKey === ActivityType.SKI) {
+      data.location = { connect: { id: Number(location) } };
+    } else {
+      data.customLocation = customLocation;
+    }
+
+    // 6. 建立 group
+    const newGroup = await prisma.group.create({ data });
+
+    // 7. 如果有 cover 圖，再寫進 groupimage
+    if (imageUrl) {
+      await prisma.groupImage.create({
+        data: {
+          group:     { connect: { id: newGroup.id } },
+          imageUrl,               // schema 裡的 imageUrl
+          sortOrder: 0,
+        }
+      });
+    }
 
     res.status(201).json(newGroup);
 
