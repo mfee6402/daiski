@@ -8,7 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Card } from '@/components/ui/card';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '@/components/ui/popover';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function CreateGroupPage() {
@@ -29,7 +33,7 @@ export default function CreateGroupPage() {
         if (!res.ok) throw new Error(`狀態 ${res.status}`);
         const keys = await res.json(); // e.g. ["SKI","MEAL"]
         const keyToLabel = { SKI: '滑雪', MEAL: '聚餐' };
-        const opts = keys.map(k => ({ value: k, label: keyToLabel[k] || k }));
+        const opts = keys.map((k) => ({ value: k, label: keyToLabel[k] || k }));
         setTypeOptions(opts);
         setType(opts[0]?.value || '');
       } catch (err) {
@@ -59,14 +63,14 @@ export default function CreateGroupPage() {
   const [coverPreview, setCoverPreview] = useState('');
   const fileInputRef = useRef(null);
 
-  const handleCoverChange = e => {
+  const handleCoverChange = (e) => {
     const f = e.target.files?.[0];
     if (f) {
       setCoverFile(f);
       setCoverPreview(URL.createObjectURL(f));
     }
   };
-  const handleDrop = e => {
+  const handleDrop = (e) => {
     e.preventDefault();
     const f = e.dataTransfer.files?.[0];
     if (f) {
@@ -77,7 +81,7 @@ export default function CreateGroupPage() {
 
   const handleCancel = () => router.push('/groups');
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title || !startDate || !endDate || !location) {
       alert('請填寫標題、日期與地點');
@@ -115,7 +119,11 @@ export default function CreateGroupPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 p-6">
-      <Tabs value={step} onValueChange={setStep} className="max-w-3xl mx-auto mb-8">
+      <Tabs
+        value={step}
+        onValueChange={setStep}
+        className="max-w-3xl mx-auto mb-8"
+      >
         <TabsList className="grid grid-cols-2">
           <TabsTrigger value="step1">基本資訊</TabsTrigger>
           <TabsTrigger value="step2">確認 & 發佈</TabsTrigger>
@@ -137,11 +145,13 @@ export default function CreateGroupPage() {
                       className="w-full justify-between"
                       disabled={!typeOptions.length}
                     >
-                      {typeOptions.find(o => o.value === type)?.label || '載入中…'} ▾
+                      {typeOptions.find((o) => o.value === type)?.label ||
+                        '載入中…'}{' '}
+                      ▾
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[160px]">
-                    {typeOptions.map(opt => (
+                    {typeOptions.map((opt) => (
                       <Button
                         key={opt.value}
                         variant={opt.value === type ? 'secondary' : 'ghost'}
@@ -161,7 +171,7 @@ export default function CreateGroupPage() {
                 <Input
                   id="title"
                   value={title}
-                  onChange={e => setTitle(e.target.value)}
+                  onChange={(e) => setTitle(e.target.value)}
                   placeholder="例如：北海道雙板初學團"
                 />
               </div>
@@ -173,7 +183,7 @@ export default function CreateGroupPage() {
                   id="start_date"
                   type="date"
                   value={startDate}
-                  onChange={e => setStartDate(e.target.value)}
+                  onChange={(e) => setStartDate(e.target.value)}
                 />
               </div>
               <div>
@@ -182,7 +192,7 @@ export default function CreateGroupPage() {
                   id="end_date"
                   type="date"
                   value={endDate}
-                  onChange={e => setEndDate(e.target.value)}
+                  onChange={(e) => setEndDate(e.target.value)}
                 />
               </div>
 
@@ -192,7 +202,7 @@ export default function CreateGroupPage() {
                 <Input
                   id="location"
                   value={location}
-                  onChange={e => setLocation(e.target.value)}
+                  onChange={(e) => setLocation(e.target.value)}
                   placeholder="例如：二世谷滑雪場"
                 />
               </div>
@@ -205,7 +215,7 @@ export default function CreateGroupPage() {
                   type="number"
                   min={1}
                   value={minPeople}
-                  onChange={e => setMinPeople(+e.target.value)}
+                  onChange={(e) => setMinPeople(+e.target.value)}
                 />
               </div>
               <div>
@@ -215,7 +225,7 @@ export default function CreateGroupPage() {
                   type="number"
                   min={1}
                   value={maxPeople}
-                  onChange={e => setMaxPeople(+e.target.value)}
+                  onChange={(e) => setMaxPeople(+e.target.value)}
                 />
               </div>
 
@@ -227,14 +237,17 @@ export default function CreateGroupPage() {
                   type="number"
                   min={0}
                   value={price}
-                  onChange={e => setPrice(+e.target.value)}
+                  onChange={(e) => setPrice(+e.target.value)}
                 />
               </div>
 
               {/* 新手開關 */}
               <div className="md:col-span-2 flex items-center space-x-4">
                 <Label>歡迎新手參加</Label>
-                <Switch checked={allowNewbie} onCheckedChange={setAllowNewbie} />
+                <Switch
+                  checked={allowNewbie}
+                  onCheckedChange={setAllowNewbie}
+                />
               </div>
 
               {/* 活動描述 */}
@@ -243,7 +256,7 @@ export default function CreateGroupPage() {
                 <Textarea
                   id="description"
                   value={description}
-                  onChange={e => setDescription(e.target.value)}
+                  onChange={(e) => setDescription(e.target.value)}
                   placeholder="請輸入活動詳情與注意事項"
                 />
               </div>
@@ -253,7 +266,7 @@ export default function CreateGroupPage() {
                 <Label>封面圖片上傳</Label>
                 <div
                   onDrop={handleDrop}
-                  onDragOver={e => e.preventDefault()}
+                  onDragOver={(e) => e.preventDefault()}
                   onClick={() => fileInputRef.current.click()}
                   className="flex h-52 cursor-pointer flex-col items-center justify-center border-2 border-dashed border-slate-300 bg-sky-50/40 hover:border-sky-500 transition"
                 >
@@ -277,7 +290,9 @@ export default function CreateGroupPage() {
             </div>
 
             <div className="flex justify-end space-x-4">
-              <Button variant="outline" onClick={handleCancel}>放棄</Button>
+              <Button variant="outline" onClick={handleCancel}>
+                放棄
+              </Button>
               <Button onClick={() => setStep('step2')}>下一步</Button>
             </div>
           </Card>
@@ -287,11 +302,15 @@ export default function CreateGroupPage() {
           <Card className="p-8 space-y-4">
             <h2 className="text-lg font-semibold">確認 & 發佈</h2>
             <div className="space-y-2">
-              <p>類型：{typeOptions.find(o => o.value === type)?.label}</p>
+              <p>類型：{typeOptions.find((o) => o.value === type)?.label}</p>
               <p>標題：{title}</p>
-              <p>日期：{startDate} ~ {endDate}</p>
+              <p>
+                日期：{startDate} ~ {endDate}
+              </p>
               <p>地點：{location}</p>
-              <p>人數：{minPeople} - {maxPeople} 人</p>
+              <p>
+                人數：{minPeople} - {maxPeople} 人
+              </p>
               <p>費用：NT$ {price}</p>
               <p>新手：{allowNewbie ? '允許' : '不允許'}</p>
               <p>描述：{description}</p>
@@ -304,7 +323,9 @@ export default function CreateGroupPage() {
               )}
             </div>
             <div className="flex justify-end space-x-4">
-              <Button variant="outline" onClick={() => setStep('step1')}>上一步</Button>
+              <Button variant="outline" onClick={() => setStep('step1')}>
+                上一步
+              </Button>
               <Button type="submit">發布</Button>
             </div>
           </Card>
