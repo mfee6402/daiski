@@ -48,6 +48,7 @@ model Product {
   product_category ProductCategory? @relation(fields: [category_id], references: [id], onUpdate: Restrict, map: "product_ibfk_1")
   product_image    ProductImage[]
   product_sku      ProductSku[]
+  CartProduct      CartProduct[]
 
   @@index([category_id], map: "category_id")
   @@index([brand_id], map: "fk_product_brand")
@@ -176,36 +177,38 @@ model Location {
 
   // relations
   groups Group[]
+
   @@map("location")
 }
 
 model Group {
-  id         Int      @id @default(autoincrement())
-  userId     Int      @map("user_id")
-  user       User     @relation(fields: [userId], references: [id])
+  id         Int       @id @default(autoincrement())
+  userId     Int       @map("user_id")
+  user       User      @relation(fields: [userId], references: [id])
   locationId Int?      @map("location_id")
   location   Location? @relation(fields: [locationId], references: [id])
 
-  customLocation String? @map("custom_location")
-  title       String         @db.VarChar(100)
-  type        ActivityType
-  difficulty  SkiDifficulty?
-  startDate   DateTime       @map("start_date")
-  endDate     DateTime       @map("end_date")
-  minPeople   Int            @map("min_people")
-  maxPeople   Int            @map("max_people")
-  price       Int
-  description String?        @db.Text
-  allowNewbie Boolean        @default(false) @map("allow_newbie")
-  createdAt DateTime  @default(now()) @map("created_at")
-  endAt     DateTime? @map("end_at")
-  deletedAt DateTime? @map("deleted_at")
+  customLocation String?        @map("custom_location")
+  title          String         @db.VarChar(100)
+  type           ActivityType
+  difficulty     SkiDifficulty?
+  startDate      DateTime       @map("start_date")
+  endDate        DateTime       @map("end_date")
+  minPeople      Int            @map("min_people")
+  maxPeople      Int            @map("max_people")
+  price          Int
+  description    String?        @db.Text
+  allowNewbie    Boolean        @default(false) @map("allow_newbie")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  endAt          DateTime?      @map("end_at")
+  deletedAt      DateTime?      @map("deleted_at")
 
   // relations
   members  GroupMember[]
   images   GroupImage[]
   comments GroupComment[]
   chatRoom ChatRoom? // inverse side of ChatRoom.group
+
   @@map("group")
 }
 
@@ -215,7 +218,6 @@ model GroupMember {
   userId   Int
   joinedAt DateTime  @default(now()) @map("joined_at")
   paidAt   DateTime? @map("paid_at")
-
 
   group Group @relation(fields: [groupId], references: [id])
   user  User  @relation(fields: [userId], references: [id])
@@ -231,6 +233,7 @@ model GroupImage {
   sortOrder Int    @default(0) @map("sort_order")
 
   group Group @relation(fields: [groupId], references: [id])
+
   @@map("groupimage")
 }
 
@@ -243,8 +246,9 @@ model GroupComment {
   replyId   Int?     @map("reply_id")
 
   group Group @relation(fields: [groupId], references: [id])
-  @@map("groupcomment")
   user  User  @relation(fields: [userId], references: [id])
+
+  @@map("groupcomment")
 }
 
 model ChatRoom {
@@ -254,6 +258,7 @@ model ChatRoom {
 
   group    Group         @relation(fields: [groupId], references: [id])
   messages ChatMessage[]
+
   @@map("chatroom")
 }
 
@@ -265,10 +270,10 @@ model ChatMessage {
   messageType MessageType @default(TEXT) @map("message_type")
   sentAt      DateTime    @default(now()) @map("sent_at")
   isRead      Boolean?    @map("is_read")
+  room        ChatRoom    @relation(fields: [groupId], references: [groupId])
+  user        User        @relation(fields: [userId], references: [id])
 
   @@map("chatmessage")
-  room ChatRoom @relation(fields: [groupId], references: [groupId])
-  user User     @relation(fields: [userId], references: [id])
 }
 
 // #endregion
@@ -334,7 +339,7 @@ model Course {
   @@map("course")
 }
 
-// // #endregion
+// #endregion
 
 // 優惠券
 // #region 
@@ -421,7 +426,8 @@ model CartProduct {
   productId Int @map("product_id")
   quantity  Int
 
-  cart Cart @relation(fields: [cartId], references: [id])
+  cart    Cart    @relation(fields: [cartId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 
   @@map("cart_product")
 }
