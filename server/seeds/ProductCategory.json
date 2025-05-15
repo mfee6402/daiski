@@ -2,7 +2,7 @@
   {
     "id": 1,
     "name": "滑雪用品",
-    "parentId": null,
+    "parent_id": null,
     "gender": 0,
     
     "deleted_at": null
@@ -10,7 +10,7 @@
   {
     "id": 2,
     "name": "毛帽",
-    "parentId": 1,
+    "parent_id": 1,
     "gender": 0,
    
     "deleted_at": null
@@ -18,7 +18,7 @@
   {
     "id": 3,
     "name": "滑雪外套",
-    "parentId": 1,
+    "parent_id": 1,
     "gender": 0,
    
     "deleted_at": null
@@ -26,7 +26,7 @@
   {
     "id": 4,
     "name": "滑雪外套-男生款",
-    "parentId": 3,
+    "parent_id": 3,
     "gender": 1,
    
     "deleted_at": null
@@ -34,7 +34,7 @@
   {
     "id": 5,
     "name": "滑雪外套-女生款",
-    "parentId": 3,
+    "parent_id": 3,
     "gender": 2,
    
 
@@ -43,7 +43,7 @@
   {
     "id": 6,
     "name": "滑雪褲",
-    "parentId": 1,
+    "parent_id": 1,
     "gender": 0,
    
     "deleted_at": null
@@ -51,7 +51,7 @@
   {
     "id": 7,
     "name": "滑雪褲-男生款",
-    "parentId": 6,
+    "parent_id": 6,
     "gender": 1,
    
     "deleted_at": null
@@ -59,7 +59,7 @@
   {
     "id": 8,
     "name": "滑雪褲-女生款",
-    "parentId": 6,
+    "parent_id": 6,
     "gender": 2,
 
     "deleted_at": null
@@ -67,7 +67,7 @@
   {
     "id": 9,
     "name": "雪鞋",
-    "parentId": 1,
+    "parent_id": 1,
     "gender": 0,
   
     "deleted_at": null
@@ -75,7 +75,7 @@
   {
     "id": 10,
     "name": "雪鞋-男款",
-    "parentId": 9,
+    "parent_id": 9,
     "gender": 1,
    
     "deleted_at": null
@@ -83,7 +83,7 @@
   {
     "id": 11,
     "name": "雪鞋-女款",
-    "parentId": 9,
+    "parent_id": 9,
     "gender": 2,
    
     "deleted_at": null
@@ -91,7 +91,7 @@
   {
     "id": 12,
     "name": "雪板",
-    "parentId": 1,
+    "parent_id": 1,
     "gender": 0,
    
     "deleted_at": null
@@ -99,7 +99,7 @@
   {
     "id": 13,
     "name": "雪板-單板",
-    "parentId": 12,
+    "parent_id": 12,
     "gender": 0,
    
     "deleted_at": null
@@ -107,7 +107,7 @@
   {
     "id": 14,
     "name": "雪板-雙板",
-    "parentId": 12,
+    "parent_id": 12,
     "gender": 0,
    
     "deleted_at": null
@@ -115,7 +115,7 @@
   {
     "id": 15,
     "name": "雪板-單板-男板",
-    "parentId": 13,
+    "parent_id": 13,
     "gender": 1,
    
     "deleted_at": null
@@ -123,7 +123,7 @@
   {
     "id": 16,
     "name": "雪板-單板-女板",
-    "parentId": 13,
+    "parent_id": 13,
     "gender": 2,
    
     "deleted_at": null
@@ -131,7 +131,7 @@
   {
     "id": 17,
     "name": "滑雪外套-男女通用款",
-    "parentId": 3,
+    "parent_id": 3,
     "gender": 3,
   
     "deleted_at": null
@@ -139,7 +139,7 @@
   {
     "id": 18,
     "name": "滑雪褲-男女通用款",
-    "parentId": 6,
+    "parent_id": 6,
     "gender": 3,
    
     "deleted_at": null
@@ -147,7 +147,7 @@
   {
     "id": 19,
     "name": "雪鞋-男女通用款",
-    "parentId": 9,
+    "parent_id": 9,
     "gender": 3,
   
     "deleted_at": null
@@ -155,7 +155,7 @@
   {
     "id": 20,
     "name": "雪板-單板-男女通用款",
-    "parentId": 13,
+    "parent_id": 13,
     "gender": 3,
    
     "deleted_at": null

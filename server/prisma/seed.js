@@ -22,16 +22,22 @@ import { isDev } from '../lib/utils.js';
 const oneToOne = [];
 // foreignKey is in the second table
 const oneToMany = [
+  'User:Group',
+  'Location:Group',
   'Cart:CartProduct',
   'Cart:CartCourse',
   'Cart:CartGroup',
   'Order:OrderProduct',
-  'Order:CartCourse',
-  'Order:CartGroup',
+  'Order:OrderCourse',
+  'Order:OrderGroup',
   'ProductCategory:Product',
   'ProductBrand:Product',
   'Coach:LanguageCoach',
   'Coach:LicenseCoach',
+  'CouponType:Coupon',
+  'CouponTarget:Coupon',
+  'User:GameScore',
+  'Game:GameScore',
 ];
 // foreignKey is in the third table
 const manyToMany = [];

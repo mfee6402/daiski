@@ -1,3 +1,4 @@
+// app/create-group/page.js
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -8,26 +9,28 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Card } from '@/components/ui/card';
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from '@/components/ui/popover';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function CreateGroupPage() {
   const router = useRouter();
+  const API_BASE = 'http://localhost:3005';
   const [step, setStep] = useState('step1');
 
-  // 下拉選單：從 /api/group?onlyTypes=true 取得
+  // 活動類型 (SKI / MEAL)
   const [typeOptions, setTypeOptions] = useState([]);
-  const [type, setType] = useState('');
+  const [type, setType] = useState('SKI');
 
-  // 表單欄位
+  // 滑雪場清單
+  const [locationOptions, setLocationOptions] = useState([]);
+  const [locationId, setLocationId] = useState('');
+
+  // 聚餐自訂地址
+  const [customLocation, setCustomLocation] = useState('');
+
+  // 其它欄位
   const [title, setTitle] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [location, setLocation] = useState('');
   const [minPeople, setMinPeople] = useState(1);
   const [maxPeople, setMaxPeople] = useState(6);
   const [price, setPrice] = useState(0);
@@ -37,54 +40,75 @@ export default function CreateGroupPage() {
   const [coverPreview, setCoverPreview] = useState('');
   const fileInputRef = useRef(null);
 
-  // 載入 type 列舉
+  // 載入活動類型
   useEffect(() => {
     async function loadTypes() {
       try {
-        const res = await fetch(
-          'http://localhost:3005/api/group?onlyTypes=true'
-        );
-        if (!res.ok) throw new Error('載入類型失敗');
-        const types = await res.json();
-        setTypeOptions(types);
-        setType(types[0]);
+        const res = await fetch(`${API_BASE}/api/group?onlyTypes=true`);
+        const keys = await res.json(); // e.g. ["SKI","MEAL"]
+        const map = { SKI: '滑雪', MEAL: '聚餐' };
+        const opts = keys.map((k) => ({ value: k, label: map[k] || k }));
+        setTypeOptions(opts);
+        setType(opts[0]?.value || 'SKI');
       } catch (err) {
-        console.warn('Type 載入失敗，改用預設', err);
-        setTypeOptions(['SKI', 'MEAL']);
-        setType('SKI');
+        console.error('載入類型失敗', err);
       }
     }
     loadTypes();
   }, []);
 
-  // 封面圖片預覽
+  // 當 type = SKI 時載入滑雪場
+  useEffect(() => {
+    if (type !== 'SKI') return;
+    async function loadLocations() {
+      try {
+        const res = await fetch(`${API_BASE}/api/location`);
+        const list = await res.json();
+        setLocationOptions(list);
+        setLocationId(list[0]?.id?.toString() || '');
+      } catch (err) {
+        console.error('載入地點失敗', err);
+      }
+    }
+    loadLocations();
+  }, [type]);
+
+  // 封面檔案處理
   const handleCoverChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setCoverFile(file);
-      setCoverPreview(URL.createObjectURL(file));
+    const f = e.target.files?.[0];
+    if (f) {
+      setCoverFile(f);
+      setCoverPreview(URL.createObjectURL(f));
     }
   };
   const handleDrop = (e) => {
     e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      setCoverFile(file);
-      setCoverPreview(URL.createObjectURL(file));
+    const f = e.dataTransfer.files?.[0];
+    if (f) {
+      setCoverFile(f);
+      setCoverPreview(URL.createObjectURL(f));
     }
   };
 
   const handleCancel = () => router.push('/groups');
 
-  // 提交表單
+  // 提交
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!title || !startDate || !endDate) return alert('請填寫標題與日期');
+    if (type === '滑雪' && !locationId) return alert('請選擇滑雪場');
+    if (type === '聚餐' && !customLocation) return alert('請輸入餐廳地址');
+
     const formData = new FormData();
     formData.append('type', type);
     formData.append('title', title);
     formData.append('start_date', startDate);
     formData.append('end_date', endDate);
-    formData.append('location', location);
+    if (type === '滑雪') {
+      formData.append('location', locationId);
+    } else {
+      formData.append('customLocation', customLocation);
+    }
     formData.append('min_people', String(minPeople));
     formData.append('max_people', String(maxPeople));
     formData.append('price', String(price));
@@ -93,22 +117,20 @@ export default function CreateGroupPage() {
     if (coverFile) formData.append('cover', coverFile);
 
     try {
-      const base = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-      const res = await fetch(`${base}/api/group`, {
+      const res = await fetch(`${API_BASE}/api/group`, {
         method: 'POST',
         body: formData,
       });
-      if (!res.ok) throw new Error('建立失敗');
+      if (!res.ok) throw new Error((await res.text()) || res.status);
       router.push('/groups');
     } catch (err) {
-      console.error('建立活動失敗', err);
-      alert('建立失敗，請稍後再試');
+      console.error(err);
+      alert('建立失敗：' + err.message);
     }
   };
 
   return (
     <main className="min-h-screen bg-slate-50 p-6">
-      {/* 分步導覽 */}
       <Tabs
         value={step}
         onValueChange={setStep}
@@ -128,31 +150,19 @@ export default function CreateGroupPage() {
               {/* 活動類型 */}
               <div>
                 <Label>活動類型</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-between"
-                      disabled={!typeOptions.length}
-                    >
-                      {type || '載入中...'}
-                      <span className="ml-2">▾</span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[160px]">
-                    {typeOptions.map((opt) => (
-                      <Button
-                        key={opt}
-                        variant={opt === type ? 'secondary' : 'ghost'}
-                        className="w-full text-left"
-                        onClick={() => setType(opt)}
-                      >
-                        {opt}
-                      </Button>
-                    ))}
-                  </PopoverContent>
-                </Popover>
+                <select
+                  className="w-full border p-2 rounded"
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                >
+                  {typeOptions.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
               </div>
+
               {/* 標題 */}
               <div>
                 <Label htmlFor="title">揪團標題</Label>
@@ -163,7 +173,8 @@ export default function CreateGroupPage() {
                   placeholder="例如：北海道雙板初學團"
                 />
               </div>
-              {/* 開始／結束日期 */}
+
+              {/* 日期 */}
               <div>
                 <Label htmlFor="start_date">開始日期</Label>
                 <Input
@@ -182,24 +193,42 @@ export default function CreateGroupPage() {
                   onChange={(e) => setEndDate(e.target.value)}
                 />
               </div>
-              {/* 地點 */}
+
+              {/* 活動地點（只有 SKI 顯示下拉，MEAL 顯示文字輸入） */}
               <div className="md:col-span-2">
-                <Label htmlFor="location">活動地點</Label>
-                <Input
-                  id="location"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="例如：二世谷滑雪場"
-                />
+                <Label>活動地點</Label>
+                {type === '滑雪' ? (
+                  <select
+                    className="w-full border p-2 rounded"
+                    value={locationId}
+                    onChange={(e) => setLocationId(e.target.value)}
+                  >
+                    <option value="" disabled>
+                      請選擇滑雪場
+                    </option>
+                    {locationOptions.map((loc) => (
+                      <option key={loc.id} value={loc.id}>
+                        {loc.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <Input
+                    value={customLocation}
+                    onChange={(e) => setCustomLocation(e.target.value)}
+                    placeholder="請輸入餐廳地址"
+                  />
+                )}
               </div>
+
               {/* 人數 */}
               <div>
                 <Label htmlFor="min_people">最少人數</Label>
                 <Input
                   id="min_people"
                   type="number"
-                  value={minPeople}
                   min={1}
+                  value={minPeople}
                   onChange={(e) => setMinPeople(+e.target.value)}
                 />
               </div>
@@ -208,23 +237,25 @@ export default function CreateGroupPage() {
                 <Input
                   id="max_people"
                   type="number"
-                  value={maxPeople}
                   min={1}
+                  value={maxPeople}
                   onChange={(e) => setMaxPeople(+e.target.value)}
                 />
               </div>
+
               {/* 費用 */}
               <div className="md:col-span-2">
                 <Label htmlFor="price">費用 (每人 TWD)</Label>
                 <Input
                   id="price"
                   type="number"
-                  value={price}
                   min={0}
+                  value={price}
                   onChange={(e) => setPrice(+e.target.value)}
                 />
               </div>
-              {/* 新手開關 */}
+
+              {/* 新手開啟 */}
               <div className="md:col-span-2 flex items-center space-x-4">
                 <Label>歡迎新手參加</Label>
                 <Switch
@@ -232,6 +263,7 @@ export default function CreateGroupPage() {
                   onCheckedChange={setAllowNewbie}
                 />
               </div>
+
               {/* 描述 */}
               <div className="md:col-span-2">
                 <Label htmlFor="description">活動描述</Label>
@@ -242,14 +274,15 @@ export default function CreateGroupPage() {
                   placeholder="請輸入活動詳情與注意事項"
                 />
               </div>
-              {/* 封面圖片 */}
+
+              {/* 封面 */}
               <div className="md:col-span-2">
                 <Label>封面圖片上傳</Label>
                 <div
                   onDrop={handleDrop}
                   onDragOver={(e) => e.preventDefault()}
                   onClick={() => fileInputRef.current.click()}
-                  className="flex h-52 cursor-pointer flex-col items-center justify-center border-2 border-dashed border-slate-300 bg-sky-50/40 hover:border-sky-500 transition"
+                  className="flex h-52 cursor-pointer flex-col items-center justify-center border-2 border-dashed border-slate-300 bg-sky-50/40 hover:border-sky-500"
                 >
                   {coverPreview ? (
                     <div
@@ -269,6 +302,7 @@ export default function CreateGroupPage() {
                 </div>
               </div>
             </div>
+
             <div className="flex justify-end space-x-4">
               <Button variant="outline" onClick={handleCancel}>
                 放棄
@@ -282,12 +316,18 @@ export default function CreateGroupPage() {
           <Card className="p-8 space-y-4">
             <h2 className="text-lg font-semibold">確認 & 發佈</h2>
             <div className="space-y-2">
-              <p>類型：{type}</p>
+              <p>類型：{typeOptions.find((o) => o.value === type)?.label}</p>
               <p>標題：{title}</p>
               <p>
                 日期：{startDate} ~ {endDate}
               </p>
-              <p>地點：{location}</p>
+              <p>
+                地點：
+                {type === '滑雪'
+                  ? locationOptions.find((l) => String(l.id) === locationId)
+                      ?.name
+                  : customLocation}
+              </p>
               <p>
                 人數：{minPeople} - {maxPeople} 人
               </p>
