@@ -1,6 +1,13 @@
 'use client';
 import { useState } from 'react';
-import { Menu, House, BookOpen, Users, ShoppingBasket } from 'lucide-react';
+import {
+  Menu,
+  House,
+  BookOpen,
+  RectangleGoggles,
+  Users,
+  ShoppingBasket,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import {
@@ -132,6 +139,11 @@ export function MobileHeaderMenu() {
             <li className="w-full active:bg-gray-200 p-2 rounded">
               <Link href="/courses" className="text-base flex flex-row gap-3">
                 <BookOpen /> 滑雪課程
+              </Link>
+            </li>
+            <li className="w-full active:bg-gray-200 p-2 rounded">
+              <Link href="/coaches" className="text-base flex flex-row gap-3">
+                <RectangleGoggles /> 教練團隊
               </Link>
             </li>
             <li className="w-full active:bg-gray-200 p-2 rounded">
