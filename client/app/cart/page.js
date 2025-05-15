@@ -16,7 +16,7 @@ import { type } from 'os';
 import DecreaseButton from './_components/decrease-button';
 
 // secondary
-export default function CartPage(props) {
+export default function CartPage({ setProcess }) {
   const url = 'http://localhost:3005/api/cart';
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -67,13 +67,12 @@ export default function CartPage(props) {
   // }
 
   // 以上測試區
-  if (loading) {
-    return <p>載入中</p>;
-  }
+  // if (loading) {
+  // return <p>載入中</p>;
+  // }
 
   return (
     <>
-      <h3 className="text-h3-tw text-primary-600">CART | 購物車 </h3>
       <Process step="1"></Process>
       <div className="flex justify-between">
         <div className="w-full">

@@ -23,7 +23,7 @@ export default function RootLayout({ children }) {
         >
           <Providers>
             <Header></Header>
-            {children}
+            <div className="min-h-dvh">{children}</div>
             <Footer></Footer>
           </Providers>
         </ThemeProvider>
