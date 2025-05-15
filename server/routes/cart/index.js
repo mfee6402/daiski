@@ -23,17 +23,19 @@ router.post('/', async function (req, res) {
 
 // 查詢
 router.get('/', async function (req, res) {
-  const cart = await prisma.cart.findUnique({
+  const data = await prisma.cart.findUnique({
   include: {
     // 相當於 JOIN cart ON cart.id = post.cart
     
     CartProduct:{
-      select:{
-        productId:true,
-        quantity:true,
-        Product:true
+      include:{
+        product:{
+          select:{
+            name:true
+          }
+        }
+         
       }
-      
     },
     CartCourse:{
      select:{
@@ -51,10 +53,23 @@ router.get('/', async function (req, res) {
     id: 1,
   },
 });
+  // 攤平 CartProduct 內的 product.name 成 productName
+  const flatCartProduct = data.CartProduct.map(item => ({
+    id: item.id,
+    cartId: item.cartId,
+    productId: item.productId,
+    quantity: item.quantity,
+    productName: item.product.name
+  }));
 
+  // 替換原本的 CartProduct 為攤平後的資料
+  const cart = {
+    ...data,
+    CartProduct: flatCartProduct
+  };
   res
     .status(200)
-    .json({ status: 'success',cart})
+    .json({ status: 'success', cart})
 })
 
 // 更新(只有商品有數量，課程跟揪團票券固定只有1)
