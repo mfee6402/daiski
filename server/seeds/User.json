@@ -1,6 +1,6 @@
 [
   {
-    "id": "1",
+    
     "account": "test1",
     "password": "123456",
     "name": "鄧伯成",
@@ -11,7 +11,7 @@
     "avatar": "1"
   },
   {
-    "id": "2",
+    
     "account": "test2",
     "password": "123456",
     "name": "史婉儀",
@@ -22,7 +22,7 @@
     "avatar": "1"
   },
   {
-    "id": "3",
+    
     "account": "test3",
     "password": "123456",
     "name": "金益凱",
@@ -33,7 +33,7 @@
     "avatar": "1"
   },
   {
-    "id": "4",
+    
     "account": "test4",
     "password": "123456",
     "name": "溫妤柔",
