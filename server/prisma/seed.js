@@ -26,6 +26,7 @@ const oneToMany = [
   'Location:Group',
   'ProductCategory:Product',
   'ProductBrand:Product',
+  // 'Product:ProductImage',
   'Cart:CartProduct',
   'Cart:CartCourse',
   'Cart:CartGroup',
