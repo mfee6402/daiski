@@ -50,10 +50,10 @@ export const serverConfig = {
   // 前端接回導向的網址
   ship711: {
     development: {
-      callbackUrl: 'http://localhost:3000/ship/callback',
+      callbackUrl: 'http://localhost:3000/cart/checkout/callback',
     },
     production: {
-      callbackUrl: 'https://xxxxx.vercel.app/ship/callback',
+      callbackUrl: 'https://xxxxx.vercel.app/cart/checkout/callback',
     },
   },
   linePay: {
