@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 
 import ShippingOptions from './shippingMethod/shipping-options';
 
-export default function ShippingMethod(props) {
+export default function ShippingMethod() {
   const [shippingSelected, setShippingSelected] = useState('homeDelivery');
   return (
     <>

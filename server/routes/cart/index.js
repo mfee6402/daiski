@@ -54,14 +54,17 @@ router.get('/', async function (req, res) {
     .json({ status: 'success',cart})
 })
 
-// 更新
+// 更新(只有商品有數量，課程跟揪團票券固定只有1)
 router.put('/:itemId', async function (req, res) {
+  // console.log(req.body.data.cart)
+  console.log(req.body.data.cart.CartProduct[req.params.itemId].quantity)
+
   const cart = await prisma.cartProduct.update({
   where: {
     id: +req.params.itemId,
   },
   data: {
-    quantity: 3,
+    quantity: 5,
   },
 });
 
