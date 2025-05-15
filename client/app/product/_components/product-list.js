@@ -80,10 +80,10 @@ export default function ProductList({ products }) {
                 />
               </CardHeader>
               <CardContent>
-                <CardTitle className="text-lg font-bold mt-2 line-clamp-2 hover:text-sky-600">
+                <CardTitle className="text-lg font-bold mt-2 line-clamp-2 hover:text-primary-500">
                   {p.name}
                 </CardTitle>
-                <CardDescription className="text-sm text-gray-600 mt-1 line-clamp-1 hover:text-sky-600">
+                <CardDescription className="text-sm text-gray-600 mt-1 line-clamp-1 hover:text-primary-500">
                   {p.category} / {p.brand}
                 </CardDescription>
                 <p className="text-red-500 font-semibold text-base mt-2">
