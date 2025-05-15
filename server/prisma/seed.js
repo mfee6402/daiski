@@ -22,6 +22,8 @@ import { isDev } from '../lib/utils.js';
 const oneToOne = [];
 // foreignKey is in the second table
 const oneToMany = [
+  'User:Group',
+  'Location:Group',
   'Cart:CartProduct',
   'Cart:CartCourse',
   'Cart:CartGroup',
@@ -47,7 +49,7 @@ const seedsFolder = 'seeds';
 // 需要先轉換為bcrypt編碼的欄位名稱 create bcrypt password hash
 const bcryptFields = ['password'];
 // 需要先轉換為日期的欄位名稱 date format fields
-const dateFields = ['birth'];
+const dateFields = ['birth','startDate', 'endDate'];
 
 // convert CamelCase to camelCase for Prisma modelName
 function convertToCamelCase(str) {
