@@ -3,6 +3,7 @@ node_modules
 .vercel
 .env*.local
 productImages
+uploads
 
 # misc
 .DS_Store

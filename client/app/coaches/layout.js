@@ -1,6 +1,6 @@
 import Container from '@/components/container';
 
-export default function CartLayout({ children }) {
+export default function CoachesLayout({ children }) {
   return (
     <>
       <Container>{children}</Container>
