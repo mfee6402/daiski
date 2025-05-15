@@ -56,6 +56,27 @@ body {
   /* --- font family --- */
   --font-en: Arial, sans-serif;
   --font-tw: 'Noto Sans TC', sans-serif;
+
+  @keyframes slideDown {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-collapsible-content-height);
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      height: var(--radix-collapsible-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+  /* 設定對應的 animate-* 變數 */
+  --animate-expand: slideDown 300ms ease-out;
+  --animate-collapse: slideUp 300ms ease-out;
 }
 
 @theme inline {
