@@ -234,7 +234,7 @@ model GroupMember {
   user  User  @relation(fields: [userId], references: [id])
 
   @@unique([groupId, userId])
-  @@map("groupmember")
+  @@map("group_member")
 }
 
 model GroupImage {
@@ -245,7 +245,7 @@ model GroupImage {
 
   group Group @relation(fields: [groupId], references: [id])
 
-  @@map("groupimage")
+  @@map("group_image")
 }
 
 model GroupComment {
@@ -259,7 +259,7 @@ model GroupComment {
   group Group @relation(fields: [groupId], references: [id])
   user  User  @relation(fields: [userId], references: [id])
 
-  @@map("groupcomment")
+  @@map("group_comment")
 }
 
 model ChatRoom {
@@ -284,7 +284,7 @@ model ChatMessage {
   room        ChatRoom    @relation(fields: [groupId], references: [groupId])
   user        User        @relation(fields: [userId], references: [id])
 
-  @@map("chatmessage")
+  @@map("chat_message")
 }
 
 // #endregion
