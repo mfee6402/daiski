@@ -6,7 +6,7 @@ export default function CartLayout({ children }) {
     <>
       <Container>
         <h3 className="text-h3-tw text-primary-600">CART | 購物車 </h3>
-        {children}
+        <div className="min-h-dvh">{children}</div>
       </Container>
     </>
   );
