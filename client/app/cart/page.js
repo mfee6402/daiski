@@ -33,8 +33,6 @@ export default function CartPage({ setProcess }) {
     fetchData();
   }, []);
 
-  const products = data?.cart.CartProduct ? data?.cart.CartProduct : [];
-
   // const groups = data?.data.cart.CartGroup ? cart.CartGroup : [];
   // const course = data?.data.cart.CartCourse ? cart.CartCourse : [];
 
@@ -76,30 +74,31 @@ export default function CartPage({ setProcess }) {
             <h6 className="text-h6-tw">商品內容</h6>
           </div>
 
-          {products?.map((product, i) => {
+          {data?.cart.CartProduct.map((product, i) => {
             return (
               <div key={product.productId} className="flex justify-between">
-                <div className="flex justify-center w-full">
-                  <p>{product.productId}</p>
+                <div className="flex  w-full">
+                  <p>{product.name}</p>
                 </div>
                 <div className="flex justify-center w-full">
                   <QuantityButton
-                    productIndex={i}
+                    productId={product.productId}
                     data={data}
                     setData={setData}
                     type="minus"
                   ></QuantityButton>
-
-                  <p>{product.quantity}</p>
-
+                  <div className="flex justify-center w-[50]">
+                    <p className="text-h6-tw">{product.quantity}</p>
+                  </div>
                   <QuantityButton
-                    productIndex={i}
+                    productId={product.productId}
                     data={data}
                     setData={setData}
                     type="plus"
                   ></QuantityButton>
                 </div>
-                <div className="flex justify-center w-full">
+
+                <div className="flex justify-center w-full gap-4">
                   <WishList
                     wishList={wishList}
                     index={i}

@@ -3,12 +3,12 @@ import { produce } from 'immer';
 import { useEffect } from 'react';
 
 export default function QuantityButton({
-  productIndex = 0,
+  productId = 0,
   data = '',
   setData = () => {},
   type = '',
 }) {
-  const url = `http://localhost:3005/api/cart/${productIndex}`;
+  const url = `http://localhost:3005/api/cart/${productId}`;
   async function fetchData(nextCart) {
     try {
       const res = await fetch(url, {
@@ -28,21 +28,21 @@ export default function QuantityButton({
   return (
     <>
       <button
+        className="w-[50]"
         onClick={() => {
-          console.log(data.cart);
           const nextCart = produce(data, (draft) => {
-            if (type === 'minus') {
-              draft.cart.CartProduct[productIndex].quantity--;
-            } else if (type === 'plus') {
-              draft.cart.CartProduct[productIndex].quantity++;
-            }
+            draft.cart.CartProduct.map((product) => {
+              if (productId === product.productId) {
+                type === 'minus' ? product.quantity-- : product.quantity++;
+              }
+            });
           });
           setData(nextCart);
           fetchData(nextCart);
         }}
       >
-        {type === 'minus' && '-'}
-        {type === 'plus' && '+'}
+        <p className="text-h6-tw">{type === 'minus' && '-'}</p>
+        <p className="text-h6-tw">{type === 'plus' && '+'}</p>
       </button>
     </>
   );
