@@ -48,6 +48,7 @@ model Product {
   product_category ProductCategory? @relation(fields: [category_id], references: [id], onUpdate: Restrict, map: "product_ibfk_1")
   product_image    ProductImage[]
   product_sku      ProductSku[]
+  CartProduct      CartProduct[]
 
   @@index([category_id], map: "category_id")
   @@index([brand_id], map: "fk_product_brand")
@@ -349,7 +350,7 @@ model Course {
   @@map("course")
 }
 
-// // #endregion
+// #endregion
 
 // 優惠券
 // #region 
@@ -436,7 +437,8 @@ model CartProduct {
   productId Int @map("product_id")
   quantity  Int
 
-  cart Cart @relation(fields: [cartId], references: [id])
+  cart    Cart    @relation(fields: [cartId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 
   @@map("cart_product")
 }

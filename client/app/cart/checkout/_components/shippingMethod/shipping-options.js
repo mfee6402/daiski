@@ -24,8 +24,13 @@ export default function ShippingOptions({
 
         <h6 className=" text-h6-tw">{name}</h6>
       </label>
-      <HomeDelivery shippingSelected={shippingSelected}></HomeDelivery>
-      {/* <StorePickup shippingSelected={shippingSelected}></StorePickup> */}
+      {/* 每個選項只負責自己的擴展內容 */}
+      {shippingSelected === method && (
+        <HomeDelivery shippingSelected={shippingSelected}></HomeDelivery>
+      )}
+      {shippingSelected === method && (
+        <StorePickup shippingSelected={shippingSelected}></StorePickup>
+      )}
     </>
   );
 }
