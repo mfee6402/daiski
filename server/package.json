@@ -14,7 +14,7 @@
     "verify": "node ./jwt/verify.js member",
     "sign2": "node --env-file=./jwt/dev.env ./jwt/sign.js ",
     "verify2": "node --env-file=./jwt/dev.env ./jwt/verify.js ",
-    "dev2":"nodemon --env-file=./login-token/dev.env ./login-token/index.js"
+    "dev2": "nodemon --env-file=./login-token/dev.env ./login-token/index.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
