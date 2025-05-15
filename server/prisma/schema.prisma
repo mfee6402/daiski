@@ -52,6 +52,7 @@ model Product {
 
   @@index([category_id], map: "category_id")
   @@index([brand_id], map: "fk_product_brand")
+  @@map("product")
 }
 
 model ProductBrand {
@@ -62,6 +63,8 @@ model ProductBrand {
   updated_at DateTime  @default(now()) @db.DateTime(0)
   deleted_at DateTime? @db.DateTime(0)
   product    Product[]
+
+  @@map("product_brand")
 }
 
 model ProductCategory {
@@ -79,6 +82,7 @@ model ProductCategory {
   product_category_path_product_category_path_descendantToproduct_category ProductCategoryPath[] @relation("product_category_path_descendantToproduct_category")
 
   @@index([parent_id], map: "parent_id")
+  @@map("product_category")
 }
 
 model ProductCategoryPath {
@@ -90,6 +94,7 @@ model ProductCategoryPath {
 
   @@id([ancestor, descendant])
   @@index([descendant], map: "idx_descendant")
+  @@map("product_category_path")
 }
 
 model ProductImage {
@@ -103,6 +108,7 @@ model ProductImage {
   product    Product   @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "product_image_ibfk_1")
 
   @@index([product_id], map: "product_id")
+  @@map("product_image")
 }
 
 model ProductRating {
@@ -115,6 +121,8 @@ model ProductRating {
   created_at  DateTime  @default(now()) @db.DateTime(0)
   updated_at  DateTime  @default(now()) @db.DateTime(0)
   deleted_at  DateTime? @db.DateTime(0)
+
+  @@map("product_rating")
 }
 
 model ProductSize {
@@ -122,6 +130,8 @@ model ProductSize {
   name        String       @unique(map: "name") @db.VarChar(10)
   sort_order  Int          @default(0)
   product_sku ProductSku[]
+
+  @@map("product_size")
 }
 
 model ProductSku {
@@ -139,6 +149,7 @@ model ProductSku {
 
   @@unique([product_id, size_id], map: "uq_sku_unique")
   @@index([size_id], map: "size_id")
+  @@map("product_sku")
 }
 
 // #endregion
