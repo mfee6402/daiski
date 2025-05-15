@@ -3,53 +3,88 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
 } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
-import { CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Pagination } from '@/components/ui/pagination';
+import Image from 'next/image';
 
 export default function GroupsPage() {
   const router = useRouter();
+  const API_BASE = 'http://localhost:3005';
+
+  // 列表與分頁
   const [groups, setGroups] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // 篩選狀態
   const [filters, setFilters] = useState({
     type: '全部',
     date: '',
     location: '全部',
     keyword: '',
   });
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const typeOptions = ['全部', '出國團', '單日滑'];
-  const locationOptions = ['全部', '二世谷', '苗場'];
 
+  // 篩選選項（動態從後端載入）
+  const [typeOptions, setTypeOptions] = useState([]);
+  const [locationOptions, setLocationOptions] = useState([]);
+
+  // 取得活動類型與地點選項
+  // useEffect(() => {
+  //   async function loadFilterOptions() {
+  //     try {
+  //       const [typesRes, locsRes] = await Promise.all([
+  //         fetch(`${API_BASE}/api/group/types`),
+  //         fetch(`${API_BASE}/api/group/location`),
+  //       ]);
+  //       const types = await typesRes.json(); // e.g. ['滑雪','聚餐']
+  //       const locs = await locsRes.json(); // e.g. ['二世谷','苗場', ...]
+  //       setTypeOptions(['全部', ...types]);
+  //       setLocationOptions(['全部', ...locs]);
+  //     } catch (err) {
+  //       console.error('載入篩選選項失敗', err);
+  //     }
+  //   }
+  //   loadFilterOptions();
+  // }, []);
+
+  // 依篩選條件與頁碼撈團列表
   useEffect(() => {
     async function fetchGroups() {
       try {
-        const res = await fetch(
-          `/api/group?type=${filters.type}&date=${filters.date}&location=${filters.location}&keyword=${filters.keyword}&page=${page}`
-        );
+        const q = new URLSearchParams({
+          type: filters.type,
+          date: filters.date,
+          location: filters.location,
+          keyword: filters.keyword,
+          page: String(page),
+        }).toString();
+
+        const res = await fetch(`${API_BASE}/api/group?${q}`);
+
         const data = await res.json();
-        setGroups(data.groups);
-        setTotalPages(data.totalPages);
-      } catch (error) {
-        console.error('Fetch groups failed:', error);
+        // console.log(data.group)
+        setGroups(data || []);
+        setTotalPages(data.totalPages || 1);
+      } catch (err) {
+        console.error('Fetch groups failed:', err);
       }
     }
     fetchGroups();
   }, [filters, page]);
 
+  // 加入揪團（示意）
   const handleJoin = (id) => {
     console.log('加入揪團', id);
-    // TODO: 實作加入行為
   };
 
   return (
@@ -108,26 +143,25 @@ export default function GroupsPage() {
         </div>
       </section>
 
-      {/* Filter Section */}
+      {/* 篩選列 */}
       <section className="max-w-screen-xl mx-auto px-6 py-8">
-        <form className="grid grid-cols-1 md:grid-cols-5 gap-6 bg-white py-6 px-6 shadow-md">
+        <form className="grid grid-cols-1 md:grid-cols-5 gap-6 bg-white p-6 shadow-md rounded-lg">
+          {/* 類型 */}
           <div>
-            <Label htmlFor="filter-type">類型</Label>
+            <Label>類型</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-full justify-between">
-                  {filters.type}
-                  <span className="ml-2">▾</span>
+                  {filters.type} <span>▾</span>
                 </Button>
               </PopoverTrigger>
-              <PopoverContent side="bottom" align="start" className="w-[160px]">
-                <h4 className="text-sm font-medium mb-2">選擇類型</h4>
+              <PopoverContent side="bottom" align="start" className="w-44">
                 <div className="flex flex-col space-y-2">
                   {typeOptions.map((opt) => (
                     <Button
                       key={opt}
                       variant={filters.type === opt ? 'secondary' : 'ghost'}
-                      onClick={() => setFilters({ ...filters, type: opt })}
+                      onClick={() => setFilters((f) => ({ ...f, type: opt }))}
                     >
                       {opt}
                     </Button>
@@ -136,32 +170,37 @@ export default function GroupsPage() {
               </PopoverContent>
             </Popover>
           </div>
+
+          {/* 日期 */}
           <div>
-            <Label htmlFor="filter-date">日期</Label>
+            <Label>日期</Label>
             <Input
-              id="filter-date"
               type="date"
               value={filters.date}
-              onChange={(e) => setFilters({ ...filters, date: e.target.value })}
+              onChange={(e) =>
+                setFilters((f) => ({ ...f, date: e.target.value }))
+              }
             />
           </div>
+
+          {/* 地點 */}
           <div>
-            <Label htmlFor="filter-location">地點</Label>
+            <Label>地點</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-full justify-between">
-                  {filters.location}
-                  <span className="ml-2">▾</span>
+                  {filters.location} <span>▾</span>
                 </Button>
               </PopoverTrigger>
-              <PopoverContent side="bottom" align="start" className="w-[160px]">
-                <h4 className="text-sm font-medium mb-2">選擇地點</h4>
+              <PopoverContent side="bottom" align="start" className="w-44">
                 <div className="flex flex-col space-y-2">
                   {locationOptions.map((opt) => (
                     <Button
                       key={opt}
                       variant={filters.location === opt ? 'secondary' : 'ghost'}
-                      onClick={() => setFilters({ ...filters, location: opt })}
+                      onClick={() =>
+                        setFilters((f) => ({ ...f, location: opt }))
+                      }
                     >
                       {opt}
                     </Button>
@@ -170,87 +209,93 @@ export default function GroupsPage() {
               </PopoverContent>
             </Popover>
           </div>
+
+          {/* 關鍵字 */}
           <div className="md:col-span-2">
-            <Label htmlFor="filter-keyword">關鍵字搜尋</Label>
+            <Label>關鍵字搜尋</Label>
             <Input
-              id="filter-keyword"
               placeholder="輸入關鍵字..."
               value={filters.keyword}
               onChange={(e) =>
-                setFilters({ ...filters, keyword: e.target.value })
+                setFilters((f) => ({ ...f, keyword: e.target.value }))
               }
             />
           </div>
         </form>
       </section>
 
-      {/* Card Grid */}
-      <section className="max-w-screen-2xl mx-auto px-4 pb-24">
+      {/* 卡片列表 */}
+      <section className="max-w-screen-2xl mx-auto px-6 pb-16">
+        <div className="flex justify-end mb-4">
+          <Button onClick={() => router.push('/groups/create')}>
+            立即開團
+          </Button>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {groups.map((group) => (
             <Card
               key={group.id}
-              className="relative overflow-hidden bg-white shadow-lg transition-transform duration-300 hover:-translate-y-2 hover:shadow-2xl"
+              className="overflow-hidden shadow-lg hover:shadow-2xl transition"
             >
-              <div className="absolute inset-0 -z-10 bg-gradient-to-br from-sky-100 to-white clip-path-[polygon(0_0,100%_5%,100%_95%,0_100%)]" />
-              <div
-                className="h-52 bg-cover bg-center"
-                style={{ backgroundImage: `url('${group.coverImage}')` }}
+              <Image
+                // src={'http://localhost:3005/uploads/123.png'}
+                src={
+                  group.images[0]?.imageUrl
+                    ? `http://localhost:3005${group.images[0].imageUrl}`
+                    : ''
+                }
+                alt={`${group.images[0]?.imageUrl}`}
+                width={10}
+                height={10}
+                className="w-full h-full object-cover transition duration-300 hover:scale-110"
               />
-              <div className="p-4 flex flex-col justify-between h-[calc(100%-208px)]">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="w-8 h-8">
-                        <AvatarImage
-                          src={group.owner.avatar}
-                          alt={group.owner.name}
-                        />
-                        <AvatarFallback>{group.owner.name[0]}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">
-                          開團者：{group.owner.name}
-                        </p>
-                      </div>
-                    </div>
-                    <Badge variant="outline" className="text-xs px-2 py-1">
-                      {group.status}
-                    </Badge>
+
+              <CardContent>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    {/* <Avatar className="w-8 h-8">
+                      <AvatarImage
+                        src={group.user.avatar}
+                        alt={group.user.name}
+                      />
+                      <AvatarFallback>{group.user.name[0]}</AvatarFallback>
+                    </Avatar> */}
+                    <span className="text-sm">開團者：{group.user.name}</span>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2 border-l-4 border-blue-600 pl-2">
-                    {group.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-1">
-                    {group.location}｜{group.dateRange}｜{group.type}
-                  </p>
-                  <p className="text-sm text-gray-700 mb-1">
-                    目前人數：{group.current} / {group.capacity} 人
-                  </p>
-                  <p className="text-sm font-semibold text-red-500 mb-4">
-                    截止報名：{group.deadline}
-                  </p>
+                  <Badge variant="outline" className="text-xs">
+                    {group.status}
+                  </Badge>
                 </div>
-                <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold mb-1">{group.title}</h3>
+                <p className="text-sm text-gray-600 mb-1">
+                  {group.location} ｜{' '}
+                  {`${new Date(group.startDate).toLocaleDateString()} ~ ${new Date(group.endDate).toLocaleDateString()}`}
+                </p>
+                <p className="text-sm text-gray-800 mb-4">
+                  {group.currentPeople}/{group.maxPeople} 人
+                </p>
+                <div className="flex justify-between">
                   <Button
                     variant="link"
-                    onClick={() => router.push(`/group/${group.id}`)}
+                    onClick={() => router.push(`/groups/${group.id}`)}
                   >
                     查看詳情
                   </Button>
-                  <Button onClick={() => handleJoin(group.id)}>加入揪團</Button>
+                  <Button size="sm" onClick={() => handleJoin(group.id)}>
+                    加入揪團
+                  </Button>
                 </div>
-              </div>
+              </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* Pagination */}
-        <div className="max-w-screen-xl mx-auto px-4 py-8 flex justify-center">
+        {/* 分頁 */}
+        <div className="mt-10 flex justify-center">
           <Pagination
             currentpage={page}
             totalpages={totalPages}
-            onPageChange={(p) => setPage(p)}
+            onPageChange={setPage}
           />
         </div>
       </section>

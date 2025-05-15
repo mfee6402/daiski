@@ -1,9 +1,13 @@
 import Container from '@/components/container';
+import Process from './_components/process';
 
 export default function CartLayout({ children }) {
   return (
     <>
-      <Container>{children}</Container>
+      <Container>
+        <h3 className="text-h3-tw text-primary-600">CART | 購物車 </h3>
+        {children}
+      </Container>
     </>
   );
 }
