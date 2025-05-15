@@ -6,6 +6,7 @@ import { Funnel } from 'lucide-react';
 import { Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Send } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -141,6 +142,7 @@ export default function CoachesPage() {
                 setFilters((f) => ({ ...f, keyword: e.target.value }));
               }}
             >
+              <Send />
               搜尋
             </Button>
           </div>
@@ -171,7 +173,7 @@ export default function CoachesPage() {
         {filtered.map((t) => (
           <div
             key={t.id}
-            className="max-w-xs mx-auto border-2 border-blue-200 rounded-2xl p-6 text-center"
+            className="max-w-xs mx-auto border-2 bordered rounded-2xl p-6 text-center"
           >
             <img
               src={t.photo}
