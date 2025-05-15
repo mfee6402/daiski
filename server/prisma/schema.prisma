@@ -13,10 +13,10 @@ model User {
   id           Int            @id @default(autoincrement())
   account      String         @unique
   password     String
-  name         String         @unique
+  name         String         
   phone        String
   birthday     String
-  email        String         @unique
+  email        String         
   is_coach     String
   avatar       String
   createdAt    DateTime       @default(now()) @map("created_at")
