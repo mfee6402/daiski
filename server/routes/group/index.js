@@ -33,10 +33,26 @@ router.get('/', async (req, res, next) => {
       const [col] = await prisma.$queryRaw`
         SHOW COLUMNS FROM \`group\` LIKE 'type'
       `;
-      const types = col.Type.match(/'[^']+'/g).map(s => s.slice(1, -1));
+      const types = col.Type.match(/'[^']+'/g).map((s) => s.slice(1, -1));
       return res.json(types);
     }
-    const groups = await prisma.group.findMany({ orderBy: { createdAt: 'desc' } });
+    const groups = await prisma.group.findMany({
+      include: {
+        user: {
+          select: {
+            name: true,
+            avatar: true,
+          },
+        },
+       images: {
+          select: {
+            imageUrl: true,
+          },
+        },
+      },
+      // select: { user: true},
+      orderBy: { createdAt: 'desc' },
+    });
     res.json(groups);
   } catch (err) {
     next(err);
@@ -51,7 +67,7 @@ router.post('/', upload.single('cover'), async (req, res, next) => {
       title,
       start_date,
       end_date,
-      location,       // 滑雪時傳 location_id
+      location, // 滑雪時傳 location_id
       customLocation, // 聚餐時傳文字
       min_people,
       max_people,
@@ -83,17 +99,17 @@ router.post('/', upload.single('cover'), async (req, res, next) => {
 
     // 4. 組 data
     const data = {
-      type:        typeKey,
+      type: typeKey,
       title,
-      startDate:   sd,
-      endDate:     ed,
-      minPeople:   Number(min_people),
-      maxPeople:   Number(max_people),
-      price:       Number(price),
+      startDate: sd,
+      endDate: ed,
+      minPeople: Number(min_people),
+      maxPeople: Number(max_people),
+      price: Number(price),
       allowNewbie: allow_newbie === '1',
       description,
-      createdAt:   new Date(),
-      user:        { connect: { id: 1 } }, // 測試用，正式可改 session
+      createdAt: new Date(),
+      user: { connect: { id: 1 } }, // 測試用，正式可改 session
     };
 
     // 5. 根據 typeKey 塞入不同欄位
@@ -110,15 +126,14 @@ router.post('/', upload.single('cover'), async (req, res, next) => {
     if (imageUrl) {
       await prisma.groupImage.create({
         data: {
-          group:     { connect: { id: newGroup.id } },
-          imageUrl,               // schema 裡的 imageUrl
+          group: { connect: { id: newGroup.id } },
+          imageUrl, // schema 裡的 imageUrl
           sortOrder: 0,
-        }
+        },
       });
     }
 
     res.status(201).json(newGroup);
-
   } catch (err) {
     next(err);
   }
