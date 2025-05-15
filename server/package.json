@@ -10,8 +10,11 @@
     "debug": "DEBUG=express:* node ./api/index.js",
     "debug-win": "set DEBUG=express:* & node ./api/index.js",
     "lint-js": "export TIMING=1 || set TIMING=1&& eslint --ext .js,.jsx,.ts,.tsx prisma/seed.js --cache --cache-strategy metadata",
-    "sign": "node ./testJWT/sign.js member",
-    "verify": "node ./testJWT/verify.js member"
+    "sign": "node ./jwt/sign.js member",
+    "verify": "node ./jwt/verify.js member",
+    "sign2": "node --env-file=./jwt/dev.env ./jwt/sign.js ",
+    "verify2": "node --env-file=./jwt/dev.env ./jwt/verify.js ",
+    "dev2":"nodemon --env-file=./login-token/dev.env ./login-token/index.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
