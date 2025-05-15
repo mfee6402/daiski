@@ -249,13 +249,13 @@ export default function GroupsPage() {
               <CardContent>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    {/* <Avatar className="w-8 h-8">
+                    <Avatar className="w-8 h-8">
                       <AvatarImage
                         src={group.user.avatar}
                         alt={group.user.name}
                       />
                       <AvatarFallback>{group.user.name[0]}</AvatarFallback>
-                    </Avatar> */}
+                    </Avatar>
                     <span className="text-sm">開團者：{group.user.name}</span>
                   </div>
                   <Badge variant="outline" className="text-xs">
