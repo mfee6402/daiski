@@ -9,7 +9,9 @@
     "build": "prisma generate && prisma db push --force-reset && prisma db seed",
     "debug": "DEBUG=express:* node ./api/index.js",
     "debug-win": "set DEBUG=express:* & node ./api/index.js",
-    "lint-js": "export TIMING=1 || set TIMING=1&& eslint --ext .js,.jsx,.ts,.tsx prisma/seed.js --cache --cache-strategy metadata"
+    "lint-js": "export TIMING=1 || set TIMING=1&& eslint --ext .js,.jsx,.ts,.tsx prisma/seed.js --cache --cache-strategy metadata",
+    "sign": "node ./testJWT/sign.js member",
+    "verify": "node ./testJWT/verify.js member"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -26,7 +28,7 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "csvtojson": "^2.0.10",
-    "dotenv": "^16.4.1",
+    "dotenv": "^16.5.0",
     "express": "^4.18.2",
     "express-session": "^1.18.1",
     "http-errors": "^2.0.0",
