@@ -17,7 +17,7 @@ router.get('/', async (req, res, next) => {
     // 2. 如果有 category_id，就先從 closure table 取所有後裔 id
     let category_ids;
     if (category_id) {
-      const rows = await prisma.product_category_path.findMany({
+      const rows = await prisma.productCategoryPath.findMany({
         where: { ancestor: Number(category_id) },
         select: { descendant: true },
       });
@@ -111,7 +111,7 @@ router.get('/', async (req, res, next) => {
 // --------------------------------------------------
 router.get('/categories', async (req, res, next) => {
   try {
-    const categories = await prisma.product_category.findMany({
+    const categories = await prisma.productCategory.findMany({
       where: { deleted_at: null }, // 若有做「軟刪除」
       select: {
         id: true,
@@ -167,7 +167,7 @@ router.get('/categories', async (req, res, next) => {
 // --------------------------------------------------
 router.get('/categories/list', async (req, res, next) => {
   try {
-    const categories = await prisma.product_category.findMany({
+    const categories = await prisma.productCategory.findMany({
       where: {
         deleted_at: null, // 如果你有做軟刪除
       },

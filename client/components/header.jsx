@@ -54,6 +54,16 @@ export default function Header() {
             </Link>
           </NavigationMenuItem>
 
+          {/* 教練團隊 */}
+          <NavigationMenuItem>
+            <Link
+              href="/coaches"
+              className={`group inline-flex h-9 w-max items-center justify-center rounded-md bg-background font-medium hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=open]:hover:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:focus:bg-accent data-[state=open]:bg-accent/50 focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 text-base`}
+            >
+              教練團隊
+            </Link>
+          </NavigationMenuItem>
+
           {/* 揪團滑雪 */}
           <NavigationMenuItem>
             <Link
