@@ -63,6 +63,27 @@ export default function ProductFilter({
           </label>
         </div>
 
+        {/* 價格篩選 */}
+        <div className="mt-4">
+          <label className="block text-sm mb-1">價格範圍</label>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              // value={minPrice}
+              // onChange={(e) => onChangePrice("min", e.target.value)}
+              placeholder="最低價"
+              className="w-full border px-2 py-1"
+            />
+            <input
+              type="number"
+              // value={maxPrice}
+              // onChange={(e) => onChangePrice("max", e.target.value)}
+              placeholder="最高價"
+              className="w-full border px-2 py-1"
+            />
+          </div>
+        </div>
+
         {/* 每頁筆數選項 */}
         <div className="px-2 py-2 border-t border-[#d8d8d8]">
           <label className="flex items-center space-x-2 text-sm mb-2">
