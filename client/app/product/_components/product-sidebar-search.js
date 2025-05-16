@@ -1,4 +1,14 @@
-import { Search } from 'lucide-react';
+import {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+  CommandShortcut,
+} from '@/components/ui/command';
 export default function ProductSidebarSearch({
   searchValue,
   onChangeSearch,
@@ -7,33 +17,75 @@ export default function ProductSidebarSearch({
   onSelect,
 }) {
   return (
-    <>
-      <div className="relative">
-        <input
-          value={searchValue}
-          onChange={(e) => onChangeSearch(e.target.value)}
-          placeholder="搜尋商品..."
-        />
+    // <Command className="max-h-20 overflow-clip">
+    //   <div className="relative border-b border-[#d8d8d8] ">
+    //     {/* <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#969696]" /> */}
+    //     <CommandInput
+    //       className="pl-4"
+    //       placeholder="搜尋商品..."
+    //       value={searchValue}
+    //       onValueChange={onChangeSearch}
+    //     />
+    //   </div>
+    //   <CommandList>
+    //     {isLoading && (
+    //       <div className="p-2 text-sm text-gray-500">搜尋中...</div>
+    //     )}
+    //     {!isLoading && suggestions.length === 0 && searchValue.length >= 2 && (
+    //       <div className="p-2 text-sm text-gray-500">找不到結果</div>
+    //     )}
+    //     {suggestions.map((item) => (
+    //       <CommandItem
+    //         key={item.id}
+    //         value={item.name}
+    //         onSelect={() => onSelect(item)}
+    //         className="px-6 py-3 text-p-tw hover:bg-gray-50"
+    //       >
+    //         {item.name}
+    //       </CommandItem>
+    //     ))}
+    //   </CommandList>
+    // </Command>
 
-        {/* 搜尋建議下拉 */}
-        {searchValue && (
-          <div className="absolute top-full bg-white border">
-            {isLoading ? (
-              <div>載入中...</div>
-            ) : (
-              suggestions.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => onSelect(item)}
-                  className="hover:bg-gray-100 cursor-pointer"
-                >
-                  {item.name}
-                </button>
-              ))
-            )}
-          </div>
-        )}
+    <Command className="h-auto">
+      <div className="relative border-b border-[#d8d8d8]">
+        <CommandInput
+          className="pl-4"
+          placeholder="搜尋商品..."
+          value={searchValue}
+          onValueChange={onChangeSearch}
+        />
       </div>
-    </>
+
+      {/* 條件渲染 CommandList */}
+      {(searchValue.length >= 2 || suggestions.length > 0) && (
+        <CommandList className="max-h-60 overflow-auto">
+          {isLoading ? (
+            <div className="p-2 text-sm text-gray-500">搜尋中...</div>
+          ) : (
+            <>
+              {suggestions.length === 0 ? (
+                <CommandEmpty className="p-2 text-sm text-gray-500">
+                  找不到結果
+                </CommandEmpty>
+              ) : (
+                <CommandGroup>
+                  {suggestions.map((item) => (
+                    <CommandItem
+                      key={item.id}
+                      value={item.name}
+                      onSelect={() => onSelect(item)}
+                      className="px-6 py-3 text-p-tw hover:bg-gray-50"
+                    >
+                      {item.name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+            </>
+          )}
+        </CommandList>
+      )}
+    </Command>
   );
 }

@@ -225,8 +225,8 @@ model Group {
 
 model GroupMember {
   id       Int       @id @default(autoincrement())
-  groupId  Int
-  userId   Int
+  groupId  Int       @map("group_id")
+  userId   Int       @map("user_id")
   joinedAt DateTime  @default(now()) @map("joined_at")
   paidAt   DateTime? @map("paid_at")
 
@@ -361,6 +361,7 @@ model Course {
 model CourseImg {
   id        Int @id @default(autoincrement())
   course_id Int
+  img String
 
   course Course @relation(fields: [course_id], references: [id])
 
@@ -369,7 +370,6 @@ model CourseImg {
 
 model CourseVariant {
   id Int @id @default(autoincrement())
-
   course_id     Int
   difficulty    String
   price         Int
@@ -385,6 +385,20 @@ model CourseVariant {
   @@map("course_variant")
 }
 
+model Tag {
+  id Int @id @default(autoincrement())
+  name String
+
+  @@map("tag")
+}
+
+model CourseTag {
+  id Int @id @default(autoincrement())
+  course_id Int
+  tag_id Int
+
+  @@map("course_tag")
+}
 // #endregion
 
 // 優惠券

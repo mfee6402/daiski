@@ -42,6 +42,18 @@ router.get('/', async (req, res, next) => {
       where.category_id = { in: category_ids };
     }
 
+    //  如果有 brand_id，就加上品牌過濾
+    if (req.query.brand_id) {
+      // 支援多選 comma-separated
+      const ids = String(req.query.brand_id)
+        .split(/[,\s]+/)
+        .map((v) => Number(v))
+        .filter((v) => !Number.isNaN(v));
+      if (ids.length) {
+        where.brand_id = { in: ids };
+      }
+    }
+
     //size_id
     if (size_id) {
       // 前端傳「逗號分隔」或重複 ?size_id=1&size_id=3
@@ -157,6 +169,45 @@ router.get('/', async (req, res, next) => {
       total,
       data: basic,
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// 在 import 之後、其他 router.get 之前加入：
+/**
+ * GET /api/products/search-suggestions
+ * Query:
+ *   - q: 關鍵字（必填，長度需 ≥ 2）
+ *   - limit: 最多回傳幾筆（選填，預設 5）
+ */
+router.get('/search-suggestions', async (req, res, next) => {
+  try {
+    const { search, limit } = req.query;
+    const keyword = typeof search === 'string' ? search.trim() : '';
+    const max = Math.max(parseInt(limit, 10), 1);
+
+    // 關鍵字長度限制
+    if (keyword.length < 2) {
+      return res.status(400).json({ message: 'search 長度需 ≥ 2 字元' });
+    }
+
+    const suggestions = await prisma.product.findMany({
+      where: {
+        delete_at: null,
+        name: {
+          contains: keyword,
+        },
+      },
+      orderBy: { name: 'asc' },
+      take: 3,
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+
+    res.json(suggestions);
   } catch (error) {
     next(error);
   }
@@ -293,6 +344,64 @@ router.get('/sizes', async (req, res, next) => {
     });
 
     res.json(sizes);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// --------------------------------------------------
+// GET /api/products/brands — 取得所有品牌，或特定分類下可用的品牌
+// --------------------------------------------------
+router.get('/brands', async (req, res, next) => {
+  const { category_id } = req.query;
+
+  try {
+    // 1. 如果有帶 category_id，先抓該分類（含所有子孫）的 ID
+    let brandFilter = {};
+    if (category_id) {
+      const catId = Number(category_id);
+      // a. 拿所有 descendant id（含自己）
+      const paths = await prisma.productCategoryPath.findMany({
+        where: { ancestor: catId },
+        select: { descendant: true },
+      });
+      const categoryIds = paths.map((p) => p.descendant);
+
+      // b. 從 product 找出這些分類下所有未刪除且有 brand_id 的商品
+      const productRows = await prisma.product.findMany({
+        where: {
+          delete_at: null,
+          brand_id: { not: null },
+          category_id: { in: categoryIds },
+        },
+        distinct: ['brand_id'],
+        select: { brand_id: true },
+      });
+      const brandIds = productRows.map((p) => p.brand_id);
+
+      // c. 在品牌過濾條件中加入這些 ID
+      if (brandIds.length) {
+        brandFilter.id = { in: brandIds };
+      } else {
+        // 若完全沒有符合的品牌，就直接回空陣列
+        return res.json([]);
+      }
+    }
+
+    // 2. 最後從 product_brand 取出符合條件的品牌清單
+    const brands = await prisma.productBrand.findMany({
+      where: {
+        deleted_at: null,
+        ...brandFilter,
+      },
+      orderBy: { sort_order: 'asc' },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+
+    res.json(brands);
   } catch (error) {
     next(error);
   }
