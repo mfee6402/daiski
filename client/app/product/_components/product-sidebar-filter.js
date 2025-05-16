@@ -7,6 +7,9 @@ export default function ProductFilter({
   selectedSizes,
   onToggleSize,
   onResetSizes,
+  showAllSizes,
+  onToggleShowAllSizes,
+  canToggleSizes,
   brands,
   selectedBrands,
   onToggleBrand,
@@ -47,7 +50,7 @@ export default function ProductFilter({
           </Button>
         </div>
 
-        {/* 尺寸篩選 */}
+        {/* 尺寸篩選
         <div className="px-4 py-2 border-t">
           <h4 className="font-medium mb-2">尺寸篩選</h4>
 
@@ -67,6 +70,43 @@ export default function ProductFilter({
           <Button
             onClick={onResetSizes}
             className="w-full mt-4 hover:bg-primary-500 cursor-pointer"
+          >
+            重置尺寸
+          </Button>
+        </div> */}
+
+        {/* ====== 尺寸篩選 ====== */}
+        <div className="px-4 py-2 border-t">
+          <h4 className="font-medium mb-2">尺寸篩選</h4>
+
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            {sizes.map((s) => (
+              <label key={s.id} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={selectedSizes.includes(s.id)}
+                  onChange={() => onToggleSize(s.id)}
+                  className="rounded border-[#cccccc]"
+                />
+                <span>{s.name}</span>
+              </label>
+            ))}
+          </div>
+
+          {canToggleSizes && (
+            <div className="text-center mt-2">
+              <button
+                onClick={onToggleShowAllSizes}
+                className="text-sm font-medium text-primary-600 hover:underline"
+              >
+                {showAllSizes ? '收合尺寸' : '查看更多尺寸'}
+              </button>
+            </div>
+          )}
+
+          <Button
+            onClick={onResetSizes}
+            className="w-full mt-4 hover:bg-primary-500"
           >
             重置尺寸
           </Button>
