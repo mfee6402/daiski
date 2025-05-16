@@ -9,7 +9,7 @@ export default function QuantityButton({
   type = '',
 }) {
   const url = `http://localhost:3005/api/cart/${productIndex}`;
-  async function fetchData() {
+  async function fetchData(nextCart) {
     try {
       const res = await fetch(url, {
         method: 'PUT',
@@ -17,7 +17,7 @@ export default function QuantityButton({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          data: data,
+          data: nextCart,
         }),
       });
     } catch (err) {
@@ -29,6 +29,7 @@ export default function QuantityButton({
     <>
       <button
         onClick={() => {
+          console.log(data.cart);
           const nextCart = produce(data, (draft) => {
             if (type === 'minus') {
               draft.cart.CartProduct[productIndex].quantity--;
@@ -37,10 +38,11 @@ export default function QuantityButton({
             }
           });
           setData(nextCart);
-          fetchData();
+          fetchData(nextCart);
         }}
       >
-        +
+        {type === 'minus' && '-'}
+        {type === 'plus' && '+'}
       </button>
     </>
   );

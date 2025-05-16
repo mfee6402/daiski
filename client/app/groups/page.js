@@ -14,7 +14,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Pagination } from '@/components/ui/pagination';
+import { CustomPagination } from './_components/group-pagination';
 import Image from 'next/image';
 
 export default function GroupsPage() {
@@ -226,11 +226,7 @@ export default function GroupsPage() {
 
       {/* 卡片列表 */}
       <section className="max-w-screen-2xl mx-auto px-6 pb-16">
-        <div className="flex justify-end mb-4">
-          <Button onClick={() => router.push('/groups/create')}>
-            立即開團
-          </Button>
-        </div>
+        <div className="flex justify-end mb-4"></div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {groups.map((group) => (
             <Card
@@ -242,9 +238,9 @@ export default function GroupsPage() {
                 src={
                   group.images[0]?.imageUrl
                     ? `http://localhost:3005${group.images[0].imageUrl}`
-                    : ''
+                    : '該揪團尚未上傳封面'
                 }
-                alt={`${group.images[0]?.imageUrl}`}
+                alt={group.title}
                 width={10}
                 height={10}
                 className="w-full h-full object-cover transition duration-300 hover:scale-110"
@@ -253,13 +249,13 @@ export default function GroupsPage() {
               <CardContent>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    {/* <Avatar className="w-8 h-8">
+                    <Avatar className="w-8 h-8">
                       <AvatarImage
                         src={group.user.avatar}
                         alt={group.user.name}
                       />
                       <AvatarFallback>{group.user.name[0]}</AvatarFallback>
-                    </Avatar> */}
+                    </Avatar>
                     <span className="text-sm">開團者：{group.user.name}</span>
                   </div>
                   <Badge variant="outline" className="text-xs">
@@ -292,10 +288,10 @@ export default function GroupsPage() {
 
         {/* 分頁 */}
         <div className="mt-10 flex justify-center">
-          <Pagination
-            currentpage={page}
-            totalpages={totalPages}
-            onPageChange={setPage}
+          <CustomPagination
+            currentPage={page} // 傳遞當前頁，建議使用 camelCase
+            totalPages={totalPages} // 傳遞總頁數，建議使用 camelCase
+            onPageChange={setPage} // 傳遞 setPage 函式作為回呼
           />
         </div>
       </section>
