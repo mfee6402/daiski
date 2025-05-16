@@ -41,8 +41,13 @@ export default function QuantityButton({
           fetchData(nextCart);
         }}
       >
-        <p className="text-h6-tw">{type === 'minus' && '-'}</p>
-        <p className="text-h6-tw">{type === 'plus' && '+'}</p>
+        {/* FIXME -號要加大*/}
+        <div>
+          <p className="text-h6-tw ">{type === 'minus' && '-'}</p>
+        </div>
+        <div>
+          <p className="text-h6-tw">{type === 'plus' && '+'}</p>
+        </div>
       </button>
     </>
   );
