@@ -13,10 +13,10 @@ model User {
   id           Int            @id @default(autoincrement())
   account      String         @unique
   password     String
-  name         String         @unique
+  name         String
   phone        String
   birthday     String
-  email        String         @unique
+  email        String
   is_coach     String
   avatar       String
   createdAt    DateTime       @default(now()) @map("created_at")
@@ -48,6 +48,7 @@ model Product {
   product_category ProductCategory? @relation(fields: [category_id], references: [id], onUpdate: Restrict, map: "product_ibfk_1")
   product_image    ProductImage[]
   product_sku      ProductSku[]
+  CartProduct      CartProduct[]
 
   @@index([category_id], map: "category_id")
   @@index([brand_id], map: "fk_product_brand")
@@ -233,7 +234,7 @@ model GroupMember {
   user  User  @relation(fields: [userId], references: [id])
 
   @@unique([groupId, userId])
-  @@map("groupmember")
+  @@map("group_member")
 }
 
 model GroupImage {
@@ -244,7 +245,7 @@ model GroupImage {
 
   group Group @relation(fields: [groupId], references: [id])
 
-  @@map("groupimage")
+  @@map("group_image")
 }
 
 model GroupComment {
@@ -258,7 +259,7 @@ model GroupComment {
   group Group @relation(fields: [groupId], references: [id])
   user  User  @relation(fields: [userId], references: [id])
 
-  @@map("groupcomment")
+  @@map("group_comment")
 }
 
 model ChatRoom {
@@ -283,7 +284,7 @@ model ChatMessage {
   room        ChatRoom    @relation(fields: [groupId], references: [groupId])
   user        User        @relation(fields: [userId], references: [id])
 
-  @@map("chatmessage")
+  @@map("chat_message")
 }
 
 // #endregion
@@ -344,12 +345,46 @@ model LicenseCoach {
 }
 
 model Course {
-  id Int @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String
+  created_at  DateTime    @default(now()) @map("created_at")
+  updated_at  DateTime    @updatedAt @map("updated_at")
+  deleted_at  DateTime?   @map("deleted_at")
+  start_at    DateTime    @updatedAt @map("start_at")
+  end_at      DateTime    @map("end_at")
+  CourseImg   CourseImg[]
 
   @@map("course")
 }
 
-// // #endregion
+model CourseImg {
+  id        Int @id @default(autoincrement())
+  course_id Int
+
+  course Course @relation(fields: [course_id], references: [id])
+
+  @@map("course_img")
+}
+
+model CourseVariant {
+  id Int @id @default(autoincrement())
+
+  course_id     Int
+  difficulty    String
+  price         Int
+  duration      Int
+  max_people    Int
+  location_id   Int
+  coach_id      Int
+  course_img_id Int
+  start_at      DateTime  @updatedAt @map("start_at")
+  deleted_at    DateTime? @map("deleted_at")
+
+  @@map("course_variant")
+}
+
+// #endregion
 
 // 優惠券
 // #region 
@@ -436,7 +471,8 @@ model CartProduct {
   productId Int @map("product_id")
   quantity  Int
 
-  cart Cart @relation(fields: [cartId], references: [id])
+  cart    Cart    @relation(fields: [cartId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 
   @@map("cart_product")
 }

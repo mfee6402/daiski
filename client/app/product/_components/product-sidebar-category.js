@@ -234,7 +234,7 @@ export default function ProductSidebarCategory({
             <button
               type="button"
               onClick={() => onSelectCategory?.(data.__id)}
-              className="font-medium text-left flex-1 hover:text-sky-600 cursor-pointer"
+              className="font-medium text-left flex-1 hover:text-primary-500 cursor-pointer "
             >
               {label}
             </button>
@@ -244,7 +244,7 @@ export default function ProductSidebarCategory({
               <CollapsibleTrigger asChild>
                 <button
                   type="button"
-                  className="w-4 h-4 flex-shrink-0 focus:outline-none transition-transform data-[state=open]:rotate-180 hover:text-sky-600 cursor-pointer"
+                  className="w-4 h-4 flex-shrink-0 focus:outline-none transition-transform data-[state=open]:rotate-180 hover:text-primary-500 cursor-pointer"
                 >
                   <svg
                     className="w-4 h-4 "
@@ -266,7 +266,7 @@ export default function ProductSidebarCategory({
           </div>
 
           <CollapsibleContent
-            className="pl-4 border-l border-gray-200 space-y-1 overflow-hidden
+            className="pl-4  border-l border-gray-200 space-y-1 overflow-hidden
        data-[state=open]:animate-[var(--animate-expand)]
     data-[state=closed]:animate-[var(--animate-collapse)]"
           >
@@ -281,7 +281,7 @@ export default function ProductSidebarCategory({
 
   return (
     <div className="px-4 py-2">
-      <h3 className="mb-2 text-xs font-semibold uppercase text-sky-600">
+      <h3 className="mb-2 text-2xl font-semibold uppercase text-primary-800">
         商品分類
       </h3>
       <div className="space-y-2">{renderTree(tree)}</div>

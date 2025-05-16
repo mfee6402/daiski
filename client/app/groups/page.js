@@ -226,7 +226,7 @@ export default function GroupsPage() {
 
       {/* 卡片列表 */}
       <section className="max-w-screen-2xl mx-auto px-6 pb-16">
-        
+        <div className="flex justify-end mb-4"></div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {groups.map((group) => (
             <Card
@@ -238,7 +238,7 @@ export default function GroupsPage() {
                 src={
                   group.images[0]?.imageUrl
                     ? `http://localhost:3005${group.images[0].imageUrl}`
-                    : ''
+                    : '該揪團尚未上傳封面'
                 }
                 alt={group.title}
                 width={10}
@@ -287,11 +287,13 @@ export default function GroupsPage() {
         </div>
 
         {/* 分頁 */}
-        <CustomPagination
-          currentPage={page} // 傳遞當前頁，建議使用 camelCase
-          totalPages={totalPages} // 傳遞總頁數，建議使用 camelCase
-          onPageChange={setPage} // 傳遞 setPage 函式作為回呼
-        />
+        <div className="mt-10 flex justify-center">
+          <CustomPagination
+            currentPage={page} // 傳遞當前頁，建議使用 camelCase
+            totalPages={totalPages} // 傳遞總頁數，建議使用 camelCase
+            onPageChange={setPage} // 傳遞 setPage 函式作為回呼
+          />
+        </div>
       </section>
     </>
   );
