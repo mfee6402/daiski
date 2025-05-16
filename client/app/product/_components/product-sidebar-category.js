@@ -234,7 +234,7 @@ export default function ProductSidebarCategory({
             <button
               type="button"
               onClick={() => onSelectCategory?.(data.__id)}
-              className="font-medium text-left flex-1 hover:text-primary-500 cursor-pointer"
+              className="font-medium text-left flex-1 hover:text-primary-500 cursor-pointer "
             >
               {label}
             </button>
@@ -266,7 +266,7 @@ export default function ProductSidebarCategory({
           </div>
 
           <CollapsibleContent
-            className="pl-4 border-l border-gray-200 space-y-1 overflow-hidden
+            className="pl-4  border-l border-gray-200 space-y-1 overflow-hidden
        data-[state=open]:animate-[var(--animate-expand)]
     data-[state=closed]:animate-[var(--animate-collapse)]"
           >

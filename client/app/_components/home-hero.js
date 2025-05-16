@@ -18,14 +18,14 @@ export default function HomeHero(props) {
             className="absolute inset-0 overflow-hidden"
           >
             <Image
-              src="./home-images/layer2.png"
+              src="/home-images/layer2.png"
               alt="最遠景"
               data-parallax-layer="1"
               className="absolute inset-0 w-full h-[130%] object-cover pointer-events-none -translate-y-[0%]"
               fill
             />
             <Image
-              src="./home-images/layer1.png"
+              src="/home-images/layer1.png"
               alt="中間層"
               data-parallax-layer="2"
               className="absolute inset-0 w-full h-[130%] object-cover pointer-events-none -translate-y-[0%]"
@@ -42,7 +42,7 @@ export default function HomeHero(props) {
             </div>
 
             <Image
-              src="./home-images/layer0-1.png"
+              src="/home-images/layer0-1.png"
               alt="最近景"
               data-parallax-layer="4"
               className="absolute inset-0 w-full h-full object-cover pointer-events-none -translate-y-[-35%]"
@@ -56,7 +56,7 @@ export default function HomeHero(props) {
       </section>
 
       {/* 空白間格 */}
-      <div className="min-h-[20vh] flex items-center justify-center"></div>
+      <div className="min-h-[22vh] flex items-center justify-center"></div>
     </>
   );
 }
