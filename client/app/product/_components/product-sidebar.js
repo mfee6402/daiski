@@ -6,14 +6,24 @@ export default function ProductSidebar({
   limit,
   onChangeLimit,
   categories,
+  selectedCategoryId,
   onSelectCategory,
+  openCategories,
+  onToggleCategory,
   sizes,
   selectedSizes,
   onToggleSize,
+  onResetSizes,
+  brands,
+  selectedBrands,
+  onToggleBrand,
+  onResetBrands,
   minPrice,
   maxPrice,
   onChangePrice,
   onTriggerPriceFilter,
+  onResetPrice,
+  priceError,
   searchValue,
   onChangeSearch,
   suggestions,
@@ -33,6 +43,9 @@ export default function ProductSidebar({
       <ProductSidebarCategory
         categories={categories}
         onSelectCategory={onSelectCategory}
+        selectedCategoryId={selectedCategoryId}
+        openCategories={openCategories}
+        onToggleCategory={onToggleCategory}
       />
 
       <ProductSidebarFilter
@@ -41,10 +54,17 @@ export default function ProductSidebar({
         sizes={sizes}
         selectedSizes={selectedSizes}
         onToggleSize={onToggleSize}
+        onResetSizes={onResetSizes}
+        brands={brands}
+        selectedBrands={selectedBrands}
+        onToggleBrand={onToggleBrand}
+        onResetBrands={onResetBrands}
         minPrice={minPrice}
         maxPrice={maxPrice}
         onChangePrice={onChangePrice}
         onTriggerPriceFilter={onTriggerPriceFilter}
+        onResetPrice={onResetPrice}
+        priceError={priceError}
       />
     </div>
   );

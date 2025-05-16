@@ -6,18 +6,51 @@ export default function ProductFilter({
   sizes,
   selectedSizes,
   onToggleSize,
+  onResetSizes,
+  brands,
+  selectedBrands,
+  onToggleBrand,
+  onResetBrands,
   minPrice,
   maxPrice,
   onChangePrice,
   onTriggerPriceFilter,
+  onResetPrice,
+  priceError,
 }) {
   return (
     <div className="hidden md:flex flex-col max-w-48 xl:max-w-64 w-full mx-auto bg-[#ffffff] text-[#231815]">
       {/* Filter Checkboxes */}
-      <div className="px-4 py-2 border-t border-[#d8d8d8]">
+      <div className="px-4 py-2">
+        {/* ====== 品牌篩選 ====== */}
+        <div className="px-4 py-2 border-t mt-4">
+          <h4 className="font-medium mb-2">品牌篩選</h4>
+
+          <div className="grid grid-cols-1 gap-x-4 gap-y-2 text-sm">
+            {brands.map((b) => (
+              <label key={b.id} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={selectedBrands.includes(b.id)}
+                  onChange={() => onToggleBrand(b.id)}
+                  className="rounded border-[#cccccc]"
+                />
+                <span>{b.name}</span>
+              </label>
+            ))}
+          </div>
+          <Button
+            onClick={onResetBrands}
+            className="w-full mt-4 hover:bg-primary-500 cursor-pointer"
+          >
+            重置品牌
+          </Button>
+        </div>
+
         {/* 尺寸篩選 */}
         <div className="px-4 py-2 border-t">
           <h4 className="font-medium mb-2">尺寸篩選</h4>
+
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
             {sizes.map((s) => (
               <label key={s.id} className="flex items-center space-x-2">
@@ -31,25 +64,37 @@ export default function ProductFilter({
               </label>
             ))}
           </div>
+          <Button
+            onClick={onResetSizes}
+            className="w-full mt-4 hover:bg-primary-500 cursor-pointer"
+          >
+            重置尺寸
+          </Button>
         </div>
 
         {/* 價格篩選 */}
-        <div className="flex flex-col gap-2 mt-4">
-          <label className="font-medium mb-2">價格篩選</label>
+        <div className="px-4 py-2 border-t mt-4">
+          <div className="flex justify-between items-center mb-2">
+            <h4 className="font-medium">價格篩選</h4>
+          </div>
           <div className="flex gap-2">
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={minPrice}
               onChange={(e) => onChangePrice('min', e.target.value)}
               placeholder="最低價"
-              className="w-full border px-2 py-1"
+              className="w-full border px-2 py-1 "
             />
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={maxPrice}
               onChange={(e) => onChangePrice('max', e.target.value)}
               placeholder="最高價"
-              className="w-full border px-2 py-1"
+              className="w-full border px-2 py-1 "
             />
           </div>
           <Button
@@ -57,6 +102,17 @@ export default function ProductFilter({
             className="w-full mt-2 hover:bg-primary-500 cursor-pointer"
           >
             價格篩選
+          </Button>
+
+          {priceError && (
+            <p className="mt-1 text-sm text-red-500">{priceError}</p>
+          )}
+
+          <Button
+            className="w-full mt-4 hover:bg-primary-500 cursor-pointer"
+            onClick={onResetPrice}
+          >
+            重置價格
           </Button>
         </div>
 
