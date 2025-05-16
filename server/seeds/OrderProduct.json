@@ -1,7 +1,7 @@
 [
   {
   "orderId"  : 1,
-  "productId" :1,
+  "productSkuId" :1,
   "quantity":2
   }
 ]
