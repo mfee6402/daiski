@@ -25,17 +25,35 @@ router.post('/', async function (req, res) {
 router.get('/', async function (req, res) {
   const data = await prisma.cart.findUnique({
   include: {
-    // 相當於 JOIN cart ON cart.id = post.cart
-    
-     CartProduct: {
-      include: {
-        product: {
-          include: {
-            product_image: true, // 取得圖片
-          },
-        },
-      },
-    },
+    // 相當於 JOIN
+     CartProduct: true,
+    //  {
+      // include: {
+        // productSku:true
+        // product: {
+          // select: {
+          //   name:true,
+          //   product_image:
+          //   {
+          //     select:{
+          //       url:true
+          //     },
+          //      where: {
+          //       sort_order: 0,
+          //      },
+          //   }, 
+          //   product_sku:{
+          //     select:{
+          //       url:true
+          //     },
+          //      where: {
+          //       sort_order: 0,
+          //      },
+          //   }
+          // },
+        // },
+      // },
+    // },
     CartCourse:{
      select:{
         courseId:true,
@@ -53,19 +71,20 @@ router.get('/', async function (req, res) {
   },
 });
   // 攤平 CartProduct 內的 product.name 成 productName
-  // const flatCartProduct = data.CartProduct.map(item => ({
+  // const CartProduct = data.CartProduct.map(item => ({
   //   id: item.id,
   //   cartId: item.cartId,
   //   productId: item.productId,
   //   quantity: item.quantity,
-  //   name: item.product.name
+  //   name: item.product.name,
+  //   product_image: item.product.product_image.map(img=>img.url)[0]
   // }));
 
-  // 替換原本的 CartProduct 為攤平後的資料
   // const cart = {
   //   ...data,
-  //   CartProduct: flatCartProduct
-  // };
+  //   CartProduct
+  // }
+
   res
     .status(200)
     .json({ status: 'success', data})

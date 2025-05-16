@@ -196,3 +196,12 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* swiper */
+:root {
+  /* 主題色：影響 nav 箭頭、bullet、loading spinner ... */
+  --swiper-theme-color: #404040; /* sky-400 */
+  /* 如果要分開改 ⇩ */
+  --swiper-navigation-color: #404040; /* 左右箭頭 */
+  --swiper-pagination-color: #404040; /* bullet 或 fraction */
+}
