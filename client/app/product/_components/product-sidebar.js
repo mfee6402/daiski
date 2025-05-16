@@ -14,6 +14,9 @@ export default function ProductSidebar({
   selectedSizes,
   onToggleSize,
   onResetSizes,
+  showAllSizes,
+  onToggleShowAllSizes,
+  canToggleSizes,
   brands,
   selectedBrands,
   onToggleBrand,
@@ -55,6 +58,9 @@ export default function ProductSidebar({
         selectedSizes={selectedSizes}
         onToggleSize={onToggleSize}
         onResetSizes={onResetSizes}
+        showAllSizes={showAllSizes}
+        onToggleShowAllSizes={onToggleShowAllSizes}
+        canToggleSizes={canToggleSizes}
         brands={brands}
         selectedBrands={selectedBrands}
         onToggleBrand={onToggleBrand}

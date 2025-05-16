@@ -112,6 +112,10 @@ export default function ProductPage() {
       ?.split(',')
       .map((v) => Number(v)) || []
   );
+  const [showAllSizes, setShowAllSizes] = useState(false);
+  const previewCount = 12;
+  const sizesToShow = showAllSizes ? sizes : sizes.slice(0, previewCount);
+  const canToggleSizes = sizes.length > previewCount;
   const [minPrice, setMinPrice] = useState(searchParams.get('min_price') || '');
   const [maxPrice, setMaxPrice] = useState(searchParams.get('max_price') || '');
 
@@ -372,10 +376,13 @@ export default function ProductPage() {
           onSelectCategory={handleCategorySelect}
           openCategories={openCategories}
           onToggleCategory={handleToggleCategory}
-          sizes={sizes}
+          sizes={sizesToShow}
           selectedSizes={selectedSizes}
           onToggleSize={handleToggleSize}
           onResetSizes={handleResetSizes}
+          showAllSizes={showAllSizes}
+          canToggleSizes={canToggleSizes}
+          onToggleShowAllSizes={() => setShowAllSizes((prev) => !prev)}
           brands={brands}
           selectedBrands={selectedBrands}
           onToggleBrand={handleToggleBrand}
