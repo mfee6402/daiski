@@ -225,8 +225,8 @@ model Group {
 
 model GroupMember {
   id       Int       @id @default(autoincrement())
-  groupId  Int
-  userId   Int
+  groupId  Int       @map("group_id")
+  userId   Int       @map("user_id")
   joinedAt DateTime  @default(now()) @map("joined_at")
   paidAt   DateTime? @map("paid_at")
 
