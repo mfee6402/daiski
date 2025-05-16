@@ -13,10 +13,10 @@ model User {
   id           Int            @id @default(autoincrement())
   account      String         @unique
   password     String
-  name         String         @unique
+  name         String
   phone        String
   birthday     String
-  email        String         @unique
+  email        String
   is_coach     String
   avatar       String
   createdAt    DateTime       @default(now()) @map("created_at")
@@ -48,9 +48,11 @@ model Product {
   product_category ProductCategory? @relation(fields: [category_id], references: [id], onUpdate: Restrict, map: "product_ibfk_1")
   product_image    ProductImage[]
   product_sku      ProductSku[]
+  CartProduct      CartProduct[]
 
   @@index([category_id], map: "category_id")
   @@index([brand_id], map: "fk_product_brand")
+  @@map("product")
 }
 
 model ProductBrand {
@@ -61,6 +63,8 @@ model ProductBrand {
   updated_at DateTime  @default(now()) @db.DateTime(0)
   deleted_at DateTime? @db.DateTime(0)
   product    Product[]
+
+  @@map("product_brand")
 }
 
 model ProductCategory {
@@ -78,6 +82,7 @@ model ProductCategory {
   product_category_path_product_category_path_descendantToproduct_category ProductCategoryPath[] @relation("product_category_path_descendantToproduct_category")
 
   @@index([parent_id], map: "parent_id")
+  @@map("product_category")
 }
 
 model ProductCategoryPath {
@@ -89,6 +94,7 @@ model ProductCategoryPath {
 
   @@id([ancestor, descendant])
   @@index([descendant], map: "idx_descendant")
+  @@map("product_category_path")
 }
 
 model ProductImage {
@@ -102,6 +108,7 @@ model ProductImage {
   product    Product   @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "product_image_ibfk_1")
 
   @@index([product_id], map: "product_id")
+  @@map("product_image")
 }
 
 model ProductRating {
@@ -114,6 +121,8 @@ model ProductRating {
   created_at  DateTime  @default(now()) @db.DateTime(0)
   updated_at  DateTime  @default(now()) @db.DateTime(0)
   deleted_at  DateTime? @db.DateTime(0)
+
+  @@map("product_rating")
 }
 
 model ProductSize {
@@ -121,6 +130,8 @@ model ProductSize {
   name        String       @unique(map: "name") @db.VarChar(10)
   sort_order  Int          @default(0)
   product_sku ProductSku[]
+
+  @@map("product_size")
 }
 
 model ProductSku {
@@ -138,6 +149,7 @@ model ProductSku {
 
   @@unique([product_id, size_id], map: "uq_sku_unique")
   @@index([size_id], map: "size_id")
+  @@map("product_sku")
 }
 
 // #endregion
@@ -176,36 +188,38 @@ model Location {
 
   // relations
   groups Group[]
+
   @@map("location")
 }
 
 model Group {
-  id         Int      @id @default(autoincrement())
-  userId     Int      @map("user_id")
-  user       User     @relation(fields: [userId], references: [id])
+  id         Int       @id @default(autoincrement())
+  userId     Int       @map("user_id")
+  user       User      @relation(fields: [userId], references: [id])
   locationId Int?      @map("location_id")
   location   Location? @relation(fields: [locationId], references: [id])
 
-  customLocation String? @map("custom_location")
-  title       String         @db.VarChar(100)
-  type        ActivityType
-  difficulty  SkiDifficulty?
-  startDate   DateTime       @map("start_date")
-  endDate     DateTime       @map("end_date")
-  minPeople   Int            @map("min_people")
-  maxPeople   Int            @map("max_people")
-  price       Int
-  description String?        @db.Text
-  allowNewbie Boolean        @default(false) @map("allow_newbie")
-  createdAt DateTime  @default(now()) @map("created_at")
-  endAt     DateTime? @map("end_at")
-  deletedAt DateTime? @map("deleted_at")
+  customLocation String?        @map("custom_location")
+  title          String         @db.VarChar(100)
+  type           ActivityType
+  difficulty     SkiDifficulty?
+  startDate      DateTime       @map("start_date")
+  endDate        DateTime       @map("end_date")
+  minPeople      Int            @map("min_people")
+  maxPeople      Int            @map("max_people")
+  price          Int
+  description    String?        @db.Text
+  allowNewbie    Boolean        @default(false) @map("allow_newbie")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  endAt          DateTime?      @map("end_at")
+  deletedAt      DateTime?      @map("deleted_at")
 
   // relations
   members  GroupMember[]
   images   GroupImage[]
   comments GroupComment[]
   chatRoom ChatRoom? // inverse side of ChatRoom.group
+
   @@map("group")
 }
 
@@ -216,12 +230,11 @@ model GroupMember {
   joinedAt DateTime  @default(now()) @map("joined_at")
   paidAt   DateTime? @map("paid_at")
 
-
   group Group @relation(fields: [groupId], references: [id])
   user  User  @relation(fields: [userId], references: [id])
 
   @@unique([groupId, userId])
-  @@map("groupmember")
+  @@map("group_member")
 }
 
 model GroupImage {
@@ -231,7 +244,8 @@ model GroupImage {
   sortOrder Int    @default(0) @map("sort_order")
 
   group Group @relation(fields: [groupId], references: [id])
-  @@map("groupimage")
+
+  @@map("group_image")
 }
 
 model GroupComment {
@@ -243,8 +257,9 @@ model GroupComment {
   replyId   Int?     @map("reply_id")
 
   group Group @relation(fields: [groupId], references: [id])
-  @@map("groupcomment")
   user  User  @relation(fields: [userId], references: [id])
+
+  @@map("group_comment")
 }
 
 model ChatRoom {
@@ -254,6 +269,7 @@ model ChatRoom {
 
   group    Group         @relation(fields: [groupId], references: [id])
   messages ChatMessage[]
+
   @@map("chatroom")
 }
 
@@ -265,10 +281,10 @@ model ChatMessage {
   messageType MessageType @default(TEXT) @map("message_type")
   sentAt      DateTime    @default(now()) @map("sent_at")
   isRead      Boolean?    @map("is_read")
+  room        ChatRoom    @relation(fields: [groupId], references: [groupId])
+  user        User        @relation(fields: [userId], references: [id])
 
-  @@map("chatmessage")
-  room ChatRoom @relation(fields: [groupId], references: [groupId])
-  user User     @relation(fields: [userId], references: [id])
+  @@map("chat_message")
 }
 
 // #endregion
@@ -329,12 +345,46 @@ model LicenseCoach {
 }
 
 model Course {
-  id Int @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String
+  created_at  DateTime    @default(now()) @map("created_at")
+  updated_at  DateTime    @updatedAt @map("updated_at")
+  deleted_at  DateTime?   @map("deleted_at")
+  start_at    DateTime    @updatedAt @map("start_at")
+  end_at      DateTime    @map("end_at")
+  CourseImg   CourseImg[]
 
   @@map("course")
 }
 
-// // #endregion
+model CourseImg {
+  id        Int @id @default(autoincrement())
+  course_id Int
+
+  course Course @relation(fields: [course_id], references: [id])
+
+  @@map("course_img")
+}
+
+model CourseVariant {
+  id Int @id @default(autoincrement())
+
+  course_id     Int
+  difficulty    String
+  price         Int
+  duration      Int
+  max_people    Int
+  location_id   Int
+  coach_id      Int
+  course_img_id Int
+  start_at      DateTime  @updatedAt @map("start_at")
+  deleted_at    DateTime? @map("deleted_at")
+
+  @@map("course_variant")
+}
+
+// #endregion
 
 // 優惠券
 // #region 
@@ -421,7 +471,8 @@ model CartProduct {
   productId Int @map("product_id")
   quantity  Int
 
-  cart Cart @relation(fields: [cartId], references: [id])
+  cart    Cart    @relation(fields: [cartId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 
   @@map("cart_product")
 }

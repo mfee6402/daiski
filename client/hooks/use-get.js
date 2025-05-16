@@ -1,24 +1,24 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
 
 export function useGet(url, options) {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch(url, options)
-        const json = await res.json()
-        setData(json)
-        setLoading(false)
+        const res = await fetch(url, options);
+        const json = await res.json();
+        setData(json);
+        setLoading(false);
       } catch (err) {
-        setError(err)
-        setLoading(false)
+        setError(err);
+        setLoading(false);
       }
     }
-    fetchData()
-  }, [url, options])
+    fetchData();
+  }, [url, options]);
 
-  return { data, loading, error }
+  return { data, loading, error };
 }
