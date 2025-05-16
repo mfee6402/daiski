@@ -4,6 +4,8 @@ node_modules
 .env*.local
 productImages
 uploads
+coachAvatar
+courseImages
 
 # misc
 .DS_Store
