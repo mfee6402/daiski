@@ -146,9 +146,7 @@
 //   );
 // }
 'use client';
-import React, { useState, useEffect } from 'react';
 
-import { useSearchParams } from 'next/navigation';
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -157,41 +155,11 @@ import {
 
 export default function ProductSidebarCategory({
   categories = [],
+  selectedCategoryId,
   onSelectCategory,
+  openCategories = [],
+  onToggleCategory,
 }) {
-  const searchParams = useSearchParams();
-  const category_id = searchParams.get('category_id');
-
-  const [openCategories, setOpenCategories] = useState([]);
-
-  useEffect(() => {
-    const openSet = new Set();
-
-    // 預設展開 id = 1 的分類所有層級
-    const fixed = categories.find((c) => c.id === 1);
-    if (fixed?.fullPath) {
-      fixed.fullPath
-        .split(' > ')
-        .map((s) => s.trim())
-        .forEach((label) => openSet.add(label));
-    }
-
-    // 如果 URL 有 category_id，再把該分類所有層級也加入
-    if (category_id) {
-      const current = categories.find(
-        (c) => c.id === parseInt(category_id, 10)
-      );
-      if (current?.fullPath) {
-        current.fullPath
-          .split(' > ')
-          .map((s) => s.trim())
-          .forEach((label) => openSet.add(label));
-      }
-    }
-
-    setOpenCategories((prev) => Array.from(new Set([...prev, ...openSet])));
-  }, [categories, category_id]);
-
   // 建樹函式
   const buildTree = (list) => {
     const root = {};
@@ -216,17 +184,14 @@ export default function ProductSidebarCategory({
       const children = data.__children || {};
       const hasChildren = Object.keys(children).length > 0;
       const isOpen = openCategories.includes(label);
+      const isActive = data.__id === selectedCategoryId;
 
       return (
         <Collapsible
           key={label}
           open={isOpen}
           onOpenChange={(open) => {
-            setOpenCategories((prev) => {
-              const set = new Set(prev);
-              open ? set.add(label) : set.delete(label);
-              return Array.from(set);
-            });
+            onToggleCategory?.(label, open);
           }}
         >
           <div className="flex justify-between items-center w-full px-2 py-1 hover:bg-gray-100 rounded-md ">
@@ -234,7 +199,15 @@ export default function ProductSidebarCategory({
             <button
               type="button"
               onClick={() => onSelectCategory?.(data.__id)}
-              className="font-medium text-left flex-1 hover:text-primary-500 cursor-pointer "
+              className={`
+           flex-1 text-left font-medium cursor-pointer
+           ${
+             isActive
+               ? 'text-primary-500' // ← 被選中時的顏色
+               : 'text-secondary-800'
+           }   
+           hover:text-primary-500
+         `}
             >
               {label}
             </button>
