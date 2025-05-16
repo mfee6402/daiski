@@ -4,14 +4,14 @@ import ClubLi from './club-li';
 import UseHomeClub from '@/hooks/use-home-club';
 
 const cards = [
-  { id: 1, src: './home-images/0508-1.jpg', title: 'The Craft' },
-  { id: 2, src: './home-images/0508-2.jpg', title: 'The Craft' },
-  { id: 3, src: './home-images/0508-3.jpg', title: 'The Craft' },
-  { id: 4, src: './home-images/2017Vol335.jpg', title: 'The Craft' },
-  { id: 5, src: './home-images/hs00.jpg', title: 'The Craft' },
-  { id: 6, src: './home-images/hs1-1.jpg', title: 'The Craft' },
-  { id: 7, src: './home-images/hs5-1.jpg', title: 'The Craft' },
-  { id: 8, src: './home-images/image12.png', title: 'The Craft' },
+  { id: 1, src: '/home-images/0508-1.jpg', title: 'The Craft' },
+  { id: 2, src: '/home-images/0508-2.jpg', title: 'The Craft' },
+  { id: 3, src: '/home-images/0508-3.jpg', title: 'The Craft' },
+  { id: 4, src: '/home-images/2017Vol335.jpg', title: 'The Craft' },
+  { id: 5, src: '/home-images/hs00.jpg', title: 'The Craft' },
+  { id: 6, src: '/home-images/hs1-1.jpg', title: 'The Craft' },
+  { id: 7, src: '/home-images/hs5-1.jpg', title: 'The Craft' },
+  { id: 8, src: '/home-images/image12.png', title: 'The Craft' },
 ];
 
 export default function HomeClub() {
