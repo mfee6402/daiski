@@ -408,24 +408,32 @@ router.get('/brands', async (req, res, next) => {
 });
 
 // --------------------------------------------------
-// GET /api/products/:id — 取得單一商品
+// GET /api/products/:id — 取得單一商品詳細資料
 // --------------------------------------------------
 router.get('/:id', async (req, res, next) => {
   const { id } = req.params;
   try {
     const product = await prisma.product.findUnique({
       where: { id: Number(id) },
-      select: {
-        id: true,
-        name: true,
-        category_id: true,
-        brand_id: true,
-        introduction: true,
-        spec: true,
-        created_at: true,
-        publish_at: true,
-        unpublish_at: true,
-        delete_at: true,
+      include: {
+        product_image: {
+          where: { deleted_at: null },
+          orderBy: { sort_order: 'asc' },
+          select: { url: true },
+        },
+        product_sku: {
+          where: { deleted_at: null },
+          orderBy: { price: 'asc' },
+          select: {
+            id: true,
+            size_id: true,
+            price: true,
+            stock: true,
+            product_size: { select: { name: true } },
+          },
+        },
+        product_brand: { select: { id: true, name: true } },
+        product_category: { select: { id: true, name: true } },
       },
     });
 
@@ -433,7 +441,29 @@ router.get('/:id', async (req, res, next) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    res.json(product);
+    // Transform response
+    const response = {
+      id: product.id,
+      name: product.name,
+      introduction: product.introduction,
+      spec: product.spec,
+      publishAt: product.publish_at,
+      createdAt: product.created_at,
+      brand: product.product_brand,
+      category: product.product_category,
+      images: product.product_image.map(
+        (img) => `http://localhost:3005${img.url}`
+      ),
+      skus: product.product_sku.map((sku) => ({
+        skuId: sku.id,
+        sizeId: sku.size_id,
+        sizeName: sku.product_size?.name || null,
+        price: sku.price,
+        stock: sku.stock,
+      })),
+    };
+
+    res.json(response);
   } catch (error) {
     next(error);
   }
