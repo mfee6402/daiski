@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
+import { Snowflake } from 'lucide-react';
 export default function CoursesPage(props) {
   const [filters, setFilters] = useState({
     keyword: '',
@@ -44,6 +44,17 @@ export default function CoursesPage(props) {
               <SelectContent>
                 <SelectItem value="light">二世谷</SelectItem>
                 <SelectItem value="dark">野澤</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select>
+              <SelectTrigger className="w-[180px]">
+                <Snowflake />
+                <SelectValue placeholder="難易度" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="light">初級</SelectItem>
+                <SelectItem value="dark">中級</SelectItem>
+                <SelectItem value="dark">高級</SelectItem>
               </SelectContent>
             </Select>
             <DatePickerWithRange />
