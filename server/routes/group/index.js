@@ -25,144 +25,17 @@ function parseYMD(str) {
   const d = new Date(str + 'T00:00:00Z'); // 使用 UTC 以避免時區問題
   return isNaN(d.getTime()) ? null : d;
 }
-
-// GET /api/group?onlyTypes=true  或  GET /api/group
-router.get('/', async (req, res, next) => {
-  try {
-    if (req.query.onlyTypes === 'true') {
-      const [col] = await prisma.$queryRaw`
-        SHOW COLUMNS FROM \`group\` LIKE 'type'
-      `;
-      const types =
-        col?.Type?.match(/'[^']+'/g).map((s) => s.slice(1, -1)) || [];
-      return res.json(types);
-    }
-
-    const {
-      type,
-      date,
-      location: locationNameFilter,
-      keyword,
-      page = 1,
-    } = req.query;
-    const itemsPerPage = 12; // 您可以根據需求調整每頁顯示的項目數量
-
-    const where = {};
-    if (type && type !== '全部') {
-      const labelToKey = { 滑雪: ActivityType.SKI, 聚餐: ActivityType.MEAL }; // 確保 ActivityType 中的值與您的 Enum 一致
-      if (labelToKey[type]) {
-        where.type = labelToKey[type];
-      } else if (Object.values(ActivityType).includes(type)) {
-        where.type = type;
-      }
-    }
-    if (date) {
-      const parsedDate = parseYMD(date);
-      if (parsedDate) {
-        where.startDate = { lte: parsedDate };
-        where.endDate = { gte: parsedDate };
-      }
-    }
-    if (locationNameFilter && locationNameFilter !== '全部') {
-      where.OR = [
-        {
-          location: {
-            name: { contains: locationNameFilter },
-          },
-        },
-        {
-          customLocation: { contains: locationNameFilter },
-        },
-      ];
-    }
-    if (keyword) {
-      const keywordCondition = { contains: keyword };
-      const keywordOrConditions = [
-        { title: keywordCondition },  
-        { description: keywordCondition },
-        { location: { name: keywordCondition } },
-        { customLocation: keywordCondition },
-        { user: { name: keywordCondition } },
-      ];
-      if (where.OR) {
-        // 如果已經有 OR 條件 (來自地點篩選)
-        where.AND = [
-          // 將地點篩選和關鍵字篩選用 AND 連接起來
-          { OR: where.OR },
-          { OR: keywordOrConditions },
-        ];
-        delete where.OR; // 移除頂層的 OR
-      } else {
-        where.OR = keywordOrConditions;
-      }
-    }
-
-    const totalItems = await prisma.group.count({ where });
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-    const groupsFromDb = await prisma.group.findMany({
-      where,
-      skip: (Number(page) - 1) * itemsPerPage,
-      take: itemsPerPage,
-      include: {
-        user: {
-          // 開團者資訊
-          select: {
-            name: true,
-            avatar: true,
-          },
-        },
-        images: {
-          // 圖片資訊
-          select: {
-            imageUrl: true,
-          },
-          orderBy: { sortOrder: 'asc' },
-          take: 1, // 通常卡片列表只需要第一張圖片
-        },
-        location: true, // 地點物件 (包含 name 等欄位)
-        _count: {
-          select: { members: true }, // *** 修改處：使用 Group 模型中定義的 'members' 關聯 ***
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const groupsForFrontend = groupsFromDb.map((group) => {
-      const {
-        _count,
-        location,
-        customLocation,
-        type: groupType,
-        ...restOfGroup
-      } = group;
-
-      let displayLocation = '地點未定';
-      if (groupType === ActivityType.SKI && location) {
-        displayLocation = location.name;
-      } else if (groupType === ActivityType.MEAL && customLocation) {
-        // 假設 MEAL 類型使用 customLocation
-        displayLocation = customLocation;
-      } else if (location) {
-        displayLocation = location.name;
-      } else if (customLocation) {
-        displayLocation = customLocation;
-      }
-
-      return {
-        ...restOfGroup,
-        type: groupType,
-        location: displayLocation,
-        currentPeople: _count ? _count.members : 0, // *** 修改處：使用 _count.members 來獲取數量 ***
-        // maxPeople 應該直接來自 restOfGroup.maxPeople，請確保 Group 模型中有此欄位且有值
-      };
-    });
-
-    res.json({ groups: groupsForFrontend, totalPages });
-  } catch (err) {
-    next(err);
+async function getUserIdFromRequest(req) {
+  const testUserId =
+    req.body.userId || req.query.userId || req.headers['x-user-id'] || 1; // 嘗試從多個地方獲取，預設為 1
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn(
+      `警告：正在使用測試 userId: ${testUserId}。在生產環境中，請務必替換為安全的身份驗證邏輯來獲取 userId。`
+    );
   }
-});
+  const numericUserId = Number(testUserId);
+  return isNaN(numericUserId) ? null : numericUserId;
+}
 
 // POST /api/group (創建揪團的路由)
 router.post('/', upload.single('cover'), async (req, res, next) => {
@@ -252,6 +125,246 @@ router.post('/', upload.single('cover'), async (req, res, next) => {
       return res.status(400).json({ error: '提供的地點 ID 無效或不存在。' });
     }
     console.error('創建揪團失敗:', err);
+    next(err);
+  }
+});
+// GET /api/group?onlyTypes=true  或  GET /api/group
+router.get('/', async (req, res, next) => {
+  try {
+    if (req.query.onlyTypes === 'true') {
+      const [col] = await prisma.$queryRaw`
+        SHOW COLUMNS FROM \`group\` LIKE 'type'
+      `;
+      const types =
+        col?.Type?.match(/'[^']+'/g).map((s) => s.slice(1, -1)) || [];
+      return res.json(types);
+    }
+
+    const {
+      type,
+      date,
+      location: locationNameFilter,
+      keyword,
+      page = 1,
+    } = req.query;
+    const itemsPerPage = 12; // 您可以根據需求調整每頁顯示的項目數量
+
+    const where = {};
+    if (type && type !== '全部') {
+      const labelToKey = { 滑雪: ActivityType.SKI, 聚餐: ActivityType.MEAL }; // 確保 ActivityType 中的值與您的 Enum 一致
+      if (labelToKey[type]) {
+        where.type = labelToKey[type];
+      } else if (Object.values(ActivityType).includes(type)) {
+        where.type = type;
+      }
+    }
+    if (date) {
+      const parsedDate = parseYMD(date);
+      if (parsedDate) {
+        where.startDate = { lte: parsedDate };
+        where.endDate = { gte: parsedDate };
+      }
+    }
+    if (locationNameFilter && locationNameFilter !== '全部') {
+      where.OR = [
+        {
+          location: {
+            name: { contains: locationNameFilter },
+          },
+        },
+        {
+          customLocation: { contains: locationNameFilter },
+        },
+      ];
+    }
+    if (keyword) {
+      const keywordCondition = { contains: keyword };
+      const keywordOrConditions = [
+        { title: keywordCondition },
+        { description: keywordCondition },
+        { location: { name: keywordCondition } },
+        { customLocation: keywordCondition },
+        { user: { name: keywordCondition } },
+      ];
+      if (where.OR) {
+        // 如果已經有 OR 條件 (來自地點篩選)
+        where.AND = [
+          // 將地點篩選和關鍵字篩選用 AND 連接起來
+          { OR: where.OR },
+          { OR: keywordOrConditions },
+        ];
+        delete where.OR; // 移除頂層的 OR
+      } else {
+        where.OR = keywordOrConditions;
+      }
+    }
+
+    const totalItems = await prisma.group.count({ where });
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+    const groupsFromDb = await prisma.group.findMany({
+      where,
+      skip: (Number(page) - 1) * itemsPerPage,
+      take: itemsPerPage,
+      include: {
+        user: {
+          // 開團者資訊
+          select: {
+            name: true,
+            avatar: true,
+          },
+        },
+        images: {
+          // 圖片資訊
+          select: {
+            imageUrl: true,
+          },
+          orderBy: { sortOrder: 'asc' },
+          take: 1, // 通常卡片列表只需要第一張圖片
+        },
+        location: true, // 地點物件 (包含 name 等欄位)
+        _count: {
+          select: { members: true }, // *** 修改處：使用 Group 模型中定義的 'members' 關聯 ***
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const groupsForFrontend = groupsFromDb.map((group) => {
+      const {
+        _count,
+        location,
+        customLocation,
+        type: groupType,
+        ...restOfGroup
+      } = group;
+
+      let displayLocation = '地點未定';
+      if (groupType === ActivityType.SKI && location) {
+        displayLocation = location.name;
+      } else if (groupType === ActivityType.MEAL && customLocation) {
+        // 假設 MEAL 類型使用 customLocation
+        displayLocation = customLocation;
+      } else if (location) {
+        displayLocation = location.name;
+      } else if (customLocation) {
+        displayLocation = customLocation;
+      }
+
+      return {
+        ...restOfGroup,
+        type: groupType,
+        location: displayLocation,
+        currentPeople: _count ? _count.members : 0, // *** 修改處：使用 _count.members 來獲取數量 ***
+        // maxPeople 應該直接來自 restOfGroup.maxPeople，請確保 Group 模型中有此欄位且有值
+      };
+    });
+
+    res.json({ groups: groupsForFrontend, totalPages });
+  } catch (err) {
+    next(err);
+  }
+});
+router.post('/:groupId/comments', async (req, res, next) => {
+  try {
+    const groupId = parseInt(req.params.groupId, 10);
+    const { content } = req.body;
+    const userId = await getUserIdFromRequest(req); // 獲取留言者 ID
+
+    if (isNaN(groupId)) {
+      return res.status(400).json({ error: '無效的群組 ID' });
+    }
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ error: '未經授權或無法識別用戶以發表留言' });
+    }
+    if (!content || typeof content !== 'string' || content.trim() === '') {
+      return res.status(400).json({ error: '留言內容不可為空' });
+    }
+
+    const groupExists = await prisma.group.findUnique({
+      where: { id: groupId },
+    });
+    if (!groupExists) {
+      return res.status(404).json({ error: '找不到指定的群組' });
+    }
+
+    const newComment = await prisma.groupComment.create({
+      data: {
+        content: content.trim(),
+        groupId: groupId,
+        userId: userId,
+      },
+      include: {
+        // 返回留言時，帶上留言者的資訊
+        user: {
+          select: { id: true, name: true, avatar: true },
+        },
+      },
+    });
+    res.status(201).json(newComment);
+  } catch (err) {
+    console.error('Error posting comment:', err);
+    next(err);
+  }
+});
+// GET /api/group/:id  → 回傳一筆 group 的完整資料
+router.get('/:groupId', async (req, res, next) => {
+  try {
+    const id = Number(req.params.groupId);
+    if (Number.isNaN(id)) {
+      return res.status(400).json({ error: '無效的 ID' });
+    }
+
+    const group = await prisma.group.findUnique({
+      where: { id },
+      include: {
+        user: { select: { name: true, avatar: true } },
+        images: { orderBy: { sortOrder: 'asc' } },
+        location: true,
+        _count: { select: { members: true } },
+        comments: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            user: {
+              // 每則留言的留言者資訊
+              select: { id: true, name: true, avatar: true },
+            },
+          },
+        }, // 如果有留言
+      },
+    });
+
+    if (!group) {
+      return res.status(404).json({ error: '找不到該揪團' });
+    }
+
+    // 轉換後端欄位名稱
+    const {
+      _count,
+      images,
+      customLocation,
+      location,
+      user,
+      comments,
+      ...rest
+    } = group;
+    const displayLocation =
+      group.type === ActivityType.SKI
+        ? location?.name // 滑雪活動使用關聯的 Location 名稱
+        : customLocation || location?.name; // 其他活動優先使用 customLocation，若無則用關聯 Location 名稱
+
+    res.json({
+      ...rest,
+      creator: user, // 將 user 重命名為 creator
+      location: displayLocation,
+      currentPeople: _count?.members || 0,
+      images, // 返回所有圖片
+      comments, // 返回包含使用者資訊的留言
+    });
+  } catch (err) {
+    console.error(`Error fetching group with id ${req.params.id}:`, err);
     next(err);
   }
 });
