@@ -1,11 +1,17 @@
-'use client'
+'use client';
 
-import React, { useState, useEffect } from 'react'
+import HomeHero from './_components/home-hero';
+import HomeNewProduct from './_components/home-new-product/home-new-product';
+import HomeClub from './_components/home-club/home-club';
+import HomeCard from './_components/home-card/home-card';
 
-export default function AppPage(props) {
+export default function AppPage() {
   return (
     <>
-      <div>Home Page</div>
+      <HomeHero />
+      <HomeNewProduct />
+      <HomeClub />
+      <HomeCard />
     </>
-  )
+  );
 }

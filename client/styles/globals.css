@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100..900&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
@@ -5,6 +6,7 @@
 
 html,
 body {
+  font-family: 'Noto Sans TC', Arial, Helvetica, sans-serif;
   max-width: 100vw;
   overflow-x: clip;
 }
@@ -54,6 +56,27 @@ body {
   /* --- font family --- */
   --font-en: Arial, sans-serif;
   --font-tw: 'Noto Sans TC', sans-serif;
+
+  @keyframes slideDown {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-collapsible-content-height);
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      height: var(--radix-collapsible-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+  /* 設定對應的 animate-* 變數 */
+  --animate-expand: slideDown 300ms ease-out;
+  --animate-collapse: slideUp 300ms ease-out;
 }
 
 @theme inline {
@@ -172,4 +195,13 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* swiper */
+:root {
+  /* 主題色：影響 nav 箭頭、bullet、loading spinner ... */
+  --swiper-theme-color: #404040; /* sky-400 */
+  /* 如果要分開改 ⇩ */
+  --swiper-navigation-color: #404040; /* 左右箭頭 */
+  --swiper-pagination-color: #404040; /* bullet 或 fraction */
 }

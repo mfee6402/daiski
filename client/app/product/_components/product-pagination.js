@@ -9,18 +9,8 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 
-import { useSearchParams } from 'next/navigation';
-
-export default function ProductPagination({ totalPages }) {
-  const searchParams = useSearchParams();
-  const currentPage = parseInt(searchParams.get('page') || '1', 10);
-
-  const getPageHref = (targetPage) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('page', targetPage);
-    return `/product?${params.toString()}`;
-  };
-
+export default function ProductPagination({ page, totalPages, onPageChange }) {
+  const currentPage = page;
   const visiblePages = Array.from(
     { length: totalPages },
     (_, i) => i + 1
@@ -31,7 +21,11 @@ export default function ProductPagination({ totalPages }) {
       <PaginationContent>
         <PaginationItem>
           <PaginationPrevious
-            href={getPageHref(currentPage - 1)}
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              if (currentPage > 1) onPageChange(currentPage - 1);
+            }}
             className={currentPage <= 1 ? 'pointer-events-none opacity-50' : ''}
           />
         </PaginationItem>
@@ -39,7 +33,15 @@ export default function ProductPagination({ totalPages }) {
         {currentPage > 3 && (
           <>
             <PaginationItem>
-              <PaginationLink href={getPageHref(1)}>1</PaginationLink>
+              <PaginationLink
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onPageChange(1);
+                }}
+              >
+                1
+              </PaginationLink>
             </PaginationItem>
             <PaginationItem>
               <PaginationEllipsis />
@@ -49,7 +51,14 @@ export default function ProductPagination({ totalPages }) {
 
         {visiblePages.map((p) => (
           <PaginationItem key={p}>
-            <PaginationLink href={getPageHref(p)} isActive={p === currentPage}>
+            <PaginationLink
+              href="#"
+              isActive={p === currentPage}
+              onClick={(e) => {
+                e.preventDefault();
+                onPageChange(p);
+              }}
+            >
               {p}
             </PaginationLink>
           </PaginationItem>
@@ -61,7 +70,13 @@ export default function ProductPagination({ totalPages }) {
               <PaginationEllipsis />
             </PaginationItem>
             <PaginationItem>
-              <PaginationLink href={getPageHref(totalPages)}>
+              <PaginationLink
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onPageChange(totalPages);
+                }}
+              >
                 {totalPages}
               </PaginationLink>
             </PaginationItem>
@@ -70,7 +85,11 @@ export default function ProductPagination({ totalPages }) {
 
         <PaginationItem>
           <PaginationNext
-            href={getPageHref(currentPage + 1)}
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              if (currentPage < totalPages) onPageChange(currentPage + 1);
+            }}
             className={
               currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''
             }

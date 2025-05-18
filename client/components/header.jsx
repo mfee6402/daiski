@@ -36,7 +36,7 @@ export default function Header() {
           {/* 主頁 */}
           <NavigationMenuItem className="">
             <Link
-              href="/products"
+              href="/"
               // 直接把shadcn navigationMenuTriggerStyle()裡面包含的所有class拿出來 直接用navigationMenuTriggerStyle()會因為執行順序的關係會害我們自己下的class被蓋掉
               className={`group inline-flex h-9 w-max items-center justify-center rounded-md bg-background font-medium hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=open]:hover:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:focus:bg-accent data-[state=open]:bg-accent/50 focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 text-base`}
             >
@@ -47,17 +47,27 @@ export default function Header() {
           {/* 滑雪課程 */}
           <NavigationMenuItem>
             <Link
-              href="/products"
+              href="/courses"
               className={`group inline-flex h-9 w-max items-center justify-center rounded-md bg-background font-medium hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=open]:hover:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:focus:bg-accent data-[state=open]:bg-accent/50 focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 text-base`}
             >
               滑雪課程
             </Link>
           </NavigationMenuItem>
 
+          {/* 教練團隊 */}
+          <NavigationMenuItem>
+            <Link
+              href="/coaches"
+              className={`group inline-flex h-9 w-max items-center justify-center rounded-md bg-background font-medium hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=open]:hover:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:focus:bg-accent data-[state=open]:bg-accent/50 focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 text-base`}
+            >
+              教練團隊
+            </Link>
+          </NavigationMenuItem>
+
           {/* 揪團滑雪 */}
           <NavigationMenuItem>
             <Link
-              href="/products"
+              href="/groups"
               className={`group inline-flex h-9 w-max items-center justify-center rounded-md bg-background  font-medium hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=open]:hover:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:focus:bg-accent data-[state=open]:bg-accent/50 focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 text-base`}
             >
               揪團滑雪
@@ -67,7 +77,7 @@ export default function Header() {
           {/* 商品 */}
           <NavigationMenuItem>
             <Link
-              href="/products"
+              href="/product"
               className={`group inline-flex h-9 w-max items-center justify-center rounded-md bg-background font-medium hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=open]:hover:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:focus:bg-accent data-[state=open]:bg-accent/50 focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 text-base`}
             >
               商品
