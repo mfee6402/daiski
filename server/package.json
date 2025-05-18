@@ -9,7 +9,12 @@
     "build": "prisma generate && prisma db push --force-reset && prisma db seed",
     "debug": "DEBUG=express:* node ./api/index.js",
     "debug-win": "set DEBUG=express:* & node ./api/index.js",
-    "lint-js": "export TIMING=1 || set TIMING=1&& eslint --ext .js,.jsx,.ts,.tsx prisma/seed.js --cache --cache-strategy metadata"
+    "lint-js": "export TIMING=1 || set TIMING=1&& eslint --ext .js,.jsx,.ts,.tsx prisma/seed.js --cache --cache-strategy metadata",
+    "sign": "node ./jwt/sign.js member",
+    "verify": "node ./jwt/verify.js member",
+    "sign2": "node --env-file=./jwt/dev.env ./jwt/sign.js ",
+    "verify2": "node --env-file=./jwt/dev.env ./jwt/verify.js ",
+    "dev2": "nodemon --env-file=./login-token/dev.env ./login-token/index.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -26,13 +31,15 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "csvtojson": "^2.0.10",
-    "dotenv": "^16.4.1",
+    "dotenv": "^16.5.0",
     "express": "^4.18.2",
     "express-session": "^1.18.1",
     "http-errors": "^2.0.0",
     "jsonwebtoken": "^9.0.2",
     "line-pay-merchant": "^0.6.0",
     "lodash": "^4.17.21",
+    "moment": "^2.30.1",
+    "monent": "^0.0.2-security",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.11.4",
@@ -53,7 +60,7 @@
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-node": "^11.1.0",
     "nodemon": "^3.1.7",
-    "prisma": "^6.0.1"
+    "prisma": "^6.7.0"
   },
   "type": "module",
   "nodemonConfig": {

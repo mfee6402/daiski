@@ -45,3 +45,7 @@
 - 日期類型(Date-only)需要加上\_date 後綴字。例如 birth_date, report_date 等
 - 日期加時間(Date+time)類型應該加上\_at 後綴字。例如 created_at, posted_at 等
 - 時間戳記(Timestamps)應該加上\_at 後綴字，而且必須使用 UTC 時間。例如 created_at, updated_at 等。
+
+## prisma Model命名
+
+- 大駝峰命名法

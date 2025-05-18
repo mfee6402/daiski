@@ -1,12 +1,13 @@
 import Container from '@/components/container';
+import Process from './_components/process';
 
 export default function CartLayout({ children }) {
   return (
     <>
-      {/* FIXME 測試用高度，之後h-[500]要刪掉 */}
-      <div className="relative h-[500]">
-        <Container>{children}</Container>
-      </div>
+      <Container>
+        <h3 className="text-h3-tw text-primary-600">CART | 購物車 </h3>
+        <div className="min-h-dvh">{children}</div>
+      </Container>
     </>
   );
 }
