@@ -16,6 +16,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { CustomPagination } from './_components/group-pagination'; // 確保路徑和組件名稱正確
 import Image from 'next/image';
+import { ChatBubble } from './_components/chat-bubble';
 
 export default function GroupsPage() {
   const router = useRouter();
@@ -32,7 +33,9 @@ export default function GroupsPage() {
   });
   const [typeOptions, setTypeOptions] = useState(['全部']);
   const [locationOptions, setLocationOptions] = useState(['全部']);
-
+  const [chatOpen, setChatOpen] = useState(false);
+  //假用戶 id是1
+  const currentUser = { id: 1, name: '測試用戶' };
   useEffect(() => {
     async function loadFilterOptions() {
       try {
@@ -143,14 +146,14 @@ export default function GroupsPage() {
             {/* 假設 white 映射到 var(--color-white) */}
             <Button
               onClick={() => router.push('/groups/create')}
-              className="px-8 py-3 bg-primary-500 text-white text-p-tw font-semibold shadow-lg transition transform hover:scale-105 rounded-md hover:bg-primary-600" // 加入 hover:bg-primary-600 (假設已定義)
+              className="px-8 py-3 bg-primary-500 text-white font-semibold shadow-lg transition transform hover:scale-105 rounded-md hover:bg-primary-600" // 加入 hover:bg-primary-600 (假設已定義)
             >
               立即開團
             </Button>
             <Button
               variant="outline"
               onClick={() => router.push('/group')}
-              className="px-8 py-3 border-primary-500 text-primary-500 text-p-tw font-semibold transition transform hover:scale-105 rounded-md hover:bg-primary-500/10" // hover 效果使用 primary-500 加上透明度
+              className="px-8 py-3 border-primary-500 text-primary-500 font-semibold transition transform hover:scale-105 rounded-md hover:bg-primary-500/10" // hover 效果使用 primary-500 加上透明度
             >
               查看開團
             </Button>
@@ -386,6 +389,13 @@ export default function GroupsPage() {
           />
         </div>
       </section>
+      {/* …上方群組內容… */}
+      <ChatBubble
+        apiBase={API_BASE}
+        currentUser={currentUser}
+        open={chatOpen}
+        onOpenChange={setChatOpen}
+      />
     </>
   );
 }
