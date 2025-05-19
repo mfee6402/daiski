@@ -18,7 +18,7 @@ model User {
   birthday     String
   email        String
   is_coach     String
-  avatar       String
+  avatar       String?
   createdAt    DateTime       @default(now()) @map("created_at")
   updatedAt    DateTime       @updatedAt @map("updated_at")
   deleteAt     DateTime?      @map("delete_at")
@@ -378,8 +378,9 @@ model CourseVariant {
   location_id   Int
   coach_id      Int
   course_img_id Int
-  start_at      DateTime  @updatedAt @map("start_at")
-  deleted_at    DateTime? @map("deleted_at")
+  start_at      DateTime     @updatedAt @map("start_at")
+  deleted_at    DateTime?    @map("deleted_at")
+  CartCourse    CartCourse[]
 
   @@map("course_variant")
 }
@@ -492,11 +493,12 @@ model CartProduct {
 }
 
 model CartCourse {
-  id       Int @id @default(autoincrement())
-  cartId   Int @map("cart_id")
-  courseId Int @map("course_id")
+  id              Int @id @default(autoincrement())
+  cartId          Int @map("cart_id")
+  courseVariantId Int @map("course_variant_id")
 
-  cart Cart @relation(fields: [cartId], references: [id])
+  cart          Cart          @relation(fields: [cartId], references: [id])
+  courseVariant CourseVariant @relation(fields: [courseVariantId], references: [id])
 
   @@map("cart_course")
 }
