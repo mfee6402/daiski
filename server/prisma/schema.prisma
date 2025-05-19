@@ -193,9 +193,10 @@ model Location {
 }
 
 model Group {
-  id         Int       @id @default(autoincrement())
-  userId     Int       @map("user_id")
-  user       User      @relation(fields: [userId], references: [id])
+  id          Int @id @default(autoincrement())
+  organizerId Int @map("organizer_id")
+
+  user       User      @relation(fields: [organizerId], references: [id])
   locationId Int?      @map("location_id")
   location   Location? @relation(fields: [locationId], references: [id])
 
@@ -230,8 +231,9 @@ model GroupMember {
   joinedAt DateTime  @default(now()) @map("joined_at")
   paidAt   DateTime? @map("paid_at")
 
-  group Group @relation(fields: [groupId], references: [id])
-  user  User  @relation(fields: [userId], references: [id])
+  group     Group       @relation(fields: [groupId], references: [id])
+  user      User        @relation(fields: [userId], references: [id])
+  CartGroup CartGroup[]
 
   @@unique([groupId, userId])
   @@map("group_member")
@@ -359,9 +361,9 @@ model Course {
 }
 
 model CourseImg {
-  id        Int @id @default(autoincrement())
+  id        Int    @id @default(autoincrement())
   course_id Int
-  img String
+  img       String
 
   course Course @relation(fields: [course_id], references: [id])
 
@@ -369,7 +371,7 @@ model CourseImg {
 }
 
 model CourseVariant {
-  id Int @id @default(autoincrement())
+  id            Int          @id @default(autoincrement())
   course_id     Int
   difficulty    String
   price         Int
@@ -386,19 +388,20 @@ model CourseVariant {
 }
 
 model Tag {
-  id Int @id @default(autoincrement())
+  id   Int    @id @default(autoincrement())
   name String
 
   @@map("tag")
 }
 
 model CourseTag {
-  id Int @id @default(autoincrement())
+  id        Int @id @default(autoincrement())
   course_id Int
-  tag_id Int
+  tag_id    Int
 
   @@map("course_tag")
 }
+
 // #endregion
 
 // 優惠券
@@ -504,11 +507,12 @@ model CartCourse {
 }
 
 model CartGroup {
-  id      Int @id @default(autoincrement())
-  cartId  Int @map("cart_id")
-  groupId Int @map("group_id")
+  id            Int @id @default(autoincrement())
+  cartId        Int @map("cart_id")
+  groupMemberId Int @map("group_member_id")
 
-  cart Cart @relation(fields: [cartId], references: [id])
+  cart        Cart        @relation(fields: [cartId], references: [id])
+  groupMember GroupMember @relation(fields: [groupMemberId], references: [id])
 
   @@map("cart_group")
 }

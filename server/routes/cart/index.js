@@ -63,10 +63,15 @@ router.get('/', async function (req, res) {
     CartGroup:{
      select:{
         groupId:true,
-      }
+      },
+      // FIXME等待會員資料
+      // 查詢本會員參與的揪團
+     
     },
     
   },
+  // FIXME等待會員資料
+  // 查詢第1台購物車
   where: {
     id: 1,
   },
