@@ -1,25 +1,77 @@
-import { Search } from 'lucide-react';
 import ProductSidebarFilter from './product-sidebar-filter';
 import ProductSidebarCategory from './product-sidebar-category';
+import ProductSidebarSearch from './product-sidebar-search';
 
-export default function ProductSidebar({ limit, onChangeLimit, categories,onSelectCategory }) {
+export default function ProductSidebar({
+  limit,
+  onChangeLimit,
+  categories,
+  selectedCategoryId,
+  onSelectCategory,
+  openCategories,
+  onToggleCategory,
+  sizes,
+  selectedSizes,
+  onToggleSize,
+  onResetSizes,
+  showAllSizes,
+  onToggleShowAllSizes,
+  canToggleSizes,
+  brands,
+  selectedBrands,
+  onToggleBrand,
+  onResetBrands,
+  minPrice,
+  maxPrice,
+  onChangePrice,
+  onTriggerPriceFilter,
+  onResetPrice,
+  priceError,
+  searchValue,
+  onChangeSearch,
+  suggestions,
+  isLoading,
+  onSelect,
+}) {
   return (
-    <div className="hidden md:flex flex-col max-w-48 xl:max-w-64 w-full mx-auto bg-[#ffffff] text-[#231815]">
-      {/* Search Bar */}
-      <div className="relative px-4 py-2 border-b border-[#d8d8d8]">
-        <div className="relative">
-          <input
-            type="text"
-            className="w-full py-1.5 pl-8 pr-2 text-sm border-none focus:outline-none"
-            placeholder=""
-          />
-          <Search className="absolute left-0 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#969696]" />
-        </div>
-      </div>
+    <div className="hidden md:flex flex-col max-w-48 xl:max-w-64 w-full bg-[#ffffff] text-[#231815]">
+      <ProductSidebarSearch
+        suggestions={suggestions}
+        isLoading={isLoading}
+        onSelect={onSelect}
+        searchValue={searchValue}
+        onChangeSearch={onChangeSearch}
+      />
 
-      <ProductSidebarCategory categories={categories} onSelectCategory={onSelectCategory}/>
+      <ProductSidebarCategory
+        categories={categories}
+        onSelectCategory={onSelectCategory}
+        selectedCategoryId={selectedCategoryId}
+        openCategories={openCategories}
+        onToggleCategory={onToggleCategory}
+      />
 
-      <ProductSidebarFilter limit={limit} onChangeLimit={onChangeLimit} />
+      <ProductSidebarFilter
+        limit={limit}
+        onChangeLimit={onChangeLimit}
+        sizes={sizes}
+        selectedSizes={selectedSizes}
+        onToggleSize={onToggleSize}
+        onResetSizes={onResetSizes}
+        showAllSizes={showAllSizes}
+        onToggleShowAllSizes={onToggleShowAllSizes}
+        canToggleSizes={canToggleSizes}
+        brands={brands}
+        selectedBrands={selectedBrands}
+        onToggleBrand={onToggleBrand}
+        onResetBrands={onResetBrands}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+        onChangePrice={onChangePrice}
+        onTriggerPriceFilter={onTriggerPriceFilter}
+        onResetPrice={onResetPrice}
+        priceError={priceError}
+      />
     </div>
   );
 }

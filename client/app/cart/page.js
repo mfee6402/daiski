@@ -11,6 +11,7 @@ import Delete from './_components/delete-button';
 import WishList from './_components/wish-list';
 import QuantityButton from './_components/quantity-button';
 
+import Image from 'next/image';
 // secondary
 export default function CartPage({ setProcess }) {
   const url = 'http://localhost:3005/api/cart';
@@ -33,8 +34,6 @@ export default function CartPage({ setProcess }) {
     fetchData();
   }, []);
 
-  const products = data?.cart.CartProduct ? data?.cart.CartProduct : [];
-
   // const groups = data?.data.cart.CartGroup ? cart.CartGroup : [];
   // const course = data?.data.cart.CartCourse ? cart.CartCourse : [];
 
@@ -44,7 +43,6 @@ export default function CartPage({ setProcess }) {
 
   const [wishList, setWishList] = useState(initWishList);
 
-  // console.log(products[2]);
   //   // 定義收藏用狀態
   // const [wishList, setWishList] = useState(false)
   // // 處理收藏布林值切換(toggle)
@@ -71,47 +69,138 @@ export default function CartPage({ setProcess }) {
     <>
       <Process step="1"></Process>
       <div className="flex justify-between">
+        {/* 品項 */}
         <div className="w-full">
+          {/* 商品 */}
           <div className="border-b-5 border-secondary-500">
             <h6 className="text-h6-tw">商品內容</h6>
           </div>
 
-          {products?.map((product, i) => {
-            return (
-              <div key={product.productId} className="flex justify-between">
-                <div className="flex justify-center w-full">
-                  <p>{product.productId}</p>
+          <div className="mt-10 flex flex-col gap-4">
+            {data?.cart.CartProduct.map((product, i) => {
+              return (
+                <div key={product.id} className="flex justify-between">
+                  {/* 商品圖與名稱 */}
+                  <div className="flex  w-full ">
+                    {product.imageUrl && (
+                      <Image
+                        src={`http://localhost:3005${product.imageUrl}`}
+                        alt="productImage"
+                        width={96}
+                        height={96}
+                        className="object-fill w-[96]"
+                      ></Image>
+                    )}
+                    <div>
+                      <p>{product.name}</p>
+                    </div>
+                  </div>
+                  {/* 商品尺寸 */}
+                  <div className="w-full flex justify-center items-center ">
+                    <p className="text-h6-tw">{product.size}</p>
+                  </div>
+                  {/* 商品價格 */}
+                  <div className="w-full flex justify-center items-center ">
+                    <p className="text-h6-tw">
+                      {(product.price * product.quantity).toLocaleString()}
+                    </p>
+                  </div>
+                  {/* 商品數量 */}
+                  <div className="flex justify-center w-full items-center">
+                    <QuantityButton
+                      productId={product.id}
+                      data={data}
+                      setData={setData}
+                      type="minus"
+                    ></QuantityButton>
+                    <div className="flex justify-center w-[50]">
+                      <p className="text-h6-tw">{product.quantity}</p>
+                    </div>
+                    <QuantityButton
+                      productId={product.id}
+                      data={data}
+                      setData={setData}
+                      type="plus"
+                    ></QuantityButton>
+                  </div>
+                  {/* 收藏、刪除 */}
+                  <div className="flex justify-center w-full gap-4">
+                    <WishList
+                      wishList={wishList}
+                      index={i}
+                      setWishList={setWishList}
+                    ></WishList>
+                    <Delete></Delete>
+                  </div>
                 </div>
-                <div className="flex justify-center w-full">
-                  <QuantityButton
-                    productIndex={i}
-                    data={data}
-                    setData={setData}
-                    type="minus"
-                  ></QuantityButton>
-
-                  <p>{product.quantity}</p>
-
-                  <QuantityButton
-                    productIndex={i}
-                    data={data}
-                    setData={setData}
-                    type="plus"
-                  ></QuantityButton>
+              );
+            })}
+            {/* 課程 */}
+            {/* 揪團 */}
+            <div className="border-b-5 border-secondary-500">
+              <h6 className="text-h6-tw">揪團</h6>
+            </div>
+            {data?.cart.CartProduct.map((product, i) => {
+              return (
+                <div key={product.id} className="flex justify-between">
+                  {/* 商品圖與名稱 */}
+                  <div className="flex  w-full ">
+                    {product.imageUrl && (
+                      <Image
+                        src={`http://localhost:3005${product.imageUrl}`}
+                        alt="productImage"
+                        width={96}
+                        height={96}
+                        className="object-fill w-[96]"
+                      ></Image>
+                    )}
+                    <div>
+                      <p>{product.name}</p>
+                    </div>
+                  </div>
+                  {/* 商品尺寸 */}
+                  <div className="w-full flex justify-center items-center ">
+                    <p className="text-h6-tw">{product.size}</p>
+                  </div>
+                  {/* 商品價格 */}
+                  <div className="w-full flex justify-center items-center ">
+                    <p className="text-h6-tw">
+                      {(product.price * product.quantity).toLocaleString()}
+                    </p>
+                  </div>
+                  {/* 商品數量 */}
+                  <div className="flex justify-center w-full items-center">
+                    <QuantityButton
+                      productId={product.id}
+                      data={data}
+                      setData={setData}
+                      type="minus"
+                    ></QuantityButton>
+                    <div className="flex justify-center w-[50]">
+                      <p className="text-h6-tw">{product.quantity}</p>
+                    </div>
+                    <QuantityButton
+                      productId={product.id}
+                      data={data}
+                      setData={setData}
+                      type="plus"
+                    ></QuantityButton>
+                  </div>
+                  {/* 收藏、刪除 */}
+                  <div className="flex justify-center w-full gap-4">
+                    <WishList
+                      wishList={wishList}
+                      index={i}
+                      setWishList={setWishList}
+                    ></WishList>
+                    <Delete></Delete>
+                  </div>
                 </div>
-                <div className="flex justify-center w-full">
-                  <WishList
-                    wishList={wishList}
-                    index={i}
-                    setWishList={setWishList}
-                  ></WishList>
-                  <Delete></Delete>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-        <Checkout></Checkout>
+        <Checkout data={data}></Checkout>
       </div>
     </>
   );

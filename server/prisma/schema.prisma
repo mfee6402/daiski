@@ -13,12 +13,12 @@ model User {
   id           Int            @id @default(autoincrement())
   account      String         @unique
   password     String
-  name         String         
+  name         String
   phone        String
   birthday     String
-  email        String         
+  email        String
   is_coach     String
-  avatar       String
+  avatar       String?
   createdAt    DateTime       @default(now()) @map("created_at")
   updatedAt    DateTime       @updatedAt @map("updated_at")
   deleteAt     DateTime?      @map("delete_at")
@@ -48,7 +48,6 @@ model Product {
   product_category ProductCategory? @relation(fields: [category_id], references: [id], onUpdate: Restrict, map: "product_ibfk_1")
   product_image    ProductImage[]
   product_sku      ProductSku[]
-  CartProduct      CartProduct[]
 
   @@index([category_id], map: "category_id")
   @@index([brand_id], map: "fk_product_brand")
@@ -135,17 +134,18 @@ model ProductSize {
 }
 
 model ProductSku {
-  id           Int          @id @default(autoincrement())
+  id           Int           @id @default(autoincrement())
   product_id   Int
   size_id      Int?
-  sku_code     String       @unique(map: "uq_sku_code") @db.VarChar(100)
-  stock        Int?         @default(0)
+  sku_code     String        @unique(map: "uq_sku_code") @db.VarChar(100)
+  stock        Int?          @default(0)
   price        Int
-  created_at   DateTime?    @default(now()) @db.DateTime(0)
-  updated_at   DateTime?    @default(now()) @db.DateTime(0)
-  deleted_at   DateTime?    @db.DateTime(0)
-  product      Product      @relation(fields: [product_id], references: [id], onUpdate: Restrict, map: "product_sku_ibfk_1")
-  product_size ProductSize? @relation(fields: [size_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "product_sku_ibfk_2")
+  created_at   DateTime?     @default(now()) @db.DateTime(0)
+  updated_at   DateTime?     @default(now()) @db.DateTime(0)
+  deleted_at   DateTime?     @db.DateTime(0)
+  product      Product       @relation(fields: [product_id], references: [id], onUpdate: Restrict, map: "product_sku_ibfk_1")
+  product_size ProductSize?  @relation(fields: [size_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "product_sku_ibfk_2")
+  CartProduct  CartProduct[]
 
   @@unique([product_id, size_id], map: "uq_sku_unique")
   @@index([size_id], map: "size_id")
@@ -225,8 +225,8 @@ model Group {
 
 model GroupMember {
   id       Int       @id @default(autoincrement())
-  groupId  Int
-  userId   Int
+  groupId  Int       @map("group_id")
+  userId   Int       @map("user_id")
   joinedAt DateTime  @default(now()) @map("joined_at")
   paidAt   DateTime? @map("paid_at")
 
@@ -234,7 +234,7 @@ model GroupMember {
   user  User  @relation(fields: [userId], references: [id])
 
   @@unique([groupId, userId])
-  @@map("groupmember")
+  @@map("group_member")
 }
 
 model GroupImage {
@@ -245,7 +245,7 @@ model GroupImage {
 
   group Group @relation(fields: [groupId], references: [id])
 
-  @@map("groupimage")
+  @@map("group_image")
 }
 
 model GroupComment {
@@ -259,7 +259,7 @@ model GroupComment {
   group Group @relation(fields: [groupId], references: [id])
   user  User  @relation(fields: [userId], references: [id])
 
-  @@map("groupcomment")
+  @@map("group_comment")
 }
 
 model ChatRoom {
@@ -284,7 +284,7 @@ model ChatMessage {
   room        ChatRoom    @relation(fields: [groupId], references: [groupId])
   user        User        @relation(fields: [userId], references: [id])
 
-  @@map("chatmessage")
+  @@map("chat_message")
 }
 
 // #endregion
@@ -345,11 +345,60 @@ model LicenseCoach {
 }
 
 model Course {
-  id Int @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String
+  created_at  DateTime    @default(now()) @map("created_at")
+  updated_at  DateTime    @updatedAt @map("updated_at")
+  deleted_at  DateTime?   @map("deleted_at")
+  start_at    DateTime    @updatedAt @map("start_at")
+  end_at      DateTime    @map("end_at")
+  CourseImg   CourseImg[]
 
   @@map("course")
 }
 
+model CourseImg {
+  id        Int @id @default(autoincrement())
+  course_id Int
+  img String
+
+  course Course @relation(fields: [course_id], references: [id])
+
+  @@map("course_img")
+}
+
+model CourseVariant {
+  id Int @id @default(autoincrement())
+  course_id     Int
+  difficulty    String
+  price         Int
+  duration      Int
+  max_people    Int
+  location_id   Int
+  coach_id      Int
+  course_img_id Int
+  start_at      DateTime     @updatedAt @map("start_at")
+  deleted_at    DateTime?    @map("deleted_at")
+  CartCourse    CartCourse[]
+
+  @@map("course_variant")
+}
+
+model Tag {
+  id Int @id @default(autoincrement())
+  name String
+
+  @@map("tag")
+}
+
+model CourseTag {
+  id Int @id @default(autoincrement())
+  course_id Int
+  tag_id Int
+
+  @@map("course_tag")
+}
 // #endregion
 
 // 優惠券
@@ -432,23 +481,24 @@ model Cart {
 }
 
 model CartProduct {
-  id        Int @id @default(autoincrement())
-  cartId    Int @map("cart_id")
-  productId Int @map("product_id")
-  quantity  Int
+  id           Int @id @default(autoincrement())
+  cartId       Int @map("cart_id")
+  productSkuId Int @map("product_sku_id")
+  quantity     Int
 
-  cart    Cart    @relation(fields: [cartId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
+  cart       Cart       @relation(fields: [cartId], references: [id])
+  productSku ProductSku @relation(fields: [productSkuId], references: [id])
 
   @@map("cart_product")
 }
 
 model CartCourse {
-  id       Int @id @default(autoincrement())
-  cartId   Int @map("cart_id")
-  courseId Int @map("course_id")
+  id              Int @id @default(autoincrement())
+  cartId          Int @map("cart_id")
+  courseVariantId Int @map("course_variant_id")
 
-  cart Cart @relation(fields: [cartId], references: [id])
+  cart          Cart          @relation(fields: [cartId], references: [id])
+  courseVariant CourseVariant @relation(fields: [courseVariantId], references: [id])
 
   @@map("cart_course")
 }
@@ -481,10 +531,11 @@ model Order {
 }
 
 model OrderProduct {
-  id        Int @id @default(autoincrement())
-  orderId   Int @map("order_id")
-  productId Int @map("product_id")
-  quantity  Int
+  id      Int @id @default(autoincrement())
+  orderId Int @map("order_id")
+
+  productSkuId Int @map("product_sku_id")
+  quantity     Int
 
   order Order @relation(fields: [orderId], references: [id])
 
