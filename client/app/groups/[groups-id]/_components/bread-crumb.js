@@ -31,7 +31,7 @@ export default function GroupBreadCrumb({ title, router }) {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => router.back()}
+          onClick={() => router.push('/groups')}
           className="inline-flex items-center font-medium bg-secondary-500 text-primary-500 px-3 py-1 hover:bg-secondary-500/80 transition rounded-md text-sm"
         >
           {/* <FaChevronLeft className="mr-1 h-3 w-3" /> */}
