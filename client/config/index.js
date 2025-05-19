@@ -7,7 +7,7 @@ export const isDev = env === 'development';
 
 // 本機環境
 const local = {
-  apiUrl: 'http://localhost:3005/api',
+  apiURL: 'http://localhost:3005/api',
   serverURL: 'http://localhost:3005',
   avatarURL: 'http://localhost:3005/avatar',
   nextUrl: 'http://localhost:3000',
@@ -15,13 +15,13 @@ const local = {
 
 // 營運環境設定(部署至Vercel)
 const production = {
-  apiUrl: 'https://xxxxx.vercel.app/api',
+  apiURL: 'https://xxxxx.vercel.app/api',
   serverURL: 'https://xxxxx.vercel.app',
   avatarURL: 'https://xxxxx.vercel.app/avatar',
   nextUrl: 'https://xxxxx.vercel.app',
 };
 
-export const apiUrl = isDev ? local.apiUrl : production.apiUrl;
+export const apiURL = isDev ? local.apiURL : production.apiURL;
 export const serverURL = isDev ? local.serverURL : production.serverURL;
 export const avatarURL = isDev ? local.avatarURL : production.avatarURL;
 export const nextUrl = isDev ? local.nextUrl : production.nextUrl;
