@@ -300,16 +300,17 @@ model ChatMessage {
 // 師資與課程
 // #region 
 model Coach {
-  id            Int             @id @default(autoincrement())
-  name          String
-  email         String
-  bio           String
-  experience    String
-  profilephoto  String
-  createdat     DateTime        @default(now()) @map("created_at")
-  valid         Int
-  LanguageCoach LanguageCoach[]
-  LicenseCoach  LicenseCoach[]
+  id             Int              @id @default(autoincrement())
+  name           String
+  email          String
+  bio            String
+  experience     String
+  profilephoto   String
+  createdat      DateTime         @default(now()) @map("created_at")
+  valid          Int
+  LanguageCoach  LanguageCoach[]
+  LicenseCoach   LicenseCoach[]
+  BoardtypeCoach BoardtypeCoach[]
 
   @@map("coach")
 }
@@ -406,6 +407,25 @@ model CourseTag {
   tag_id    Int
 
   @@map("course_tag")
+}
+
+model Boardtype {
+  id             Int              @id @default(autoincrement())
+  name           String
+  BoardtypeCoach BoardtypeCoach[]
+
+  @@map("boardtype")
+}
+
+model BoardtypeCoach {
+  id           Int @id @default(autoincrement())
+  boardtype_id Int
+  coach_id     Int
+
+  boardtype Boardtype @relation(fields: [boardtype_id], references: [id])
+  coach     Coach     @relation(fields: [coach_id], references: [id])
+
+  @@map("boardtype_coach")
 }
 
 // #endregion

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { PiPersonSimpleSki } from 'react-icons/pi';
 import { Funnel, Globe, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -51,14 +52,14 @@ export default function CoachesPage() {
     const result = coaches.filter((t) => {
       const matchKeyword = !filters.keyword || t.name.includes(filters.keyword);
       const matchBoard =
-        !filters.boardType || t.boardType.includes(filters.boardType);
+        !filters.boardTypes || t.boardTypes.includes(filters.boardType);
       const matchLang =
-        !filters.language || t.languages.includes(filters.language);
+        !filters.languages || t.languages.includes(filters.language);
       return matchKeyword && matchBoard && matchLang;
     });
     setFiltered(result);
   }, [coaches, filters]);
-
+  console.log(filters);
   //  按下「搜尋」按鈕才把暫存的 keyword 寫入 filters
   const handleSearch = () => {
     setFilters((f) => ({ ...f, keyword: searchKeyword }));
@@ -85,7 +86,7 @@ export default function CoachesPage() {
           {/* 語言選單*/}
           <Select
             value={filters.language}
-            onValuueChange={(val) =>
+            onValueChange={(val) =>
               setFilters((f) => ({ ...f, language: val }))
             }
           >
@@ -94,11 +95,11 @@ export default function CoachesPage() {
               <SelectValue placeholder="授課語言" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="light">中文</SelectItem>
-              <SelectItem value="dark">日文</SelectItem>
-              <SelectItem value="system">英文</SelectItem>
-              <SelectItem value="system">韓文</SelectItem>
-              <SelectItem value="system">粵語</SelectItem>
+              <SelectItem value="中文">中文</SelectItem>
+              <SelectItem value="日文">日文</SelectItem>
+              <SelectItem value="英文">英文</SelectItem>
+              <SelectItem value="韓文">韓文</SelectItem>
+              <SelectItem value="粵語">粵語</SelectItem>
             </SelectContent>
           </Select>
           {/* 單雙板 */}
@@ -113,8 +114,8 @@ export default function CoachesPage() {
               <SelectValue placeholder="單/雙板" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="light">單板</SelectItem>
-              <SelectItem value="dark">雙板</SelectItem>
+              <SelectItem value="單板">單板</SelectItem>
+              <SelectItem value="雙板">雙板</SelectItem>
             </SelectContent>
           </Select>
 
@@ -124,7 +125,7 @@ export default function CoachesPage() {
               type="text"
               placeholder="請輸入關鍵字..."
               value={searchKeyword}
-              onChange={(e) => setSearchKeyword((f) => e.target.value)}
+              onChange={(e) => setSearchKeyword(e.target.value)}
             />
             <Button type="submit" onClick={handleSearch}>
               <Send />
@@ -139,17 +140,21 @@ export default function CoachesPage() {
         {filtered.map((t) => (
           <div
             key={t.id}
-            className="max-w-xs mx-auto border-2 bordered rounded-2xl p-6 text-center"
+            className="w-75 mx-auto border-2 bordered rounded-2xl p-6 text-center"
           >
-            <img
-              src={t.profilephoto}
+            <Image
+              src={`http://localhost:3005/${t.profilephoto}`}
               alt={t.name}
               className="w-32 h-32 rounded-full mx-auto object-cover"
+              width={150}
+              height={150}
             />
             <h2 className="mt-4 text-xl font-semibold flex items-center justify-center">
               <span className="mr-2">{t.name}</span>
             </h2>
-            <p className="mt-2 text-gray-700">{t.boardType || '無資料'}</p>
+            <p className="mt-2 text-gray-700">
+              {t.boardtypes.join('、') || '無資料'}
+            </p>
             <p className="mt-1 text-gray-700">
               語言：{t.languages || '無資料'}
             </p>
