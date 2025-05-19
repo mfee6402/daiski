@@ -26,14 +26,17 @@ function parseYMD(str) {
   return isNaN(d.getTime()) ? null : d;
 }
 async function getUserIdFromRequest(req) {
-  const testUserId =
-    req.body.userId || req.query.userId || req.headers['x-user-id'] || 1; // 嘗試從多個地方獲取，預設為 1
+  const testOrganizerId =
+    req.body.organizerId ||
+    req.query.organizerId ||
+    req.headers['x-user-id'] ||
+    2; // 嘗試從多個地方獲取，預設為 1
   if (process.env.NODE_ENV !== 'production') {
     console.warn(
-      `警告：正在使用測試 userId: ${testUserId}。在生產環境中，請務必替換為安全的身份驗證邏輯來獲取 userId。`
+      `警告：正在使用測試 userId: ${testOrganizerId}。在生產環境中，請務必替換為安全的身份驗證邏輯來獲取 userId。`
     );
   }
-  const numericUserId = Number(testUserId);
+  const numericUserId = Number(testOrganizerId);
   return isNaN(numericUserId) ? null : numericUserId;
 }
 
@@ -56,7 +59,7 @@ router.post('/', upload.single('cover'), async (req, res, next) => {
     } = req.body;
 
     // 假設 userId 暫時寫死為 1，您需要替換成實際的 userId 獲取邏輯
-    const userId = 1;
+    const organizerId = 1;
 
     const labelToKey = { 滑雪: ActivityType.SKI, 聚餐: ActivityType.MEAL };
     let typeKey;
@@ -80,7 +83,7 @@ router.post('/', upload.single('cover'), async (req, res, next) => {
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
     const data = {
-      userId, // 關聯到創建者
+      organizerId, // 關聯到創建者
       type: typeKey,
       title,
       startDate: sd,
