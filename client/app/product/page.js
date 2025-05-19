@@ -68,7 +68,7 @@ export default function ProductPage() {
 
   const { data: suggestions = [], isValidating: sugLoading } = useSWR(
     debouncedSearch.length >= 2
-      ? `http://localhost:3005/api/products/search-suggestions?q=${encodeURIComponent(debouncedSearch)}&limit=5`
+      ? `/api/products/search-suggestions?search=${encodeURIComponent(debouncedSearch)}&limit=5`
       : null,
 
     fetcher
@@ -96,6 +96,15 @@ export default function ProductPage() {
     category_id: parseInt(searchParams.get('category_id') || '1', 10),
   });
   const [categories, setCategories] = useState([]);
+  // ─── 新增：品牌列表 & 已選品牌 state ───
+  const [brands, setBrands] = useState([]);
+  const [selectedBrands, setSelectedBrands] = useState(
+    searchParams
+      .get('brand_id')
+      ?.split(',')
+      .map((v) => Number(v)) || []
+  );
+
   const [sizes, setSizes] = useState([]);
   const [selectedSizes, setSelectedSizes] = useState(
     searchParams
@@ -103,6 +112,10 @@ export default function ProductPage() {
       ?.split(',')
       .map((v) => Number(v)) || []
   );
+  const [showAllSizes, setShowAllSizes] = useState(false);
+  const previewCount = 12;
+  const sizesToShow = showAllSizes ? sizes : sizes.slice(0, previewCount);
+  const canToggleSizes = sizes.length > previewCount;
   const [minPrice, setMinPrice] = useState(searchParams.get('min_price') || '');
   const [maxPrice, setMaxPrice] = useState(searchParams.get('max_price') || '');
 
@@ -151,6 +164,23 @@ export default function ProductPage() {
       })
       .catch(console.error);
   }, [pageInfo.category_id]); // 關鍵依賴：確保 pageInfo.category_id 更新後此 effect 執行
+
+  // ─── 當 category_id 變更時，讀品牌列表 ───
+  useEffect(() => {
+    if (!pageInfo.category_id) return;
+    const url = new URL('http://localhost:3005/api/products/brands');
+    url.searchParams.set('category_id', String(pageInfo.category_id));
+    fetch(url)
+      .then((r) => r.json())
+      .then((data) => {
+        setBrands(data);
+        // 只保留仍存在於新列表裡的 selectedBrands
+        setSelectedBrands((prev) =>
+          prev.filter((id) => data.some((b) => b.id === id))
+        );
+      })
+      .catch(console.error);
+  }, [pageInfo.category_id]);
 
   // ─── 4. 用 SWR 抓「商品列表」──
   // Key function：
@@ -207,6 +237,71 @@ export default function ProductPage() {
     router.push(`?${p.toString()}`);
   };
 
+  const handleToggleCategory = (label, open) => {
+    setOpenCategories((prev) => {
+      const set = new Set(prev);
+      open ? set.add(label) : set.delete(label);
+      return Array.from(set);
+    });
+  };
+
+  // ─── 新增：切換品牌 checkbox───
+  const handleToggleBrand = (bid) => {
+    const next = selectedBrands.includes(bid)
+      ? selectedBrands.filter((i) => i !== bid)
+      : [...selectedBrands, bid];
+    const p = new URLSearchParams(Array.from(searchParams.entries()));
+    p.set('page', '1');
+    if (next.length) p.set('brand_id', next.join(','));
+    else p.delete('brand_id');
+    router.push(`?${p.toString()}`);
+    setSelectedBrands(next);
+  };
+
+  // ─── 新增：重置品牌───
+  const handleResetBrands = () => {
+    const p = new URLSearchParams(Array.from(searchParams.entries()));
+    p.delete('brand_id');
+    p.set('page', '1');
+    router.push(`?${p.toString()}`, undefined, { shallow: true });
+    setSelectedBrands([]);
+  };
+
+  // 1. Helper：根據 categories & selectedCategoryId 計算要預設開啟哪些 label
+  const getDefaultOpen = (categoriesList, selectedId) => {
+    const set = new Set();
+
+    // 總是展開 id=1 的那一路
+    const fixed = categoriesList.find((c) => c.id === 1);
+    if (fixed?.fullPath) {
+      fixed.fullPath
+        .split(' > ')
+        .map((s) => s.trim())
+        .forEach((label) => set.add(label));
+    }
+
+    // 如果有選中分類，再把它的 fullPath 也拆開加入
+    if (selectedId) {
+      const cur = categoriesList.find((c) => c.id === selectedId);
+      if (cur?.fullPath) {
+        cur.fullPath
+          .split(' > ')
+          .map((s) => s.trim())
+          .forEach((label) => set.add(label));
+      }
+    }
+
+    return Array.from(set);
+  };
+  // 2. openCategories state，初始值用 helper 計算
+  const [openCategories, setOpenCategories] = useState(() =>
+    getDefaultOpen(categories, pageInfo.category_id)
+  );
+  // 3. 當 categories 或 selectedCategoryId (= pageInfo.category_id) 變動時，重新同步
+  useEffect(() => {
+    setOpenCategories(getDefaultOpen(categories, pageInfo.category_id));
+  }, [categories, pageInfo.category_id]);
+
   const handleToggleSize = (sid) => {
     const next = selectedSizes.includes(sid)
       ? selectedSizes.filter((i) => i !== sid)
@@ -219,18 +314,56 @@ export default function ProductPage() {
     setSelectedSizes(next); // 立即更新 UI 反饋
   };
 
+  // (其餘 handleSelect, JSX return 部分不變)
+  // 新增：重置所有尺寸的 handler
+  const handleResetSizes = () => {
+    // 1. 清掉 URL 上的 size_id，並把 page 重設1
+    const p = new URLSearchParams(Array.from(searchParams.entries()));
+    p.delete('size_id');
+    p.set('page', '1');
+    router.push(`?${p.toString()}`, undefined, { shallow: true });
+
+    // 2. 立即在 UI 上清空 selectedSizes
+    setSelectedSizes([]);
+  };
+
+  // 價格錯誤訊息 state
+  const [priceError, setPriceError] = useState('');
+
+  // onTriggerPriceFilter 改成帶驗證
   const handlePriceFilter = () => {
+    const min = Number(minPrice);
+    const max = Number(maxPrice);
+    if (min < 0 || max < 0) {
+      setPriceError('價格不可為負數');
+      return;
+    }
+    if (max < min) {
+      setPriceError('最高價不能低於最低價');
+      return;
+    }
+    // 驗證通過
+    setPriceError('');
     const p = new URLSearchParams(Array.from(searchParams.entries()));
     p.set('page', '1');
     if (minPrice) p.set('min_price', minPrice);
     else p.delete('min_price');
     if (maxPrice) p.set('max_price', maxPrice);
     else p.delete('max_price');
-    router.push(`?${p.toString()}`);
+    router.push(`?${p.toString()}`, undefined, { shallow: true });
   };
 
-  // (其餘 handleSelect, JSX return 部分不變)
-  // ...
+  // 重置價格
+  const handleResetPrice = () => {
+    const p = new URLSearchParams(Array.from(searchParams.entries()));
+    p.delete('min_price');
+    p.delete('max_price');
+    p.set('page', '1');
+    router.push(`?${p.toString()}`, undefined, { shallow: true });
+    setMinPrice('');
+    setMaxPrice('');
+    setPriceError('');
+  };
 
   return (
     <Container className="z-10 pt-10 pb-20">
@@ -239,19 +372,32 @@ export default function ProductPage() {
           limit={pageInfo.limit}
           onChangeLimit={changeLimit}
           categories={categories}
-          // 這裡的 currentCategory 可以考慮直接從 pageInfo.category_id 或 searchParams 讀取
-          // selectedCategoryId={pageInfo.category_id}
+          selectedCategoryId={pageInfo.category_id}
           onSelectCategory={handleCategorySelect}
-          sizes={sizes}
+          openCategories={openCategories}
+          onToggleCategory={handleToggleCategory}
+          sizes={sizesToShow}
           selectedSizes={selectedSizes}
           onToggleSize={handleToggleSize}
+          onResetSizes={handleResetSizes}
+          showAllSizes={showAllSizes}
+          canToggleSizes={canToggleSizes}
+          onToggleShowAllSizes={() => setShowAllSizes((prev) => !prev)}
+          brands={brands}
+          selectedBrands={selectedBrands}
+          onToggleBrand={handleToggleBrand}
+          onResetBrands={handleResetBrands}
           minPrice={minPrice}
           maxPrice={maxPrice}
           onChangePrice={(type, val) => {
-            if (type === 'min') setMinPrice(val);
-            else setMaxPrice(val);
+            const clean = val.replace(/\D/g, '');
+            if (type === 'min') setMinPrice(clean);
+            else setMaxPrice(clean);
+            setPriceError('');
           }}
           onTriggerPriceFilter={handlePriceFilter}
+          onResetPrice={handleResetPrice}
+          priceError={priceError}
           searchValue={searchText}
           onChangeSearch={setSearchText}
           suggestions={suggestions} // <--- 傳遞搜尋建議

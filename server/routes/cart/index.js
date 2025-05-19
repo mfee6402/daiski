@@ -25,22 +25,41 @@ router.post('/', async function (req, res) {
 router.get('/', async function (req, res) {
   const data = await prisma.cart.findUnique({
   include: {
-    // 相當於 JOIN cart ON cart.id = post.cart
-    
-     CartProduct: {
-      include: {
-        product: {
-          include: {
-            product_image: true, // 取得圖片
-          },
-        },
-      },
-    },
-    CartCourse:{
-     select:{
-        courseId:true,
+    // 相當於 JOIN
+     CartProduct:
+     {
+      include:{
+        productSku:{
+          select:{
+            price:true,
+            product_size:{
+              select:{
+                name:true
+              }
+            },
+            product:{
+              select:{
+                name:true,
+                product_image:{
+                  select:{
+                    url:true
+                  },
+                  where:{
+                    sort_order:0
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
+    CartCourse:true,
+    // {
+    //  select:{
+    //     courseId:true,
+    //   }
+    // },
     CartGroup:{
      select:{
         groupId:true,
@@ -52,39 +71,41 @@ router.get('/', async function (req, res) {
     id: 1,
   },
 });
-  // 攤平 CartProduct 內的 product.name 成 productName
-  // const flatCartProduct = data.CartProduct.map(item => ({
-  //   id: item.id,
-  //   cartId: item.cartId,
-  //   productId: item.productId,
-  //   quantity: item.quantity,
-  //   name: item.product.name
-  // }));
 
-  // 替換原本的 CartProduct 為攤平後的資料
-  // const cart = {
-  //   ...data,
-  //   CartProduct: flatCartProduct
-  // };
+  const CartProduct = data.CartProduct.map(item => ({
+    id: item.id,
+    productSkuId: item.productSkuId,
+    quantity: item.quantity,
+    price: item.productSku.price,
+    name: item.productSku.product.name,
+    imageUrl:  item.productSku.product.product_image[0].url,
+    size:  item.productSku.product_size.name
+  }));
+
+  const cart = {
+    ...data,
+    CartProduct
+  }
+
   res
     .status(200)
-    .json({ status: 'success', data})
+    .json({ status: 'success', cart})
 })
 
-// 更新(只有商品有數量，課程跟揪團票券固定只有1)
+// 更新(只有商品有數量，課程跟揪團票券固定只有1，但為了日後擴充性，req傳遞購物車全部)
 router.put('/:itemId', async function (req, res) {
   // console.log(req.body.data.cart)
   // console.log(req.body.data.cart.CartProduct[req.params.itemId].quantity)
 
-  // const cart = await prisma.cartProduct.update({
-  // where: {
-  //   id: +req.params.itemId,
-  // },
-  // data: {
-  //   quantity: req.body.data.cart.CartProduct[req.params.itemId].quantity,
-  // },
+//   const cart = await prisma.cartProduct.update({
+//   where: {
+//     id: +req.params.itemId,
+//   },
+//   data: {
+//     quantity: req.body.data.cart.CartProduct[req.params.itemId].quantity,
+//   },
 // });
-console.log(+req.params.itemId)
+
   res
     .status(200)
     .json({ status: 'success',data:{}})
