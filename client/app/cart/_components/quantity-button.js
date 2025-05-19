@@ -9,6 +9,8 @@ export default function QuantityButton({
   type = '',
 }) {
   const url = `http://localhost:3005/api/cart/${productId}`;
+
+  // 將更新傳回後端
   async function fetchData(nextCart) {
     try {
       const res = await fetch(url, {
@@ -17,7 +19,7 @@ export default function QuantityButton({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          data: nextCart,
+          cart: nextCart.cart,
         }),
       });
     } catch (err) {
@@ -32,11 +34,19 @@ export default function QuantityButton({
         onClick={() => {
           const nextCart = produce(data, (draft) => {
             draft.cart.CartProduct.map((product) => {
-              if (productId === product.productId) {
-                type === 'minus' ? product.quantity-- : product.quantity++;
+              if (productId === product.id) {
+                if (type === 'minus') {
+                  // FIXME 增加刪除功能
+                  product.quantity === 1
+                    ? alert('確認刪除?(待做)')
+                    : product.quantity--;
+                } else if (type === 'plus') {
+                  product.quantity++;
+                }
               }
             });
           });
+
           setData(nextCart);
           fetchData(nextCart);
         }}

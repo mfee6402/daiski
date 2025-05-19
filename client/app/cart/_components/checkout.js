@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 
-export default function Checkout() {
+export default function Checkout({ data = {} }) {
   return (
     <>
       <div className=" w-[450] sm:w-[200] md:w-[250] lg:w-[350] xl:w-[450]  sticky top-30">
@@ -12,10 +12,32 @@ export default function Checkout() {
           <div className="flex justify-between">
             <p className="text-p-tw">商品原價總金額</p>
             {/* FIXME 待寫入金額 */}
-            <p className="text-p-tw"></p>
+            <p className="text-p-tw">
+              $
+              {data?.cart.CartCourse.length != 0
+                ? data?.cart.CartProduct.reduce((acc, product) => {
+                    acc += product.quantity * product.price;
+                    return acc;
+                  }, 0).toLocaleString()
+                : 0}
+            </p>
           </div>
           <div>
             <p className="text-p-tw">課程原價總金額</p>
+            {/* FIXME 待寫入金額 */}
+            <p className="text-p-tw">
+              {' '}
+              $
+              {data?.cart.CartCourse.length != 0
+                ? data?.cart.CartCourse.reduce((acc, course) => {
+                    acc += course.quantity * course.price;
+                    return acc;
+                  }, 0).toLocaleString()
+                : 0}
+            </p>
+          </div>
+          <div>
+            <p className="text-p-tw">揪團總金額</p>
             {/* FIXME 待寫入金額 */}
             <p className="text-p-tw"></p>
           </div>
