@@ -10,23 +10,29 @@ datasource db {
 // 會員 
 // #region 
 model User {
-  id           Int            @id @default(autoincrement())
-  account      String         @unique
-  password     String
-  name         String
-  phone        String
-  birthday     String
-  email        String
-  is_coach     String
-  avatar       String?
-  createdAt    DateTime       @default(now()) @map("created_at")
-  updatedAt    DateTime       @updatedAt @map("updated_at")
-  deleteAt     DateTime?      @map("delete_at")
+  id        Int      @id @default(autoincrement())
+  account   String   @unique
+  password  String
+  name      String
+  phone     String
+  // String->DateTime
+  birthday  DateTime
+  email     String
+  // 更改為與資料庫相同
+  is_coach  Int
+  avatar    String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  deleted_at DateTime? @map("deleted_at")
+
   Group        Group[]
   GroupMember  GroupMember[]
   GroupComment GroupComment[]
   ChatMessage  ChatMessage[]
   GameScore    GameScore[]
+
+  @@map("user")
 }
 
 // #endregion
