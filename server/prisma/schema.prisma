@@ -18,7 +18,7 @@ model User {
   birthday     String
   email        String
   is_coach     String
-  avatar       String
+  avatar       String?
   createdAt    DateTime       @default(now()) @map("created_at")
   updatedAt    DateTime       @updatedAt @map("updated_at")
   deleteAt     DateTime?      @map("delete_at")
