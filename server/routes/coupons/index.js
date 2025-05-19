@@ -15,6 +15,7 @@ router.get('/', async function (req, res) {
   const coupon = await prisma.coupon.findMany({
     select: {
       // 想顯示的 scalar 欄位
+      id: true,
       name: true,
       startAt: true,
       endAt: true,
@@ -27,14 +28,21 @@ router.get('/', async function (req, res) {
           amount: true,
         },
       },
+      couponTarget: {
+        select: {
+          target: true,
+        },
+      },
     },
   });
-  const flattened = coupon.map(({ couponType, ...rest }) => ({
+  const coupons = coupon.map(({ couponType, couponTarget, ...rest }) => ({
     ...rest,
-    ...couponType,
+    type: couponType.type,
+    amount: couponType.amount,
+    target: couponTarget.target,
   }));
 
-  res.status(200).json({ status: 'success', flattened });
+  res.status(200).json({ status: 'success', coupons });
 });
 
 export default router;
