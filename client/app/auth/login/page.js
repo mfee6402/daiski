@@ -39,6 +39,7 @@ import {
 } from '@/services/rest-client/use-user';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { color } from 'framer-motion';
 
 export default function UserPage() {
   // 輸入表單用的狀態
@@ -119,22 +120,24 @@ export default function UserPage() {
       <h1>會員登入認証&授權測試(JWT)</h1>
       <p>會員狀態:{isAuth ? '已登入' : '未登入'}</p>
       <hr />
-      <label>
+      <label >
         帳號:
         <input
           type="text"
           name="account"
           value={userInput.account}
           onChange={handleFieldChange}
+          className=" border-4 border-lime-700"
         />
       </label>
-      <label>
+      <label className="block text-lg">
         密碼:
         <input
           type="text"
           name="password"
           value={userInput.password}
           onChange={handleFieldChange}
+          className="w-full px-4 py-3 rounded-lg border border-[#cbd5e0] focus:outline-none focus:ring-2 focus:ring-[#0059c8]"
         />
       </label>
       <br />

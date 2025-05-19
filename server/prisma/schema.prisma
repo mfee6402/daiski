@@ -21,6 +21,7 @@ model User {
   // 更改為與資料庫相同
   is_coach  Int
   avatar    String?
+  bio       String?
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -49,7 +50,7 @@ model Product {
   created_at       DateTime         @default(now()) @db.DateTime(0)
   publish_at       DateTime?        @db.DateTime(0)
   unpublish_at     DateTime?        @db.DateTime(0)
-  delete_at        DateTime?        @db.DateTime(0)
+  deleted_at       DateTime?        @db.DateTime(0)
   product_brand    ProductBrand?    @relation(fields: [brand_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_product_brand")
   product_category ProductCategory? @relation(fields: [category_id], references: [id], onUpdate: Restrict, map: "product_ibfk_1")
   product_image    ProductImage[]
