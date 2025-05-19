@@ -1,6 +1,6 @@
 import express from 'express'
-import db from '../../config/mysql.js'
 import prisma from '../../lib/prisma.js'
+
 
 
 const router = express.Router()
@@ -62,8 +62,22 @@ router.get('/', async function (req, res) {
     // },
     CartGroup:{
      select:{
-        groupId:true,
-      },
+      groupMember:{
+        select:{
+          groupId:true,
+          joinedAt:true,
+         
+          group:{
+            select:{
+              title:true,
+              price:true,
+              images:true
+            }
+          }
+         
+        }
+      }
+     }
       // FIXME等待會員資料
       // 查詢本會員參與的揪團
      

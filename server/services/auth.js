@@ -10,7 +10,7 @@ import { safeParseBindSchema } from '../lib/utils.js'
 const authSchema = {}
 // 登入的驗証用的schema
 authSchema.loginData = z.object({
-  username: z.string().min(1).max(50), // 1-50個字元，必要
+  account: z.string().min(1).max(50), // 1-50個字元，必要
   password: z.string().min(5).max(30), // 5-30個字元，必要
 })
 
@@ -30,10 +30,10 @@ export const login = async (loginData) => {
   // 檢查從前端來的資料是否符合格式，注意要傳入與檢查schema同名的物件值，例如{ loginData: loginData }，前者為物件的key，會比對schema物件中的檢查格式，後者為要檢查物件的值
   authSchemaValidator({ loginData })
 
-  // 查詢資料庫這帳號的使用者資料(如果username有設定為unique，可以用`findUnique`)
+  // 查詢資料庫這帳號的使用者資料(如果account有設定為unique，可以用`findUnique`)
   // 這裡不會有profile
   const user = await prisma.user.findFirst({
-    where: { username: loginData.username },
+    where: { account: loginData.account },
   })
 
   // null代表不存在
@@ -62,7 +62,7 @@ export const login = async (loginData) => {
     }
   }
 
-  // 存取令牌(access token)只需要id和username就足夠，其它資料可以再向資料庫查詢
+  // 存取令牌(access token)只需要id和account就足夠，其它資料可以再向資料庫查詢
   return user
 }
 

@@ -22,7 +22,6 @@ import {
 } from '../services/auth.js'
 import {
   getUserById,
-  getUserFavorites,
   getUserByField,
   createUser,
   updateUserDataByField,
@@ -89,13 +88,13 @@ const generateAccessToken = async (res, user) => {
 
   // 取得會員id
   const userId = user.id
+  
   // 取得會員所有資料，包含profile
   const allUserData = await getUserById(userId)
-  // 取得會員收藏清單
-  const favorites = await getUserFavorites(userId)
+
 
   // 傳送access token回應(例如react可以儲存在state中使用)
-  successResponse(res, { user: allUserData, favorites })
+  successResponse(res, { user: allUserData })
 }
 
 const logoutClearCookie = (res) => {
@@ -123,9 +122,8 @@ router.get('/check', authenticate, async (req, res) => {
   try {
     // 取得會員所有資料，包含profile
     const user = await getUserById(userId)
-    // 取得會員收藏清單
-    const favorites = await getUserFavorites(userId)
-    successResponse(res, { user, favorites })
+
+    successResponse(res, { user })
   } catch (error) {
     errorResponse(res, error)
   }
@@ -189,7 +187,7 @@ router.post('/google-login', async function (req, res) {
     if (!googleUidUser && !emailUser) {
       const newUser = {
         // 用googleUid當帳號(因為帳號是必要的，這裡不會用到)
-        username: String(googleUid),
+        account: String(googleUid),
         name: displayName,
         // 用亂數產生密碼(因為密碼是必要的，這裡不會用到)，長度20
         password: crypto.randomBytes(10).toString('hex'),
@@ -283,7 +281,7 @@ router.get(
           // 2-2. 不存在 -> 建立一個新會員資料，只有line來的資料 -> 執行登入工作
           const newUser = {
             // 用LineUid當帳號(因為帳號是必要的，這裡不會用到)
-            username: String(lineUid),
+            account: String(lineUid),
             // 用亂數產生密碼(因為密碼是必要的，這裡不會用到)，長度20
             password: crypto.randomBytes(10).toString('hex'),
             // 因為line登入要得到email，必須額外申請，所以這裡只作展示用，以亂數產生，參考:
