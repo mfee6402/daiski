@@ -221,7 +221,7 @@ export default function CreateGroupPage() {
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3005';
   const [currentStep, setCurrentStep] = useState('step1');
 
-  // 表單 state (與之前相同)
+  // 表單
   const [typeOptions, setTypeOptions] = useState([]);
   const [type, setType] = useState('');
   const [openTypePopover, setOpenTypePopover] = useState(false);
@@ -250,7 +250,7 @@ export default function CreateGroupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [formError, setFormError] = useState('');
 
-  // useEffect 邏輯 (與之前相同)
+  // useEffect 邏輯
   useEffect(() => {
     async function loadTypes() {
       try {
@@ -534,8 +534,11 @@ export default function CreateGroupPage() {
                             <span className="ml-2 text-xs opacity-50">▼▲</span>
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-slate-50">
-                          <Command>
+                        <PopoverContent
+                          className="w-[--radix-popover-trigger-width] p-0 bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-slate-50"
+                          align="start"
+                        >
+                          <Command className="">
                             <CommandInput
                               placeholder="搜尋類型..."
                               className="h-9 border-slate-300 dark:border-slate-700"
@@ -648,7 +651,10 @@ export default function CreateGroupPage() {
                               </span>
                             </Button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-slate-50">
+                          <PopoverContent
+                            className="w-[--radix-popover-trigger-width] p-0 bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-slate-50"
+                            align="start"
+                          >
                             <Command>
                               <CommandInput
                                 placeholder="搜尋滑雪場..."
@@ -724,7 +730,10 @@ export default function CreateGroupPage() {
                               </span>
                             </Button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-slate-50">
+                          <PopoverContent
+                            className="w-[--radix-popover-trigger-width] p-0 bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-slate-50"
+                            align="start"
+                          >
                             <Command>
                               <CommandList>
                                 <CommandEmpty>找不到難易度。</CommandEmpty>
