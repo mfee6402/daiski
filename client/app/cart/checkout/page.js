@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Process from '../_components/process';
 import ShippingMethod from './_components/shippingMethod';
+import Link from 'next/link';
 
 export default function CheckoutPage(props) {
   const handleSubmit = (e) => {
@@ -75,8 +76,12 @@ export default function CheckoutPage(props) {
             <span className="pointer-events-none w-3  h-3 rounded-full bg-primary-600 absolute left-1.5 my-auto opacity-0 peer-checked:opacity-100" />
 
             <h6 className=" text-h6-tw">綠界</h6>
+            <Link href="http://localhost:3005/api/cart/ecpay-test-only?amount=2500">
+              綠界按鈕
+            </Link>
           </label>
         </div>
+
         <div className="flex justify-end ">
           <button
             type="submit"

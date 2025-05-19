@@ -3,12 +3,14 @@ import { produce } from 'immer';
 import { useEffect } from 'react';
 
 export default function QuantityButton({
-  productIndex = 0,
+  productId = 0,
   data = '',
   setData = () => {},
   type = '',
 }) {
-  const url = `http://localhost:3005/api/cart/${productIndex}`;
+  const url = `http://localhost:3005/api/cart/${productId}`;
+
+  // 將更新傳回後端
   async function fetchData(nextCart) {
     try {
       const res = await fetch(url, {
@@ -17,7 +19,7 @@ export default function QuantityButton({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          data: nextCart,
+          cart: nextCart.cart,
         }),
       });
     } catch (err) {
@@ -28,21 +30,34 @@ export default function QuantityButton({
   return (
     <>
       <button
+        className="w-[50]"
         onClick={() => {
-          console.log(data.cart);
           const nextCart = produce(data, (draft) => {
-            if (type === 'minus') {
-              draft.cart.CartProduct[productIndex].quantity--;
-            } else if (type === 'plus') {
-              draft.cart.CartProduct[productIndex].quantity++;
-            }
+            draft.cart.CartProduct.map((product) => {
+              if (productId === product.id) {
+                if (type === 'minus') {
+                  // FIXME 增加刪除功能
+                  product.quantity === 1
+                    ? alert('確認刪除?(待做)')
+                    : product.quantity--;
+                } else if (type === 'plus') {
+                  product.quantity++;
+                }
+              }
+            });
           });
+
           setData(nextCart);
           fetchData(nextCart);
         }}
       >
-        {type === 'minus' && '-'}
-        {type === 'plus' && '+'}
+        {/* FIXME -號要加大*/}
+        <div>
+          <p className="text-h6-tw ">{type === 'minus' && '-'}</p>
+        </div>
+        <div>
+          <p className="text-h6-tw">{type === 'plus' && '+'}</p>
+        </div>
       </button>
     </>
   );
