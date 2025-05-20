@@ -12,9 +12,10 @@ import { createClient } from 'redis';
 // 使用檔案的session store，預設是存在sessions資料夾
 import sessionFileStore from 'session-file-store';
 import { serverConfig } from '../config/server.config.js';
-
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 // 修正 ESM 中的 __dirname 與 windows os 中的 ESM dynamic import
-import { pathToFileURL } from 'url';
+import { pathToFileURL, fileURLToPath } from 'url';
 // import { fileURLToPath, pathToFileURL } from 'url'
 // const __filename = fileURLToPath(import.meta.url)
 // const __dirname = path.dirname(__filename)
@@ -23,11 +24,15 @@ import 'dotenv/config.js';
 
 // 建立 Express 應用程式
 const app = express();
-
+// --- Socket.IO 修改 1: 使用 Express app 創建 HTTP 伺服器 ---
+const server = http.createServer(app);
 // cors設定，參數為必要，注意不要只寫`app.use(cors())`
 // 設定白名單，只允許特定網址存取
-const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000' || 'http://localhost:3005'
-const whiteList = frontendUrl.split(',')
+const frontendUrl =
+  process.env.FRONTEND_URL ||
+  'http://localhost:3000' ||
+  'http://localhost:3005';
+const whiteList = frontendUrl.split(',');
 // 設定CORS
 app.use(
   cors({
@@ -100,7 +105,31 @@ app.use(
     saveUninitialized: false,
   })
 );
+// --- Socket.IO 修改 2: 初始化 Socket.IO 伺服器並附加到 HTTP 伺服器 ---
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: whiteList, // 使用您已定義的白名單
+    methods: ['GET', 'POST'],
+    credentials: true, // 如果前端需要傳遞 cookie 或 Authorization header
+  },
+});
+// --- Socket.IO 修改 3: 添加基本的連線處理邏輯 ---
+io.on('connection', (socket) => {
+  console.log('一個使用者已透過 Socket.IO 連線:', socket.id);
 
+  // 示例：監聽來自客戶端的 'send_message' 事件
+  socket.on('send_message', (data) => {
+    console.log(`收到來自 ${socket.id} 的訊息:`, data);
+    // 示例：將收到的訊息廣播給所有其他客戶端
+    socket.broadcast.emit('receive_message', data);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('使用者已離線:', socket.id);
+  });
+
+  // 您可以在此處添加更多特定於您應用程式的 Socket.IO 事件處理
+});
 // 根路由預設測試畫面
 app.get('/', (req, res) => res.send('Express server is running.'));
 
@@ -166,8 +195,16 @@ app.use(function (err, req, res) {
   res.status(500).send({ error: err });
 });
 
-const port = process.env.PORT || 3000;
+// --- Socket.IO 修改 4: 修改伺服器啟動方式 ---
+const port = process.env.PORT || 3005; // 您的設定檔中 API 埠號似乎是 3005
 
-app.listen(port, () => console.log(`Server ready on port ${port}.`));
+server.listen(port, () => {
+  // 改為監聽 http server
+  console.log(
+    `API 伺服器 (包含 Socket.IO) 正在 http://localhost:${port} 上運行`
+  );
+});
+
+// app.listen(port, () => console.log(`Server ready on port ${port}.`));
 
 export default app;

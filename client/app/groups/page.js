@@ -16,6 +16,8 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { CustomPagination } from './_components/group-pagination'; // 確保路徑和組件名稱正確
 import Image from 'next/image';
+import { ChatBubble } from './_components/chat-bubble';
+import { stringify } from 'querystring';
 
 export default function GroupsPage() {
   const router = useRouter();
@@ -32,7 +34,10 @@ export default function GroupsPage() {
   });
   const [typeOptions, setTypeOptions] = useState(['全部']);
   const [locationOptions, setLocationOptions] = useState(['全部']);
-
+  const [chatOpen, setChatOpen] = useState(false);
+  const PAGE_SIZE = 12;
+  //假用戶 id是1
+  const currentUser = { id: 1, name: '測試用戶' };
   useEffect(() => {
     async function loadFilterOptions() {
       try {
@@ -61,7 +66,9 @@ export default function GroupsPage() {
   useEffect(() => {
     async function fetchGroups() {
       try {
-        const params = new URLSearchParams();
+        const params = new URLSearchParams({
+          pageSize: String(PAGE_SIZE),
+        });
         if (filters.type !== '全部') params.append('type', filters.type);
         if (filters.date) params.append('date', filters.date);
         if (filters.location !== '全部')
@@ -69,8 +76,7 @@ export default function GroupsPage() {
         if (filters.keyword) params.append('keyword', filters.keyword);
         params.append('page', String(page));
 
-        const q = params.toString();
-        const res = await fetch(`${API_BASE}/api/group?${q}`);
+        const res = await fetch(`${API_BASE}/api/group?${params}`);
         const data = await res.json();
 
         if (data && Array.isArray(data.groups)) {
@@ -143,14 +149,14 @@ export default function GroupsPage() {
             {/* 假設 white 映射到 var(--color-white) */}
             <Button
               onClick={() => router.push('/groups/create')}
-              className="px-8 py-3 bg-primary-500 text-white text-p-tw font-semibold shadow-lg transition transform hover:scale-105 rounded-md hover:bg-primary-600" // 加入 hover:bg-primary-600 (假設已定義)
+              className="px-8 py-3 bg-primary-500 text-white font-semibold shadow-lg transition transform hover:scale-105 rounded-md hover:bg-primary-600 cursor-pointer" // 加入 hover:bg-primary-600 (假設已定義)
             >
               立即開團
             </Button>
             <Button
               variant="outline"
               onClick={() => router.push('/group')}
-              className="px-8 py-3 border-primary-500 text-primary-500 text-p-tw font-semibold transition transform hover:scale-105 rounded-md hover:bg-primary-500/10" // hover 效果使用 primary-500 加上透明度
+              className="px-8 py-3 border-primary-500 text-primary-500 font-semibold transition transform hover:scale-105 rounded-md hover:bg-primary-500/10 cursor-pointer" // hover 效果使用 primary-500 加上透明度
             >
               查看開團
             </Button>
@@ -358,14 +364,14 @@ export default function GroupsPage() {
                 <div className="mt-auto pt-2 flex justify-between items-center">
                   <Button
                     variant="link"
-                    className="px-0 text-p-tw text-primary-500 hover:text-primary-600" // text-primary-500 和 hover 效果
+                    className="px-0 text-p-tw text-primary-500 hover:text-primary-600 cursor-pointer" // text-primary-500 和 hover 效果
                     onClick={() => router.push(`/groups/${group.id}`)}
                   >
                     查看詳情
                   </Button>
                   <Button
                     size="sm"
-                    className="font-semibold bg-primary-500 text-white text-base  hover:bg-primary-600" // 主要按鈕樣式
+                    className="font-semibold bg-primary-500 text-white text-base  hover:bg-primary-600 cursor-pointer" // 主要按鈕樣式
                     onClick={() => handleJoin(group.id)}
                   >
                     加入揪團
@@ -386,6 +392,14 @@ export default function GroupsPage() {
           />
         </div>
       </section>
+
+      {/* …上方群組內容… */}
+      <ChatBubble
+        apiBase={API_BASE}
+        currentUser={currentUser}
+        open={chatOpen}
+        onOpenChange={setChatOpen}
+      />
     </>
   );
 }

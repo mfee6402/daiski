@@ -408,24 +408,35 @@ router.get('/brands', async (req, res, next) => {
 });
 
 // --------------------------------------------------
-// GET /api/products/:id — 取得單一商品
+// GET /api/products/:id — 取得單一商品詳細資料 + 相關商品
 // --------------------------------------------------
 router.get('/:id', async (req, res, next) => {
   const { id } = req.params;
+
   try {
+    // 1. 先拿主商品 + 該分類的 parent_id
     const product = await prisma.product.findUnique({
       where: { id: Number(id) },
-      select: {
-        id: true,
-        name: true,
-        category_id: true,
-        brand_id: true,
-        introduction: true,
-        spec: true,
-        created_at: true,
-        publish_at: true,
-        unpublish_at: true,
-        delete_at: true,
+      include: {
+        product_image: {
+          where: { deleted_at: null },
+          orderBy: { sort_order: 'asc' },
+          select: { url: true },
+        },
+        product_sku: {
+          where: { deleted_at: null },
+          orderBy: [{ product_size: { sort_order: 'asc' } }, { price: 'asc' }],
+          select: {
+            id: true,
+            size_id: true,
+            price: true,
+            stock: true,
+            product_size: { select: { name: true } },
+          },
+        },
+        product_brand: { select: { id: true, name: true } },
+        // 多取 parent_id
+        product_category: { select: { id: true, name: true, parent_id: true } },
       },
     });
 
@@ -433,7 +444,98 @@ router.get('/:id', async (req, res, next) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    res.json(product);
+    const catId = product.product_category?.id;
+    const parentId = product.product_category?.parent_id;
+
+    // helper: 統一把 Prisma 回來的 p 轉成前端要的格式
+    const normalize = (p) => ({
+      id: p.id,
+      name: p.name,
+      image: p.product_image[0]
+        ? `http://localhost:3005${p.product_image[0].url}`
+        : '/placeholder.jpg',
+      price: p.product_sku[0]?.price ?? 0,
+    });
+
+    // 2. 撈同子分類（最多 4 筆，排除自己）
+    let related = await prisma.product.findMany({
+      where: {
+        delete_at: null,
+        category_id: catId,
+        id: { not: product.id },
+      },
+      take: 4,
+      include: {
+        product_image: {
+          where: { deleted_at: null, sort_order: 0 },
+          take: 1,
+          select: { url: true },
+        },
+        product_sku: {
+          where: { deleted_at: null },
+          orderBy: { price: 'asc' },
+          take: 1,
+          select: { price: true },
+        },
+      },
+    });
+
+    // 3. 不足 4 筆且有父分類，就補同父分類
+    if (related.length < 4 && parentId) {
+      const excludeIds = [product.id, ...related.map((p) => p.id)];
+      const siblings = await prisma.product.findMany({
+        where: {
+          delete_at: null,
+          // 取該 parentId 底下的所有子分類商品
+          product_category: { parent_id: parentId },
+          id: { notIn: excludeIds },
+        },
+        take: 4 - related.length,
+        include: {
+          product_image: {
+            where: { deleted_at: null, sort_order: 0 },
+            take: 1,
+            select: { url: true },
+          },
+          product_sku: {
+            where: { deleted_at: null },
+            orderBy: { price: 'asc' },
+            take: 1,
+            select: { price: true },
+          },
+        },
+      });
+
+      related = related.concat(siblings);
+    }
+
+    // 4. 組 response
+    const response = {
+      id: product.id,
+      name: product.name,
+      introduction: product.introduction,
+      spec: product.spec,
+      publishAt: product.publish_at,
+      createdAt: product.created_at,
+      brand: product.product_brand,
+      category: {
+        id: product.product_category.id,
+        name: product.product_category.name,
+      },
+      images: product.product_image.map(
+        (img) => `http://localhost:3005${img.url}`
+      ),
+      skus: product.product_sku.map((sku) => ({
+        skuId: sku.id,
+        sizeId: sku.size_id,
+        sizeName: sku.product_size?.name || null,
+        price: sku.price,
+        stock: sku.stock,
+      })),
+      related: related.map(normalize),
+    };
+
+    res.json(response);
   } catch (error) {
     next(error);
   }

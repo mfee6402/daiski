@@ -25,7 +25,112 @@ function parseYMD(str) {
   const d = new Date(str + 'T00:00:00Z'); // 使用 UTC 以避免時區問題
   return isNaN(d.getTime()) ? null : d;
 }
+async function getUserIdFromRequest(req) {
+  const testOrganizerId =
+    req.body.organizerId ||
+    req.query.organizerId ||
+    req.headers['x-user-id'] ||
+    2; // 嘗試從多個地方獲取，預設為 1
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn(
+      `警告：正在使用測試 userId: ${testOrganizerId}。在生產環境中，請務必替換為安全的身份驗證邏輯來獲取 userId。`
+    );
+  }
+  const numericUserId = Number(testOrganizerId);
+  return isNaN(numericUserId) ? null : numericUserId;
+}
 
+// POST /api/group (創建揪團的路由)
+router.post('/', upload.single('cover'), async (req, res, next) => {
+  try {
+    const {
+      type: rawType,
+      title,
+      start_date,
+      end_date,
+      location: locationInput, // 前端傳來的地點，可能是 location_id (滑雪) 或 地點名稱 (聚餐)
+      customLocation: customLocationInput, // 前端可能也會傳這個，或者合併到 locationInput 處理
+      min_people,
+      max_people,
+      price,
+      allow_newbie,
+      description,
+      // userId, // 正式環境應從 session 或 token 獲取
+    } = req.body;
+
+    // 假設 userId 暫時寫死為 1，您需要替換成實際的 userId 獲取邏輯
+    const organizerId = 1;
+
+    const labelToKey = { 滑雪: ActivityType.SKI, 聚餐: ActivityType.MEAL };
+    let typeKey;
+    if (labelToKey[rawType]) {
+      typeKey = labelToKey[rawType];
+    } else if (Object.values(ActivityType).includes(rawType)) {
+      typeKey = rawType;
+    } else {
+      return res.status(400).json({ error: `無效的活動類型：${rawType}` });
+    }
+
+    const sd = parseYMD(start_date);
+    const ed = parseYMD(end_date);
+    if (!sd || !ed) {
+      return res.status(400).json({ error: '日期格式錯誤，請用 yyyy-MM-dd' });
+    }
+    if (ed < sd) {
+      return res.status(400).json({ error: '結束日期不能早於開始日期' });
+    }
+
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
+    const data = {
+      organizerId, // 關聯到創建者
+      type: typeKey,
+      title,
+      startDate: sd,
+      endDate: ed,
+      minPeople: Number(min_people),
+      maxPeople: Number(max_people),
+      price: Number(price),
+      allowNewbie: allow_newbie === '1' || allow_newbie === true,
+      description,
+      // createdAt 會自動生成
+    };
+
+    if (typeKey === ActivityType.SKI) {
+      if (!locationInput)
+        return res.status(400).json({ error: '滑雪活動必須選擇地點 ID' });
+      data.locationId = Number(locationInput); // 直接設定 locationId
+    } else {
+      // 例如 MEAL 或其他類型使用 customLocation
+      if (!customLocationInput && !locationInput)
+        return res
+          .status(400)
+          .json({ error: '活動必須提供地點或自訂地點名稱' });
+      data.customLocation = customLocationInput || locationInput; // 如果 customLocationInput 沒提供，嘗試使用 locationInput
+    }
+
+    const newGroup = await prisma.group.create({ data });
+
+    if (imageUrl) {
+      await prisma.groupImage.create({
+        data: {
+          groupId: newGroup.id,
+          imageUrl,
+          sortOrder: 0,
+        },
+      });
+    }
+
+    res.status(201).json(newGroup);
+  } catch (err) {
+    if (err.code === 'P2002' && err.meta?.target?.includes('locationId')) {
+      // 假設是外鍵約束錯誤
+      return res.status(400).json({ error: '提供的地點 ID 無效或不存在。' });
+    }
+    console.error('創建揪團失敗:', err);
+    next(err);
+  }
+});
 // GET /api/group?onlyTypes=true  或  GET /api/group
 router.get('/', async (req, res, next) => {
   try {
@@ -78,7 +183,7 @@ router.get('/', async (req, res, next) => {
     if (keyword) {
       const keywordCondition = { contains: keyword };
       const keywordOrConditions = [
-        { title: keywordCondition },  
+        { title: keywordCondition },
         { description: keywordCondition },
         { location: { name: keywordCondition } },
         { customLocation: keywordCondition },
@@ -163,95 +268,106 @@ router.get('/', async (req, res, next) => {
     next(err);
   }
 });
-
-// POST /api/group (創建揪團的路由)
-router.post('/', upload.single('cover'), async (req, res, next) => {
+router.post('/:groupId/comments', async (req, res, next) => {
   try {
-    const {
-      type: rawType,
-      title,
-      start_date,
-      end_date,
-      location: locationInput, // 前端傳來的地點，可能是 location_id (滑雪) 或 地點名稱 (聚餐)
-      customLocation: customLocationInput, // 前端可能也會傳這個，或者合併到 locationInput 處理
-      min_people,
-      max_people,
-      price,
-      allow_newbie,
-      description,
-      // userId, // 正式環境應從 session 或 token 獲取
-    } = req.body;
+    const groupId = parseInt(req.params.groupId, 10);
+    const { content } = req.body;
+    const userId = await getUserIdFromRequest(req); // 獲取留言者 ID
 
-    // 假設 userId 暫時寫死為 1，您需要替換成實際的 userId 獲取邏輯
-    const userId = 1;
-
-    const labelToKey = { 滑雪: ActivityType.SKI, 聚餐: ActivityType.MEAL };
-    let typeKey;
-    if (labelToKey[rawType]) {
-      typeKey = labelToKey[rawType];
-    } else if (Object.values(ActivityType).includes(rawType)) {
-      typeKey = rawType;
-    } else {
-      return res.status(400).json({ error: `無效的活動類型：${rawType}` });
+    if (isNaN(groupId)) {
+      return res.status(400).json({ error: '無效的群組 ID' });
+    }
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ error: '未經授權或無法識別用戶以發表留言' });
+    }
+    if (!content || typeof content !== 'string' || content.trim() === '') {
+      return res.status(400).json({ error: '留言內容不可為空' });
     }
 
-    const sd = parseYMD(start_date);
-    const ed = parseYMD(end_date);
-    if (!sd || !ed) {
-      return res.status(400).json({ error: '日期格式錯誤，請用 yyyy-MM-dd' });
-    }
-    if (ed < sd) {
-      return res.status(400).json({ error: '結束日期不能早於開始日期' });
+    const groupExists = await prisma.group.findUnique({
+      where: { id: groupId },
+    });
+    if (!groupExists) {
+      return res.status(404).json({ error: '找不到指定的群組' });
     }
 
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
-
-    const data = {
-      userId, // 關聯到創建者
-      type: typeKey,
-      title,
-      startDate: sd,
-      endDate: ed,
-      minPeople: Number(min_people),
-      maxPeople: Number(max_people),
-      price: Number(price),
-      allowNewbie: allow_newbie === '1' || allow_newbie === true,
-      description,
-      // createdAt 會自動生成
-    };
-
-    if (typeKey === ActivityType.SKI) {
-      if (!locationInput)
-        return res.status(400).json({ error: '滑雪活動必須選擇地點 ID' });
-      data.locationId = Number(locationInput); // 直接設定 locationId
-    } else {
-      // 例如 MEAL 或其他類型使用 customLocation
-      if (!customLocationInput && !locationInput)
-        return res
-          .status(400)
-          .json({ error: '活動必須提供地點或自訂地點名稱' });
-      data.customLocation = customLocationInput || locationInput; // 如果 customLocationInput 沒提供，嘗試使用 locationInput
-    }
-
-    const newGroup = await prisma.group.create({ data });
-
-    if (imageUrl) {
-      await prisma.groupImage.create({
-        data: {
-          groupId: newGroup.id,
-          imageUrl,
-          sortOrder: 0,
+    const newComment = await prisma.groupComment.create({
+      data: {
+        content: content.trim(),
+        groupId: groupId,
+        userId: userId,
+      },
+      include: {
+        // 返回留言時，帶上留言者的資訊
+        user: {
+          select: { id: true, name: true, avatar: true },
         },
-      });
+      },
+    });
+    res.status(201).json(newComment);
+  } catch (err) {
+    console.error('Error posting comment:', err);
+    next(err);
+  }
+});
+// GET /api/group/:id  → 回傳一筆 group 的完整資料
+router.get('/:groupId', async (req, res, next) => {
+  try {
+    const id = Number(req.params.groupId);
+    if (Number.isNaN(id)) {
+      return res.status(400).json({ error: '無效的 ID' });
     }
 
-    res.status(201).json(newGroup);
-  } catch (err) {
-    if (err.code === 'P2002' && err.meta?.target?.includes('locationId')) {
-      // 假設是外鍵約束錯誤
-      return res.status(400).json({ error: '提供的地點 ID 無效或不存在。' });
+    const group = await prisma.group.findUnique({
+      where: { id },
+      include: {
+        user: { select: { name: true, avatar: true } },
+        images: { orderBy: { sortOrder: 'asc' } },
+        location: true,
+        _count: { select: { members: true } },
+        comments: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            user: {
+              // 每則留言的留言者資訊
+              select: { id: true, name: true, avatar: true },
+            },
+          },
+        }, // 如果有留言
+      },
+    });
+
+    if (!group) {
+      return res.status(404).json({ error: '找不到該揪團' });
     }
-    console.error('創建揪團失敗:', err);
+
+    // 轉換後端欄位名稱
+    const {
+      _count,
+      images,
+      customLocation,
+      location,
+      user,
+      comments,
+      ...rest
+    } = group;
+    const displayLocation =
+      group.type === ActivityType.SKI
+        ? location?.name // 滑雪活動使用關聯的 Location 名稱
+        : customLocation || location?.name; // 其他活動優先使用 customLocation，若無則用關聯 Location 名稱
+
+    res.json({
+      ...rest,
+      creator: user, // 將 user 重命名為 creator
+      location: displayLocation,
+      currentPeople: _count?.members || 0,
+      images, // 返回所有圖片
+      comments, // 返回包含使用者資訊的留言
+    });
+  } catch (err) {
+    console.error(`Error fetching group with id ${req.params.id}:`, err);
     next(err);
   }
 });
