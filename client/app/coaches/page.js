@@ -25,10 +25,10 @@ export default function CoachesPage() {
   // 套用篩選邏輯
   const [coaches, setCoaches] = useState([]);
   const [filtered, setFiltered] = useState([]);
-  // 3. loading & error 顯示
+  // loading & error 顯示
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // 4. 排序／搜尋暫存 keyword
+  // 排序／搜尋暫存 keyword
   const [searchKeyword, setSearchKeyword] = useState('');
 
   useEffect(() => {

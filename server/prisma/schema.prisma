@@ -328,6 +328,7 @@ model Coach {
   LanguageCoach  LanguageCoach[]
   LicenseCoach   LicenseCoach[]
   BoardtypeCoach BoardtypeCoach[]
+  CourseVariant  CourseVariant[]
 
   @@map("coach")
 }
@@ -371,15 +372,18 @@ model LicenseCoach {
 }
 
 model Course {
-  id          Int         @id @default(autoincrement())
-  name        String
-  description String
-  created_at  DateTime    @default(now()) @map("created_at")
-  updated_at  DateTime    @updatedAt @map("updated_at")
-  deleted_at  DateTime?   @map("deleted_at")
-  start_at    DateTime    @updatedAt @map("start_at")
-  end_at      DateTime    @map("end_at")
-  CourseImg   CourseImg[]
+  id            Int             @id @default(autoincrement())
+  name          String
+  description   String
+  content       String
+  created_at    DateTime        @default(now()) @map("created_at")
+  updated_at    DateTime        @updatedAt @map("updated_at")
+  deleted_at    DateTime?       @map("deleted_at")
+  start_at      DateTime        @updatedAt @map("start_at")
+  end_at        DateTime        @map("end_at")
+  CourseImg     CourseImg[]
+  CourseVariant CourseVariant[]
+  CourseTag     CourseTag[]
 
   @@map("course")
 }
@@ -389,7 +393,8 @@ model CourseImg {
   course_id Int
   img       String
 
-  course Course @relation(fields: [course_id], references: [id])
+  course        Course          @relation(fields: [course_id], references: [id])
+  CourseVariant CourseVariant[]
 
   @@map("course_img")
 }
@@ -398,7 +403,7 @@ model CourseVariant {
   id            Int          @id @default(autoincrement())
   course_id     Int
   difficulty    String
-  price         Int
+  price         String
   duration      Int
   max_people    Int
   location_id   Int
@@ -408,20 +413,27 @@ model CourseVariant {
   deleted_at    DateTime?    @map("deleted_at")
   CartCourse    CartCourse[]
 
+  course    Course    @relation(fields: [course_id], references: [id])
+  coach     Coach     @relation(fields: [coach_id], references: [id])
+  courseImg CourseImg @relation(fields: [course_img_id], references: [id])
+
   @@map("course_variant")
 }
 
 model Tag {
-  id   Int    @id @default(autoincrement())
-  name String
+  id        Int         @id @default(autoincrement())
+  name      String
+  CourseTag CourseTag[]
 
   @@map("tag")
 }
 
 model CourseTag {
-  id        Int @id @default(autoincrement())
+  id        Int    @id @default(autoincrement())
   course_id Int
   tag_id    Int
+  course    Course @relation(fields: [course_id], references: [id])
+  tag       Tag    @relation(fields: [tag_id], references: [id])
 
   @@map("course_tag")
 }
