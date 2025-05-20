@@ -3,10 +3,23 @@ import Container from '@/components/container';
 import ProductList from './_components/product-list';
 import ProductPagination from './_components/product-pagination';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import ProductSidebar from './_components/product-sidebar';
 import useSWR from 'swr';
 import { useDebounce } from 'use-debounce';
+import {
+  Sheet,
+  SheetTrigger,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetClose,
+} from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { X, Sliders } from 'lucide-react';
+
+import { useFavorite } from '@/hooks/use-favorite';
+import { useAuth } from '@/hooks/use-auth';
 
 // 1. Next.js Server Component（可直接 await fetch）
 // export default async function ProductsPage() {
@@ -32,9 +45,13 @@ import { useDebounce } from 'use-debounce';
 */
 // SWR fetcher：把 URL 拿去 fetch 然後轉成 JSON
 const fetcher = (url) =>
-  fetch(`http://localhost:3005${url}`).then((res) => res.json());
+  fetch(`http://localhost:3005${url}`, { credentials: 'include' }).then((r) =>
+    r.json()
+  );
 
 export default function ProductPage() {
+  const { user, isAuth, isLoading } = useAuth();
+
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -118,6 +135,7 @@ export default function ProductPage() {
   const canToggleSizes = sizes.length > previewCount;
   const [minPrice, setMinPrice] = useState(searchParams.get('min_price') || '');
   const [maxPrice, setMaxPrice] = useState(searchParams.get('max_price') || '');
+  const [sidebarOpen, setSidebarOpen] = useState(false); //sidebar sheet 狀態
 
   // 從 URL 同步 category_id (和 page) 到 pageInfo state
   const categoryIdFromUrl = searchParams.get('category_id');
@@ -214,6 +232,42 @@ export default function ProductPage() {
 
   const products = productRes?.data || [];
   const totalPages = Math.max(1, Math.ceil(pageInfo.total / pageInfo.limit));
+
+  // 取得收藏清單
+  const { data: favIds = [], mutate: mutateFav } = useSWR(
+    isAuth ? '/api/profile/favorites' : null,
+    fetcher
+  );
+
+  const toggleFavorite = useCallback(
+    async (productId) => {
+      const isFav = favIds.includes(productId);
+      const next = isFav
+        ? favIds.filter((id) => id !== productId)
+        : [...favIds, productId];
+      // 樂觀更新
+      mutateFav(next, false);
+      try {
+        if (isFav) {
+          await fetch(
+            `http://localhost:3005/api/profile/favorites/${productId}`,
+            { method: 'DELETE', credentials: 'include' }
+          );
+        } else {
+          await fetch('http://localhost:3005/api/profile/favorites', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId }),
+          });
+        }
+        mutateFav();
+      } catch {
+        mutateFav();
+      }
+    },
+    [favIds, mutateFav]
+  );
 
   // ─── 5. 各種篩選操作 handler ───
   const goToPage = (newPage) => {
@@ -365,10 +419,22 @@ export default function ProductPage() {
     setPriceError('');
   };
 
+  if (isLoading) {
+    return <div>載入中...</div>; // 顯示 loading 畫面
+  }
+
+  if (!isAuth) {
+    // return <div>請先登入才能查看此頁面。</div>;
+  }
+
   return (
-    <Container className="z-10 pt-10 pb-20">
-      <main className="flex flex-row min-h-1/2 gap-20 justify-between">
-        <ProductSidebar
+    <Container className="z-10 pt-4 md:pt-10 pb-20">
+      <div>
+        <h1>你好，{user?.name}！</h1>
+        <p>你的 Email 是：{user.email}</p>
+      </div>
+      <main className="flex flex-col md:flex-row min-h-1/2 gap-4 md:gap-20 justify-between">
+        {/* <ProductSidebar
           limit={pageInfo.limit}
           onChangeLimit={changeLimit}
           categories={categories}
@@ -403,10 +469,107 @@ export default function ProductPage() {
           suggestions={suggestions} // <--- 傳遞搜尋建議
           isLoading={sugLoading} // <--- 傳遞加載狀態
           onSelect={handleSelect} // <--- 傳遞點選建議處理
-        ></ProductSidebar>
+        ></ProductSidebar> */}
+
+        {/* md+ 顯示常駐 Sidebar */}
+        <div className="hidden md:flex">
+          <ProductSidebar
+            limit={pageInfo.limit}
+            onChangeLimit={changeLimit}
+            categories={categories}
+            selectedCategoryId={pageInfo.category_id}
+            onSelectCategory={handleCategorySelect}
+            openCategories={openCategories}
+            onToggleCategory={handleToggleCategory}
+            sizes={sizesToShow}
+            selectedSizes={selectedSizes}
+            onToggleSize={handleToggleSize}
+            onResetSizes={handleResetSizes}
+            showAllSizes={showAllSizes}
+            canToggleSizes={canToggleSizes}
+            onToggleShowAllSizes={() => setShowAllSizes((prev) => !prev)}
+            brands={brands}
+            selectedBrands={selectedBrands}
+            onToggleBrand={handleToggleBrand}
+            onResetBrands={handleResetBrands}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            onChangePrice={(type, val) => {
+              const clean = val.replace(/\D/g, '');
+              if (type === 'min') setMinPrice(clean);
+              else setMaxPrice(clean);
+              setPriceError('');
+            }}
+            onTriggerPriceFilter={handlePriceFilter}
+            onResetPrice={handleResetPrice}
+            priceError={priceError}
+            searchValue={searchText}
+            onChangeSearch={setSearchText}
+            suggestions={suggestions} // <--- 傳遞搜尋建議
+            isLoading={sugLoading} // <--- 傳遞加載狀態
+            onSelect={handleSelect} // <--- 傳遞點選建議處理
+          />
+        </div>
+
+        {/* md- 顯示按鈕 + Sheet */}
+        <div className="flex md:hidden">
+          <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="m-4">
+                <Sliders className=" h-4 w-4" />
+                篩選
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-full p-4 overflow-auto">
+              <SheetHeader className="flex items-center justify-between">
+                <SheetTitle>篩選條件</SheetTitle>
+              </SheetHeader>
+              <ProductSidebar
+                limit={pageInfo.limit}
+                onChangeLimit={changeLimit}
+                categories={categories}
+                selectedCategoryId={pageInfo.category_id}
+                onSelectCategory={handleCategorySelect}
+                openCategories={openCategories}
+                onToggleCategory={handleToggleCategory}
+                sizes={sizesToShow}
+                selectedSizes={selectedSizes}
+                onToggleSize={handleToggleSize}
+                onResetSizes={handleResetSizes}
+                showAllSizes={showAllSizes}
+                canToggleSizes={canToggleSizes}
+                onToggleShowAllSizes={() => setShowAllSizes((prev) => !prev)}
+                brands={brands}
+                selectedBrands={selectedBrands}
+                onToggleBrand={handleToggleBrand}
+                onResetBrands={handleResetBrands}
+                minPrice={minPrice}
+                maxPrice={maxPrice}
+                onChangePrice={(type, val) => {
+                  const clean = val.replace(/\D/g, '');
+                  if (type === 'min') setMinPrice(clean);
+                  else setMaxPrice(clean);
+                  setPriceError('');
+                }}
+                onTriggerPriceFilter={handlePriceFilter}
+                onResetPrice={handleResetPrice}
+                priceError={priceError}
+                searchValue={searchText}
+                onChangeSearch={setSearchText}
+                suggestions={suggestions} // <--- 傳遞搜尋建議
+                isLoading={sugLoading} // <--- 傳遞加載狀態
+                onSelect={handleSelect} // <--- 傳遞點選建議處理
+              />
+            </SheetContent>
+          </Sheet>
+        </div>
 
         <div className="flex flex-col gap-10 flex-1">
-          <ProductList products={products} />
+          <ProductList
+            products={products}
+            favIds={favIds}
+            onToggleFavorite={toggleFavorite}
+          />
           {productError && (
             <div className="text-red-500">載入商品時發生錯誤</div>
           )}
@@ -420,310 +583,3 @@ export default function ProductPage() {
     </Container>
   );
 }
-
-/* 
-商品V2 2025/5/15 18:22前
-*/
-// export default function ProductPage() {
-//   const searchParams = useSearchParams();
-//   const router = useRouter();
-
-//   // 分頁 / 分類 state
-//   const [pageInfo, setPageInfo] = useState({
-//     page: parseInt(searchParams.get('page') || '1', 10),
-//     limit: parseInt(searchParams.get('limit') || '12', 10),
-//     total: 0,
-//     category_id: parseInt(searchParams.get('category_id') || '1', 10),
-//   });
-
-//   const [products, setProducts] = useState([]);
-//   const [categories, setCategories] = useState([]);
-//   const [sizes, setSizes] = useState([]);
-//   const [selectedSizes, setSelectedSizes] = useState([]);
-
-//   // 價格篩選 state
-//   const [minPrice, setMinPrice] = useState('');
-//   const [maxPrice, setMaxPrice] = useState('');
-
-//   // 讀分類抓尺寸
-//   useEffect(() => {
-//     const url = new URL('http://localhost:3005/api/products/sizes');
-//     url.searchParams.set('category_id', String(pageInfo.category_id));
-//     fetch(url)
-//       .then((r) => r.json())
-//       .then((data) => {
-//         setSizes(data);
-//         setSelectedSizes((prev) =>
-//           prev.filter((id) => data.some((s) => s.id === id))
-//         );
-//       })
-//       .catch(console.error);
-//   }, [pageInfo.category_id]);
-
-//   // 讀分類清單
-//   useEffect(() => {
-//     fetch('http://localhost:3005/api/products/categories')
-//       .then((r) => r.json())
-//       .then(setCategories)
-//       .catch(console.error);
-//   }, []);
-
-//   // 任何 URL query 變動，都重新拉資料
-//   const fetchProducts = () => {
-//     const sp = Object.fromEntries(searchParams.entries());
-//     const url = new URL('http://localhost:3005/api/products');
-//     url.searchParams.set('include', 'card');
-//     url.searchParams.set('page', sp.page || '1');
-//     url.searchParams.set('limit', sp.limit || '12');
-//     url.searchParams.set('category_id', sp.category_id || '1');
-//     if (sp.size_id) url.searchParams.set('size_id', sp.size_id);
-//     if (sp.min_price) url.searchParams.set('min_price', sp.min_price);
-//     if (sp.max_price) url.searchParams.set('max_price', sp.max_price);
-
-//     fetch(url)
-//       .then((r) => r.json())
-//       .then(({ page, limit, total, data }) => {
-//         setProducts(data);
-//         setPageInfo((prev) => ({ ...prev, page, limit, total }));
-//       })
-//       .catch(console.error);
-//   };
-//   useEffect(fetchProducts, [searchParams]);
-
-//   // 分頁、每頁數、分類、尺寸、價格篩選都透過 router.push 改 URL
-//   const goToPage = (newPage) => {
-//     const p = new URLSearchParams(Array.from(searchParams.entries()));
-//     p.set('page', newPage);
-//     router.push(`?${p}`);
-//   };
-//   const changeLimit = (newLimit) => {
-//     const p = new URLSearchParams(Array.from(searchParams.entries()));
-//     p.set('page', '1');
-//     p.set('limit', newLimit);
-//     router.push(`?${p}`);
-//   };
-//   const handleCategorySelect = (cid) => {
-//     const p = new URLSearchParams(Array.from(searchParams.entries()));
-//     p.set('page', '1');
-//     p.set('category_id', cid);
-//     router.push(`?${p}`);
-//   };
-//   const handleToggleSize = (sizeId) => {
-//     const next = selectedSizes.includes(sizeId)
-//       ? selectedSizes.filter((i) => i !== sizeId)
-//       : [...selectedSizes, sizeId];
-//     const p = new URLSearchParams(Array.from(searchParams.entries()));
-//     p.set('page', '1');
-//     if (next.length) p.set('size_id', next.join(','));
-//     else p.delete('size_id');
-//     router.push(`?${p}`);
-//     setSelectedSizes(next);
-//   };
-//   const handlePriceFilter = () => {
-//     const p = new URLSearchParams(Array.from(searchParams.entries()));
-//     p.set('page', '1');
-//     if (minPrice) p.set('min_price', minPrice);
-//     else p.delete('min_price');
-//     if (maxPrice) p.set('max_price', maxPrice);
-//     else p.delete('max_price');
-//     router.push(`?${p}`);
-//   };
-
-//   const totalPages = Math.max(1, Math.ceil(pageInfo.total / pageInfo.limit));
-
-//   return (
-//     <Container className="z-10 pt-10 pb-20">
-//       <main className="flex flex-row min-h-1/2 gap-20">
-//         <ProductSidebar
-//           limit={pageInfo.limit}
-//           onChangeLimit={changeLimit}
-//           categories={categories}
-//           onSelectCategory={handleCategorySelect}
-//           sizes={sizes}
-//           selectedSizes={selectedSizes}
-//           onToggleSize={handleToggleSize}
-//           minPrice={minPrice}
-//           maxPrice={maxPrice}
-//           onChangePrice={(type, value) => {
-//             if (type === 'min') setMinPrice(value);
-//             else setMaxPrice(value);
-//           }}
-//           onTriggerPriceFilter={handlePriceFilter}
-//         />
-
-//         <div className="flex flex-col gap-10">
-//           <ProductList products={products} />
-//           <ProductPagination
-//             page={pageInfo.page}
-//             totalPages={totalPages}
-//             onPageChange={goToPage}
-//           />
-//         </div>
-//       </main>
-//     </Container>
-//   );
-// }
-
-/* 
-商品V1
-*/
-// export default function ProductPage() {
-//   const searchParams = useSearchParams();
-//   const router = useRouter();
-
-//   // 初始 state：從 URL 讀 page & limit，fallback 分別是 1 與 12
-//   const [pageInfo, setPageInfo] = useState({
-//     page: parseInt(searchParams.get('page') || '1', 10),
-//     limit: parseInt(searchParams.get('limit') || '12', 10),
-//     total: 0,
-//     category_id: parseInt(searchParams.get('category_id') || '1', 10),
-//   });
-//   const [products, setProducts] = useState([]);
-//   const [categories, setCategories] = useState([]);
-//   const [sizes, setSizes] = useState([]);
-//   const [selectedSizes, setSelectedSizes] = useState([]);
-//   const [minPrice, setMinPrice] = useState('');
-//   const [maxPrice, setMaxPrice] = useState('');
-
-//   // 當 category_id 變動時，去抓尺寸清單
-//   useEffect(() => {
-//     const cat = pageInfo.category_id;
-//     const url = new URL('http://localhost:3005/api/products/sizes');
-//     url.searchParams.set('category_id', String(cat));
-
-//     fetch(url.toString())
-//       .then((r) => r.json())
-//       .then((data) => {
-//         setSizes(data);
-//         // 保留之前選的，但如果新分類沒包含，就移除
-//         setSelectedSizes((prev) =>
-//           prev.filter((id) => data.some((s) => s.id === id))
-//         );
-//       })
-//       .catch(console.error);
-//   }, [pageInfo.category_id]);
-
-//   // 監聽 URL 上的 page & limit 變化，更新 state
-//   useEffect(() => {
-//     const currentPage = parseInt(searchParams.get('page') || '1', 10);
-//     const currentLimit = parseInt(searchParams.get('limit') || '12', 10);
-//     const currentCategory = parseInt(
-//       searchParams.get('category_id') || '1',
-//       10
-//     );
-//     setPageInfo((prev) => ({
-//       ...prev,
-//       page: currentPage,
-//       limit: currentLimit,
-//       category_id: currentCategory,
-//     }));
-//   }, [searchParams]);
-
-//   useEffect(() => {
-//     const { page, limit, category_id } = pageInfo;
-//     const url = new URL('http://localhost:3005/api/products');
-//     url.searchParams.set('include', 'card');
-//     url.searchParams.set('page', page);
-//     url.searchParams.set('limit', limit);
-//     url.searchParams.set('category_id', category_id);
-
-//     if (selectedSizes.length) {
-//       url.searchParams.set('size_id', selectedSizes.join(','));
-//     } else {
-//       url.searchParams.delete('size_id');
-//     }
-
-//     fetch(url.toString())
-//       .then((res) => res.json())
-//       .then(({ page: p, limit: l, total, data }) => {
-//         setProducts(data);
-//         setPageInfo((prev) => ({ ...prev, page: p, limit: l, total }));
-//       })
-//       .catch(console.error);
-//   }, [pageInfo.page, pageInfo.limit, pageInfo.category_id, selectedSizes]);
-
-//   useEffect(() => {
-//     fetch('http://localhost:3005/api/products/categories')
-//       .then((res) => res.json())
-//       .then((data) => setCategories(data))
-//       .catch(console.error);
-//   }, []);
-
-//   const goToPage = (newPage) => {
-//     const current = new URLSearchParams(Array.from(searchParams.entries()));
-//     current.set('page', newPage);
-//     router.push(`?${current.toString()}`);
-//   };
-
-//   const changeLimit = (newLimit) => {
-//     const current = new URLSearchParams(Array.from(searchParams.entries()));
-//     current.set('page', '1'); // 換每頁數量時重置為第 1 頁
-//     current.set('limit', newLimit);
-//     router.push(`?${current.toString()}`);
-//     setPageInfo((prev) => ({
-//       ...prev,
-//       limit: newLimit,
-//       page: 1,
-//     }));
-//   };
-
-//   const handleCategorySelect = (category_id) => {
-//     const current = new URLSearchParams(Array.from(searchParams.entries()));
-//     current.set('category_id', category_id);
-//     current.set('page', '1'); // 選分類後常見做法：跳回第 1 頁
-//     router.push(`?${current.toString()}`);
-//   };
-
-//   const totalPages = Math.max(1, Math.ceil(pageInfo.total / pageInfo.limit));
-
-//   return (
-//     <Container className="z-10 pt-10 pb-20">
-//       <main className="flex flex-row min-h-1/2 gap-20">
-//         <ProductSidebar
-//           limit={pageInfo.limit}
-//           onChangeLimit={changeLimit}
-//           categories={categories}
-//           onSelectCategory={handleCategorySelect}
-//           /* 新增三個 props */
-//           sizes={sizes}
-//           selectedSizes={selectedSizes}
-//           onToggleSize={(sizeId) => {
-//             // 勾選／取消勾選
-//             setSelectedSizes((prev) =>
-//               prev.includes(sizeId)
-//                 ? prev.filter((i) => i !== sizeId)
-//                 : [...prev, sizeId]
-//             );
-//             // reset 回第 1 頁
-//             const params = new URLSearchParams(
-//               Array.from(searchParams.entries())
-//             );
-//             params.set('page', '1');
-//             router.push(`?${params.toString()}`);
-//           }}
-//           minPrice={minPrice}
-//           maxPrice={maxPrice}
-//           onChangePrice={(type, value) => {
-//             if (type === 'min') setMinPrice(value);
-//             if (type === 'max') setMaxPrice(value);
-//           }}
-//           onTriggerPriceFilter={() => {
-//             const params = new URLSearchParams(
-//               Array.from(searchParams.entries())
-//             );
-//             params.set('page', '1');
-//             router.push(`?${params.toString()}`);
-//           }}
-//         />
-//         <div className="flex flex-col gap-10">
-//           <ProductList products={products} />
-//           <ProductPagination
-//             page={pageInfo.page}
-//             totalPages={totalPages}
-//             onPageChange={goToPage}
-//           />
-//         </div>
-//       </main>
-//     </Container>
-//   );
-// }
