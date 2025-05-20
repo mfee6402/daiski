@@ -5,23 +5,6 @@ import jwt from 'jsonwebtoken';
 import db from '../../config/mysql.js';
 import { verifyToken } from '../../middlewares/verify-token.js';
 const SECRET_KEY = 'testGreat';
-// function verifyToken(req, res, next) {
-//     const SECRET_KEY = 'testGreat';
-//     const authHeader = req.headers['authorization'];
-//     const token = authHeader && authHeader.split(' ')[1]; // Bearer <token>
-
-//     if (!token) {
-//       return res.status(401).json({ message: 'Token not provided' });
-//     }
-
-//     jwt.verify(token, SECRET_KEY, (err, user) => {
-//       if (err) return res.status(403).json({ message: 'Invalid token' });
-
-//       console.log('token驗證成功');
-//       req.id = user.id; // 把解碼的 payload 存起來
-//       next(); // 通過驗證，繼續下一步
-//     });
-// }
 /* GET home page. */
 router.post('/', async function (req, res) {
   const { account, password } = req.body;
@@ -45,7 +28,7 @@ router.post('/', async function (req, res) {
       account: response.account,
     },
     SECRET_KEY,
-    { expiresIn: '1h' }
+    { expiresIn: '1d' }
   );
   console.log(token);
   res.status(200).json({
