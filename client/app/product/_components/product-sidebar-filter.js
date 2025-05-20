@@ -22,7 +22,7 @@ export default function ProductFilter({
   priceError,
 }) {
   return (
-    <div className="hidden md:flex flex-col max-w-48 xl:max-w-64 w-full mx-auto bg-[#ffffff] text-[#231815]">
+    <div className="flex flex-col md:max-w-48 xl:max-w-64 w-full mx-auto bg-[#ffffff] text-[#231815]">
       {/* Filter Checkboxes */}
       <div className="px-4 py-2">
         {/* ====== 品牌篩選 ====== */}
