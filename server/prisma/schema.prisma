@@ -26,6 +26,7 @@ model User {
 
   deleted_at DateTime? @map("deleted_at")
 
+  favorites    UserFavorite[]
   Group        Group[]
   GroupMember  GroupMember[]
   GroupComment GroupComment[]
@@ -33,6 +34,20 @@ model User {
   GameScore    GameScore[]
 
   @@map("user")
+}
+
+model UserFavorite {
+  id        Int @id @default(autoincrement())
+  userId    Int @map("user_id")
+  productId Int @map("product_id")
+
+  // 正式關聯
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([userId], map: "idx_user_id")
+  @@index([productId], map: "idx_product_id")
+  @@map("user_favorite")
 }
 
 // #endregion
@@ -54,6 +69,8 @@ model Product {
   product_category ProductCategory? @relation(fields: [category_id], references: [id], onUpdate: Restrict, map: "product_ibfk_1")
   product_image    ProductImage[]
   product_sku      ProductSku[]
+
+  favorites UserFavorite[]
 
   @@index([category_id], map: "category_id")
   @@index([brand_id], map: "fk_product_brand")

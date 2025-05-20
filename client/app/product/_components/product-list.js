@@ -46,7 +46,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Card,
   CardHeader,
@@ -56,8 +56,10 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import Image from 'next/image';
+import FavoriteButton from '@/components/favorite-button';
 
-export default function ProductList({ products }) {
+export default function ProductList({ products, favIds, onToggleFavorite }) {
+  const router = useRouter();
   return (
     <ul className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-hidden">
       {products.map((p) => (
@@ -67,36 +69,45 @@ export default function ProductList({ products }) {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 100, damping: 12 }}
           viewport={{ once: true, amount: 0.2 }}
+          className="relative"
+          // 點整個卡片才導航
+          onClick={() => router.push(`/product/${p.id}`)}
         >
-          <Link href={`/product/${p.id}`}>
-            <Card>
-              <CardHeader className="w-full aspect-[4/3] overflow-hidden rounded-xl">
-                <Image
-                  src={p.image || '/placeholder.jpg'}
-                  alt={p.name}
-                  width={10}
-                  height={10}
-                  className="w-full h-full object-cover transition duration-300 hover:scale-110"
-                />
-              </CardHeader>
-              <CardContent>
-                <CardTitle className="text-lg font-bold mt-2 line-clamp-2 hover:text-primary-500">
-                  {p.name}
-                </CardTitle>
-                <CardDescription className="text-sm text-gray-600 mt-1 line-clamp-1 hover:text-primary-500">
-                  {p.category} / {p.brand}
-                </CardDescription>
-                <p className="text-red-500 font-semibold text-base mt-2">
-                  ${p.price}
-                </p>
-              </CardContent>
-              <CardFooter>
-                <p className="text-sm text-gray-500">
-                  評價：{p.rating || '尚無評價'}
-                </p>
-              </CardFooter>
-            </Card>
-          </Link>
+          <Card>
+            {/* 收藏按钮 */}
+            <div className="absolute top-2 right-2 z-10">
+              <FavoriteButton
+                isFav={favIds.includes(p.id)}
+                onToggle={() => onToggleFavorite(p.id)}
+                variant="circle"
+              />
+            </div>
+            <CardHeader className="w-full aspect-[4/3] overflow-hidden rounded-xl">
+              <Image
+                src={p.image || '/placeholder.jpg'}
+                alt={p.name}
+                width={10}
+                height={10}
+                className="w-full h-full object-cover transition duration-300 hover:scale-110"
+              />
+            </CardHeader>
+            <CardContent>
+              <CardTitle className="text-lg font-bold mt-2 line-clamp-2 hover:text-primary-500">
+                {p.name}
+              </CardTitle>
+              <CardDescription className="text-sm text-gray-600 mt-1 line-clamp-1 hover:text-primary-500">
+                {p.category} / {p.brand}
+              </CardDescription>
+              <p className="text-red-500 font-semibold text-base mt-2">
+                ${p.price}
+              </p>
+            </CardContent>
+            <CardFooter>
+              <p className="text-sm text-gray-500">
+                評價：{p.rating || '尚無評價'}
+              </p>
+            </CardFooter>
+          </Card>
         </motion.li>
       ))}
     </ul>
