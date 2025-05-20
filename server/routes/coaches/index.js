@@ -23,6 +23,13 @@ router.get('/', async function (req, res) {
             },
           },
         },
+        BoardtypeCoach: {
+          select: {
+            boardtype: {
+              select: { name: true },
+            },
+          },
+        },
       },
     });
     const result = coaches.map((coach) => ({
@@ -30,6 +37,7 @@ router.get('/', async function (req, res) {
       name: coach.name,
       profilephoto: coach.profilephoto,
       languages: coach.LanguageCoach.map((cl) => cl.language.name),
+      boardtypes: coach.BoardtypeCoach.map((cl) => cl.boardtype.name),
     }));
     res.status(200).json(result);
   } catch (error) {
