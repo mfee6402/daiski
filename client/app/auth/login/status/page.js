@@ -14,7 +14,7 @@ export default function StatusPage() {
       <h1>會員隱私資料(未登入會跳轉回來)</h1>
       <hr />
       <p>
-        <Link href="/user">會員登入認証&授權測試(JWT)</Link>
+        <Link href="/auth/login">會員登入認証&授權測試(JWT)</Link>
       </p>
       <p>會員姓名:{user?.name}</p>
       <p>會員電子郵件:{user?.email}</p>

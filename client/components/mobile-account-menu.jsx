@@ -7,6 +7,17 @@ import {
 } from '@/components/ui/accordion';
 
 export function MobileAccountMenu() {
+  // 處理登出
+  const handleLogout = async () => {
+    const res = await logout();
+    const resData = await res.json();
+    // 成功登出
+    if (resData.status === 'success') {
+      // 呼叫useAuthGet的mutate方法
+      // 將會進行重新驗證(revalidation)(將資料標記為已過期並觸發重新請求)
+      mutate();
+    }
+  };
   return (
     <div className="w-full">
       <Accordion type="single" collapsible className="w-full">
@@ -33,9 +44,9 @@ export function MobileAccountMenu() {
           </AccordionTrigger>
 
           <AccordionContent className="p-2">
-            <div className="text-sm font-medium text-gray-500 mb-2">
+            {/* <div className="text-sm font-medium text-gray-500 mb-2">
               帳號選單
-            </div>
+            </div> */}
             <div className="space-y-1">
               <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100 text-base">
                 個人資料
@@ -49,7 +60,10 @@ export function MobileAccountMenu() {
               <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100 text-base">
                 揪團
               </button>
-              <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100 text-base">
+              <button
+                className="w-full text-left px-2 py-1 rounded hover:bg-gray-100 text-base"
+                onClick={handleLogout}
+              >
                 登出
               </button>
             </div>
