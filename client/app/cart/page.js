@@ -12,6 +12,8 @@ import WishList from './_components/wish-list';
 import QuantityButton from './_components/quantity-button';
 
 import Image from 'next/image';
+
+import { useAuth } from '@/hooks/use-auth';
 // secondary
 export default function CartPage({ setProcess }) {
   const url = 'http://localhost:3005/api/cart';
@@ -34,6 +36,7 @@ export default function CartPage({ setProcess }) {
     fetchData();
   }, []);
 
+  const { user, isAuth } = useAuth();
   // const groups = data?.data.cart.CartGroup ? cart.CartGroup : [];
   // const course = data?.data.cart.CartCourse ? cart.CartCourse : [];
 
@@ -64,7 +67,7 @@ export default function CartPage({ setProcess }) {
   // if (loading) {
   // return <p>載入中</p>;
   // }
-
+  console.log(isAuth);
   return (
     <>
       <Process step="1"></Process>
