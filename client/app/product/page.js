@@ -18,6 +18,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { X, Sliders } from 'lucide-react';
 
+import { useAuth } from '@/hooks/use-auth';
+
 // 1. Next.js Server Component（可直接 await fetch）
 // export default async function ProductsPage() {
 //   // 2. 呼叫後端 API
@@ -45,6 +47,8 @@ const fetcher = (url) =>
   fetch(`http://localhost:3005${url}`).then((res) => res.json());
 
 export default function ProductPage() {
+  const { user, isAuth, isLoading } = useAuth();
+
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -376,8 +380,20 @@ export default function ProductPage() {
     setPriceError('');
   };
 
+  if (isLoading) {
+    return <div>載入中...</div>; // 顯示 loading 畫面
+  }
+
+  if (!isAuth) {
+    // return <div>請先登入才能查看此頁面。</div>;
+  }
+
   return (
     <Container className="z-10 pt-4 md:pt-10 pb-20">
+      <div>
+        <h1>你好，{user?.name}！</h1>
+        <p>你的 Email 是：{user.email}</p>
+      </div>
       <main className="flex flex-col md:flex-row min-h-1/2 gap-4 md:gap-20 justify-between">
         {/* <ProductSidebar
           limit={pageInfo.limit}
