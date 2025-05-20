@@ -41,21 +41,25 @@ const SigninDesktop = () => {
             <div className="flex flex-col items-start pl-2.5 mt-7 w-full max-md:max-w-full">
               <FormField
                 label="電子郵件"
+                type="email"
                 value={email}
+                onChange={e => setEmail(e.target.value)}
                 placeholder="example@gmail.com"
               />
 
-              <div className="mt-8">
+              <div className="mt-8 w-full">
                 <PasswordInput
                   label="密碼"
                   value={password}
+                  onChange={e => setPassword(e.target.value)}
                 />
               </div>
 
-              <div className="mt-8">
+              <div className="mt-8 w-full">
                 <PasswordInput
                   label="確認密碼"
                   value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
                 />
               </div>
 
@@ -63,18 +67,19 @@ const SigninDesktop = () => {
                 <input
                   type="checkbox"
                   checked={agreedToTerms}
-                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  onChange={e => setAgreedToTerms(e.target.checked)}
                   className="rounded border border-solid border-slate-300"
                 />
-                <span>我已閱讀並同意[會員條款]及[隱私權政策]</span>
+                <span>我已閱讀並同意 [會員條款] 及 [隱私權政策]</span>
               </label>
             </div>
 
             <button
               type="submit"
-              className="gap-2 self-stretch px-6 mt-12 text-xl font-semibold leading-snug text-white whitespace-nowrap bg-cyan-900 rounded-3xl min-h-[60px] max-md:px-5 max-md:mt-10 max-md:mr-2.5"
+              disabled={!email || !password || password !== confirmPassword || !agreedToTerms}
+              className="gap-2 self-stretch px-6 mt-12 text-xl font-semibold leading-snug text-white whitespace-nowrap bg-cyan-900 rounded-3xl min-h-[60px] max-md:px-5 max-md:mt-10 max-md:mr-2.5 disabled:opacity-50"
             >
-              登入
+              註冊
             </button>
 
             <DividerWithText text="OR" />

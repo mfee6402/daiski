@@ -1,6 +1,6 @@
 import React from 'react';
 
-const FormField = ({ label, type = 'text', value, placeholder, className = '' }) => {
+const FormField = ({ label, type = 'text', value, placeholder, onChange, className = '' }) => {
   return (
     <div className="flex flex-col items-start w-full">
       <label className="flex gap-2 items-start max-w-full text-base font-medium tracking-normal leading-none whitespace-nowrap text-slate-500">
@@ -9,6 +9,7 @@ const FormField = ({ label, type = 'text', value, placeholder, className = '' })
       <input
         type={type}
         value={value}
+        onChange={onChange}
         placeholder={placeholder}
         className={`flex flex-col justify-center items-start self-stretch py-2 px-3 mt-3.5 text-base tracking-normal leading-none whitespace-nowrap bg-white rounded-xl border border-solid shadow-sm border-slate-300 text-slate-600 w-full ${className}`}
       />
