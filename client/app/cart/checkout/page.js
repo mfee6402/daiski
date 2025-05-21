@@ -66,7 +66,7 @@ export default function CheckoutPage(props) {
 
             <h6 className=" text-h6-tw">LINE PAY</h6>
             <Link href="http://localhost:3005/api/line-pay-test-only/reserve?amount=1">
-              LINE PAY
+              PayPal
             </Link>
           </label>
           {/* 綠界 */}

@@ -8,39 +8,46 @@ export default function Checkout({ data = {} }) {
         <div className="border-b-5 border-secondary-500">
           <h6 className="text-h6-tw font-bold">結帳明細</h6>
         </div>
-        <div className="border-b-5 border-secondary-500">
+        <div>
           <div className="flex justify-between">
             <p className="text-p-tw">商品原價總金額</p>
-            {/* FIXME 待寫入金額 */}
             <p className="text-p-tw">
               $
-              {data?.cart.CartCourse.length != 0
-                ? data?.cart.CartProduct.reduce((acc, product) => {
+              {data?.cart?.CartProduct.length != 0
+                ? data?.cart?.CartProduct.reduce((acc, product) => {
                     acc += product.quantity * product.price;
                     return acc;
                   }, 0).toLocaleString()
                 : 0}
             </p>
           </div>
-          <div>
+          {/* FIXME等待課程完成 */}
+          {/* <div>
             <p className="text-p-tw">課程原價總金額</p>
-            {/* FIXME 待寫入金額 */}
             <p className="text-p-tw">
               {' '}
               $
-              {data?.cart.CartCourse.length != 0
-                ? data?.cart.CartCourse.reduce((acc, course) => {
+              {data?.cart?.CartCourse.length != 0
+                ? data?.cart?.CartCourse.reduce((acc, course) => {
                     acc += course.quantity * course.price;
                     return acc;
                   }, 0).toLocaleString()
                 : 0}
-            </p>
-          </div>
-          <div>
-            <p className="text-p-tw">揪團總金額</p>
-            {/* FIXME 待寫入金額 */}
-            <p className="text-p-tw"></p>
-          </div>
+            </p> */}
+        </div>
+        <div className="flex justify-between">
+          <p className="text-p-tw">揪團總金額</p>
+          <p className="text-p-tw">
+            $
+            {data?.cart?.CartGroup.length != 0
+              ? data?.cart?.CartGroup.reduce((acc, group) => {
+                  acc += group.price;
+                  return acc;
+                }, 0).toLocaleString()
+              : 0}
+          </p>
+        </div>
+        <div>
           <div>
             <p className="text-p-tw">折扣券</p>
             {/* FIXME 待寫入金額 */}
