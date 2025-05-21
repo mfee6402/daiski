@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React from 'react';
 import CouponHeader from './CouponHeader';
 import CouponTabs from './CouponTabs';
@@ -24,4 +24,3 @@ const CouponManagement = () => {
 };
 
 export default CouponManagement;
-

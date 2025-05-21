@@ -547,7 +547,7 @@ model GameScore {
 // cart
 model Cart {
   id          Int           @id @default(autoincrement())
-  userId      Int           @map("user_id")
+  userId      Int           @unique @map("user_id")
   CartProduct CartProduct[]
   CartCourse  CartCourse[]
   CartGroup   CartGroup[]
