@@ -120,6 +120,7 @@ export default function UserPage() {
       <h1>會員登入認証&授權測試(JWT)</h1>
       <p>會員狀態:{isAuth ? '已登入' : '未登入'}</p>
       <hr />
+      
       <label >
         帳號:
         <input
@@ -127,7 +128,7 @@ export default function UserPage() {
           name="account"
           value={userInput.account}
           onChange={handleFieldChange}
-          className=" border-4 border-lime-700"
+          className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
         />
       </label>
       <label className="block text-lg">
@@ -137,9 +138,10 @@ export default function UserPage() {
           name="password"
           value={userInput.password}
           onChange={handleFieldChange}
-          className="w-full px-4 py-3 rounded-lg border border-[#cbd5e0] focus:outline-none focus:ring-2 focus:ring-[#0059c8]"
+          className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
         />
       </label>
+      
       <br />
       <button
         onClick={() => {
