@@ -1,8 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import useSWR from 'swr';
+import { useAuth } from '@/hooks/use-auth';
+import FavoriteButton from '@/components/favorite-button';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -49,13 +51,26 @@ function useIsMobile(breakpoint = 1024) {
 }
 
 const fetcher = (url) =>
-  fetch(`http://localhost:3005${url}`).then((r) => r.json());
+  fetch(`http://localhost:3005${url}`, { credentials: 'include' }).then((r) =>
+    r.json()
+  );
 
 export default function ProductDetail() {
   const isMobile = useIsMobile();
   const { id } = useParams();
+  // 1. 獲取商品詳細資訊
   const { data: product, error } = useSWR(
     id ? `/api/products/${id}` : null,
+    fetcher
+  );
+
+  // 2. 獲取用戶認證狀態，判斷用戶是否登入
+  const { user, isAuth, isLoading: authLoading } = useAuth();
+
+  // 3. 取得收藏清單
+  // 只有在用戶登入 (isAuth 為 true) 時，才發送請求獲取收藏列表
+  const { data: favIds = [], mutate: mutateFav } = useSWR(
+    isAuth ? '/api/profile/favorites' : null,
     fetcher
   );
 
@@ -91,6 +106,47 @@ export default function ProductDetail() {
       }
     };
   }, []);
+
+  // 4. 定義收藏/取消收藏商品的函式
+  // 這個函式會傳遞給 FavoriteButton 的 onToggle props
+  const toggleFavorite = useCallback(
+    async () => {
+      // 確保商品數據已載入且用戶已登入，否則不執行操作
+      if (!product || !isAuth) {
+        return;
+      }
+
+      const productId = product.id; // 取得當前商品的 ID
+      const isFav = favIds.includes(productId); // 判斷當前商品是否已在收藏列表中
+      const next = isFav
+        ? favIds.filter((favId) => favId !== productId) // 如果已收藏，則從列表中移除
+        : [...favIds, productId]; // 如果未收藏，則將商品 ID 加入列表
+
+      mutateFav(next, false); // 樂觀更新：立即更新 UI，提高用戶體驗 (第一個參數是新的數據，第二個參數 false 表示不重新驗證)
+
+      try {
+        // 根據收藏狀態發送 API 請求
+        if (isFav) {
+          await fetch(
+            `http://localhost:3005/api/profile/favorites/${productId}`,
+            { method: 'DELETE', credentials: 'include' }
+          );
+        } else {
+          await fetch('http://localhost:3005/api/profile/favorites', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId }),
+          });
+        }
+        mutateFav(); // 重新驗證數據：API 請求成功後，重新從伺服器獲取最新數據，確保數據一致性
+      } catch (e) {
+        console.error('收藏操作失敗:', e);
+        mutateFav(); // 錯誤時回滾：如果 API 請求失敗，回滾到之前的數據狀態
+      }
+    },
+    [product, favIds, isAuth, mutateFav] // 依賴項：確保函式在這些值改變時重新建立
+  );
 
   if (error) return <p>載入失敗：{error.message}</p>;
   if (!product) return <p>載入中…</p>;
@@ -285,9 +341,16 @@ export default function ProductDetail() {
               <Button className="h-12 bg-blue-800 text-white">
                 加入購物車
               </Button>
-              <Button variant="outline" className="h-12">
-                收藏 <Heart className="ml-1" />
-              </Button>
+              {/* 使用你的 FavoriteButton 元件 */}
+              <FavoriteButton
+                // isFav: 判斷當前商品 ID 是否存在於收藏列表中
+                isFav={favIds.includes(product.id)}
+                // onToggle: 點擊按鈕時觸發的函式
+                onToggle={toggleFavorite}
+                // variant: 設定按鈕樣式為 'rect' (長方形)
+                variant="rect"
+                // className: 提供額外的 Tailwind CSS 類名來設定按鈕的寬度和高度
+              />
               <Button className="h-12 bg-blue-500 text-white">
                 分享 <Share2 className="ml-1" />
               </Button>
@@ -296,21 +359,6 @@ export default function ProductDetail() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* 介紹 & 規格 */}
-          {/* <div className="flex flex-col gap-6 w-2/3 ">
-            <section className="flex flex-col mt-12">
-              <h2 className="text-xl font-semibold mb-4 pl-10">介紹</h2>
-              <div
-                className=" whitespace-pre-wrap"
-                dangerouslySetInnerHTML={{ __html: introduction }}
-              />
-            </section>
-            <section className="flex flex-col">
-              <h2 className="text-lg font-semibold mb-2 ">規格</h2>
-              <p className="whitespace-pre-wrap leading-loose">{spec}</p>
-            </section>
-          </div> */}
-
           {/* 介紹 & 規格 Tabs */}
 
           <Tabs
@@ -340,28 +388,6 @@ export default function ProductDetail() {
               <h2 className="text-xl font-semibold mb-4">相關商品</h2>
               <ul className="grid grid-cols-2 gap-4">
                 {related.map((item) => (
-                  // <Link
-                  //   key={item.id}
-                  //   href={`/product/${item.id}`}
-                  //   className="block border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
-                  // >
-                  //   <div className="aspect-square w-full relative">
-                  //     <Image
-                  //       src={item.image}
-                  //       alt={item.name}
-                  //       fill
-                  //       className="object-cover"
-                  //     />
-                  //   </div>
-                  //   <div className="p-2">
-                  //     <p className="text-sm text-gray-700 truncate">
-                  //       {item.name}
-                  //     </p>
-                  //     <p className="text-base font-bold mt-1">
-                  //       NT$ {item.price}
-                  //     </p>
-                  //   </div>
-                  // </Link>
                   <motion.li
                     key={item.id}
                     initial={{ opacity: 0, y: 20 }}
