@@ -140,7 +140,7 @@ model ProductImage {
   product_id Int
   url        String    @db.VarChar(255)
   sort_order Int?      @default(0)
-  created_at DateTime  @default(now()) @db.Timestamp(0)
+  created_at DateTime  @default(now()) @db.DateTime(0)
   updated_at DateTime  @default(now()) @db.DateTime(0)
   deleted_at DateTime? @db.DateTime(0)
   product    Product   @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "product_image_ibfk_1")
