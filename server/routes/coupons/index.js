@@ -50,16 +50,19 @@ router.get('/', async function (req, res) {
   }
 });
 
-// 會員領取優惠卷
-router.post('/usercoupon', async function (req, res) {
-  const { userId, couponId } = req.body;
+// 會員領取優惠卷   //TODO 日期要修改成台灣
+router.post('/claimcoupon', authenticate, async function (req, res) {
+  const { couponId } = req.body;
+  const userId = req.user.id;
+  console.log(couponId);
+
   try {
     const claim = await prisma.userCoupon.create({
       data: { userId, couponId },
     });
     res.status(200).json({ status: 'success', claim });
   } catch (error) {
-    res.status(400).json({ error: '此優惠券已領取過' });
+    res.status(200).json({ status: 'fail', data: '此優惠券已領取過' });
   }
 });
 
