@@ -67,7 +67,7 @@ export default function CartPage({ setProcess }) {
   // if (loading) {
   // return <p>載入中</p>;
   // }
-  console.log(isAuth);
+
   return (
     <>
       <Process step="1"></Process>
