@@ -13,9 +13,17 @@ const router = express.Router();
 // });
 
 // 查詢
-router.get('/', async function (req, res) {
+router.get('/', authenticate, async function (req, res) {
+  console.log(new Date());
   try {
+    const userId = req.user.id;
     const coupon = await prisma.coupon.findMany({
+      where: {
+        UserCoupon: { none: { userId } },
+        endAt: {
+          gt: new Date(),
+        },
+      },
       select: {
         // 想顯示的 scalar 欄位
         id: true,
@@ -45,8 +53,10 @@ router.get('/', async function (req, res) {
       target: couponTarget.target,
     }));
     res.status(200).json({ status: 'success', coupons });
-  } catch (error) {
-    res.status(200).json({ status: 'fail', data: '查詢資料庫失敗' });
+  } catch (err) {
+    // res.status(200).json({ status: 'fail', data: error });
+    console.error(err); // 直接印 stack 會看到哪個欄位驗證沒過
+    res.status(500).json({ err: err.message });
   }
 });
 
