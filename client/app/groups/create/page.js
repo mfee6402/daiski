@@ -471,7 +471,7 @@ export default function CreateGroupPageWithAuth() {
               您需要登入才能建立揪團。
             </p>
             <Button
-              onClick={() => router.push('/login')}
+              onClick={() => router.push('/auth/login')}
               className="bg-sky-600 hover:bg-sky-700 text-white"
             >
               前往登入

@@ -16,8 +16,6 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { CustomPagination } from './_components/group-pagination'; // 確保路徑和組件名稱正確
 import Image from 'next/image';
-import { ChatBubble } from './_components/chat-bubble';
-import { stringify } from 'querystring';
 
 export default function GroupsPage() {
   const router = useRouter();
@@ -34,10 +32,7 @@ export default function GroupsPage() {
   });
   const [typeOptions, setTypeOptions] = useState(['全部']);
   const [locationOptions, setLocationOptions] = useState(['全部']);
-  const [chatOpen, setChatOpen] = useState(false);
   const PAGE_SIZE = 12;
-  //假用戶 id是1
-  const currentUser = { id: 1, name: '測試用戶' };
   useEffect(() => {
     async function loadFilterOptions() {
       try {
@@ -392,14 +387,6 @@ export default function GroupsPage() {
           />
         </div>
       </section>
-
-      {/* …上方群組內容… */}
-      <ChatBubble
-        apiBase={API_BASE}
-        currentUser={currentUser}
-        open={chatOpen}
-        onOpenChange={setChatOpen}
-      />
     </>
   );
 }
