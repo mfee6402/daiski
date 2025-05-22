@@ -1,5 +1,5 @@
 'use client';
-//==== 一般功能如何通過驗證 ====
+//==== 這是系統二的一般功能如何通過驗證 ====
 import React, { useState, useEffect, use } from 'react';
 
 export default function Test2Page(props) {

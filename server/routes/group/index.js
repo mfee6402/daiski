@@ -371,5 +371,141 @@ router.get('/:groupId', async (req, res, next) => {
     next(err);
   }
 });
+// PUT /api/group/:groupId (編輯揪團)
+router.put('/:groupId', upload.single('cover'), async (req, res, next) => {
+  try {
+    const groupId = Number(req.params.groupId);
+    if (isNaN(groupId)) return res.status(400).json({ error: '無效的揪團 ID' });
 
+    const userId = await getUserIdFromRequest(req);
+    if (!userId) return res.status(401).json({ error: '未授權或無法識別用戶' });
+
+    const groupToUpdate = await prisma.group.findUnique({ where: { id: groupId } });
+    if (!groupToUpdate) return res.status(404).json({ error: '找不到要編輯的揪團' });
+    if (groupToUpdate.organizerId !== userId) return res.status(403).json({ error: '您沒有權限編輯此揪團' });
+
+    const {
+      type: rawType, title, start_date, end_date, location: locationInput,
+      customLocation: customLocationInput, difficulty, min_people, max_people,
+      price, allow_newbie, description,
+    } = req.body;
+
+    const dataToUpdate = {};
+
+    if (rawType) {
+      const labelToKey = { 滑雪: ActivityType.SKI, 聚餐: ActivityType.MEAL };
+      if (labelToKey[rawType]) dataToUpdate.type = labelToKey[rawType];
+      else if (Object.values(ActivityType).includes(rawType)) dataToUpdate.type = rawType;
+      else return res.status(400).json({ error: `無效的活動類型：${rawType}` });
+    }
+
+    if (title !== undefined) dataToUpdate.title = title;
+    if (start_date) {
+      const sd = parseYMD(start_date);
+      if (!sd) return res.status(400).json({ error: '開始日期格式錯誤' });
+      dataToUpdate.startDate = sd;
+    }
+    if (end_date) {
+      const ed = parseYMD(end_date);
+      if (!ed) return res.status(400).json({ error: '結束日期格式錯誤' });
+      dataToUpdate.endDate = ed;
+    }
+
+    const finalStartDate = dataToUpdate.startDate || groupToUpdate.startDate;
+    const finalEndDate = dataToUpdate.endDate || groupToUpdate.endDate;
+    if (finalEndDate < finalStartDate) return res.status(400).json({ error: '結束日期不能早於開始日期' });
+
+    if (min_people !== undefined) dataToUpdate.minPeople = Number(min_people);
+    if (max_people !== undefined) dataToUpdate.maxPeople = Number(max_people);
+    if (price !== undefined) dataToUpdate.price = Number(price);
+    if (allow_newbie !== undefined) dataToUpdate.allowNewbie = allow_newbie === '1' || allow_newbie === true;
+    if (description !== undefined) dataToUpdate.description = description;
+
+    const effectiveType = dataToUpdate.type || groupToUpdate.type;
+    if (effectiveType === ActivityType.SKI) {
+      if (locationInput !== undefined) {
+        if (locationInput) {
+            dataToUpdate.locationId = Number(locationInput);
+            dataToUpdate.customLocation = null; // 滑雪類型清除 customLocation
+        } else {
+            dataToUpdate.locationId = null; // 允許清除地點
+        }
+      }
+      if (difficulty !== undefined) dataToUpdate.difficulty = difficulty;
+      else if (locationInput !== undefined && !difficulty ) dataToUpdate.difficulty = null; // 如果更新了地點但沒給難度，則清除難度
+    } else { // MEAL 或其他類型
+      if (customLocationInput !== undefined || locationInput !== undefined) {
+        const newCustomLocation = customLocationInput || locationInput;
+        if (newCustomLocation) {
+            dataToUpdate.customLocation = newCustomLocation;
+            dataToUpdate.locationId = null; // 非滑雪類型清除 locationId
+        } else {
+            dataToUpdate.customLocation = null;
+        }
+      }
+      dataToUpdate.difficulty = null; // 非滑雪類型清除難度
+    }
+
+    if (req.file) {
+      const newImageUrl = `/uploads/${req.file.filename}`;
+      const existingImage = await prisma.groupImage.findFirst({ where: { groupId } });
+      if (existingImage) {
+        await prisma.groupImage.update({ where: { id: existingImage.id }, data: { imageUrl: newImageUrl } });
+      } else {
+        await prisma.groupImage.create({ data: { groupId, imageUrl: newImageUrl, sortOrder: 0 } });
+      }
+      // TODO: 考慮刪除舊的 public/uploads 中的圖片檔案
+    }
+
+    if (Object.keys(dataToUpdate).length === 0 && !req.file) {
+      return res.status(400).json({ error: '沒有提供任何需要更新的資料' });
+    }
+
+    const updatedGroup = await prisma.group.update({ where: { id: groupId }, data: dataToUpdate });
+    res.status(200).json(updatedGroup);
+  } catch (err) {
+    if (err instanceof multer.MulterError) {
+        return res.status(400).json({ error: `圖片上傳錯誤: ${err.message}` });
+    }
+    if (err.message === '僅允許上傳圖片檔案！') {
+        return res.status(400).json({ error: err.message });
+    }
+    console.error(`編輯揪團 ${req.params.groupId} 失敗:`, err);
+    if (err.code === 'P2025') return res.status(404).json({ error: '找不到要更新的揪團或相關資源。' });
+    if (err.code === 'P2003' && err.meta?.field_name?.includes('locationId')) return res.status(400).json({ error: '提供的地點 ID 無效或不存在。' });
+    return res.status(500).json({ error: '伺服器內部錯誤，更新揪團失敗。' });
+  }
+});
+
+// DELETE /api/group/:groupId (刪除揪團)
+router.delete('/:groupId', async (req, res, next) => {
+  try {
+    const groupId = Number(req.params.groupId);
+    if (isNaN(groupId)) return res.status(400).json({ error: '無效的揪團 ID' });
+
+    const userId = await getUserIdFromRequest(req);
+    if (!userId) return res.status(401).json({ error: '未授權或無法識別用戶' });
+
+    const groupToDelete = await prisma.group.findUnique({ where: { id: groupId } });
+    if (!groupToDelete) return res.status(404).json({ error: '找不到要刪除的揪團' });
+    if (groupToDelete.organizerId !== userId) return res.status(403).json({ error: '您沒有權限刪除此揪團' });
+
+    // 假設 Prisma schema 中已設定 onDelete: Cascade
+    // 否則需要手動刪除 GroupImage, GroupMember, GroupComment
+    await prisma.group.delete({ where: { id: groupId } });
+
+    // TODO: 考慮刪除 public/uploads 中的相關圖片檔案
+
+    res.status(200).json({ message: '揪團已成功刪除' });
+  } catch (err) {
+    console.error(`刪除揪團 ${req.params.groupId} 失敗:`, err);
+    if (err.code === 'P2025') return res.status(404).json({ error: '找不到要刪除的揪團。' });
+    // P2003 (Foreign key constraint failed) 通常在 onDelete: Cascade 設定不當時發生
+    // 但如果 Cascade 已設定，更可能是 P2025 (Record to delete does not exist)
+    if (err.code === 'P2003') {
+        return res.status(409).json({ error: '無法刪除揪團，可能因為它仍被其他資料引用。請確認資料庫關聯設定。' });
+    }
+    return res.status(500).json({ error: '伺服器內部錯誤，刪除揪團失敗。' });
+  }
+});
 export default router;
