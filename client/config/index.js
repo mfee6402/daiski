@@ -29,7 +29,7 @@ export const nextUrl = isDev ? local.nextUrl : production.nextUrl;
 // 這裡是設定不需要Layout的路由
 export const noLayoutPaths = ['/ship/callback'];
 // 登入頁路由
-export const loginRoute = '/auth/login';
+export const loginRoute = '/auth/not-login';
 // 隱私頁面路由，未登入時會，檢查後跳轉至登入頁路由
 export const protectedRoutes = [
   // 這代表/dashboard/底下的所有路由都會被保護
@@ -40,7 +40,7 @@ export const protectedRoutes = [
   '/user/profile-password',
   '/cart',
   '/coupons',
-  '/groups/create',
+  // '/groups/create',
   '/profile',
 ];
 

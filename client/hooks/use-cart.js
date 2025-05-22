@@ -30,7 +30,7 @@ CartContext.displayName = 'CartContext';
 export function CartProvider({ children }) {
   // 購物車中的項目 與商品的物件屬性會相差一個count屬性(數字類型，代表購買數量)
   const [items, setItems] = useState([]);
-  const [cartProduct, setCartProduct] = useState({
+  const [cart, setCart] = useState({
     product: [],
     group: [],
     course: [],
@@ -40,8 +40,8 @@ export function CartProvider({ children }) {
   const [didMount, setDidMount] = useState(false);
 
   // 處理遞增
-  const onIncrease = (itemId) => {
-    const nextItems = items.map((v) => {
+  const onIncrease = (type, itemId) => {
+    const nextItems = cart[type].map((v) => {
       if (v.id === itemId) {
         // 如果比對出id=itemId的成員，則進行再拷貝物件，並且作修改`count: v.count+1`
         return { ...v, count: v.count + 1 };
@@ -55,8 +55,8 @@ export function CartProvider({ children }) {
     setItems(nextItems);
   };
   // 處理遞減
-  const onDecrease = (itemId) => {
-    const nextItems = items.map((v) => {
+  const onDecrease = (type, itemId) => {
+    const nextItems = cart[type].map((v) => {
       if (v.id === itemId) {
         // 如果比對出id=itemId的成員，則進行再拷貝物件，並且作修改`count: v.count-1`
         return { ...v, count: v.count - 1 };
@@ -70,8 +70,8 @@ export function CartProvider({ children }) {
     setItems(nextItems);
   };
   // 處理刪除
-  const onRemove = (itemId) => {
-    const nextItems = items.filter((v, i) => {
+  const onRemove = (type, itemId) => {
+    const nextItems = cart[type].filter((v) => {
       // 過濾出id不為itemId的物件資料
       return v.id !== itemId;
     });
@@ -79,17 +79,17 @@ export function CartProvider({ children }) {
     setItems(nextItems);
   };
   // 處理新增
-  const onAdd = (product) => {
+  const onAdd = (type, itemId) => {
     // 判斷要加入的商品物件是否已經在購物車狀態
-    const foundIndex = items.findIndex((v) => v.id === product.id);
+    const foundIndex = cart[type].findIndex((v) => v.id === itemId.id);
 
     if (foundIndex !== -1) {
       // 如果有找到 ===> 遞增購物車狀態商品數量
-      onIncrease(product.id);
+      onIncrease(itemId.id);
     } else {
       // 否則 ===> 新增到購物車狀態
       // 擴增一個count屬性， 預設為1
-      const newItem = { ...product, count: 1 };
+      const newItem = { ...itemId, count: 1 };
       // 加到購物車狀態最前面
       const nextItems = [newItem, ...items];
       // 設定到狀態
@@ -99,8 +99,22 @@ export function CartProvider({ children }) {
 
   // 使用陣列的迭代方法reduce(歸納, 累加)
   // 稱為"衍生,派生"狀態(derived state)，意即是狀態的一部份，或是由狀態計算得來的值
-  const totalQty = items.reduce((acc, v) => acc + v.count, 0);
-  const totalAmount = items.reduce((acc, v) => acc + v.count * v.price, 0);
+  const totalQty = {
+    product: 0,
+    group: 0,
+    course: 0,
+  };
+  for (const key in cart) {
+    totalQty[key] = cart[key].reduce((acc, v) => acc + v.count, 0);
+  }
+  const totalAmount = {
+    product: 0,
+    group: 0,
+    course: 0,
+  };
+  for (const key in cart) {
+    totalAmount[key] = cart[key].reduce((acc, v) => acc + v.count, 0);
+  }
 
   // 第一次渲染完成後，從localStorage取出儲存購物車資料進行同步化
   useEffect(() => {

@@ -46,20 +46,26 @@ export const AuthProvider = ({ children }) => {
     // eslint-disable-next-line
   }, [pathname]);
   // #endregion
-
-  return (
-    <AuthContext.Provider
-      value={{
-        isLoading, // 載入動畫指示用(會撥放1秒)
-        didAuthMount,
-        isAuth,
-        user, // 個人資料在user.profile
-        // favorites,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  if (
+    !protectedRoutes.includes(pathname) ||
+    protectedRoutesPatterns.some((regex) => regex.test(pathname))
+  ) {
+    return (
+      <AuthContext.Provider
+        value={{
+          isLoading, // 載入動畫指示用(會撥放1秒)
+          didAuthMount,
+          isAuth,
+          user, // 個人資料在user.profile
+          // favorites,
+        }}
+      >
+        {children}
+      </AuthContext.Provider>
+    );
+  } else {
+    return <></>;
+  }
 };
 
 export const useAuth = () => useContext(AuthContext);
