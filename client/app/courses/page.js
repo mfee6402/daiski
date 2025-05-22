@@ -50,16 +50,13 @@ export default function CoursesPage(props) {
   }
 
   return (
-    <main className="bg-white">
+    <main className="bg-white ">
       {/* 篩選列 */}
       <div className=" mx-auto p-8">
         <div className="flex items-center justify-center  gap-2 mb-4 relative">
           <div className="flex flex-wrap items-center gap-4">
             <Select>
-              <SelectTrigger className="w-[180px]">
-                <PiPersonSimpleSki />
-                <SelectValue placeholder="單/雙板" />
-              </SelectTrigger>
+              <SelectTrigger className="w-[180px]"></SelectTrigger>
               <SelectContent>
                 <SelectItem value="單板">單板</SelectItem>
                 <SelectItem value="雙板">雙板</SelectItem>
