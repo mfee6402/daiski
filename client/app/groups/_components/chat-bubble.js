@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { io } from 'socket.io-client';
-import { usePathname, useParams } from 'next/navigation'; // 匯入 usePathname 和 useParams
+import { usePathname, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -19,13 +19,11 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
   const [isChatAllowedForGroup, setIsChatAllowedForGroup] = useState(false);
   const [isCheckingGroupAuth, setIsCheckingGroupAuth] = useState(false);
 
-  const pathname = usePathname(); // 獲取當前路徑
-  // const params = useParams(); // 也可以用 params，如果路由結構更複雜
+  const pathname = usePathname();
 
   const socket = useMemo(() => {
-    // 只有在 apiBase 存在時才初始化 socket，連接會在 groupId 和授權確認後進行
     if (apiBase) {
-      return io(apiBase, { autoConnect: false }); // 設定為手動連接
+      return io(apiBase, { autoConnect: false });
     }
     return null;
   }, [apiBase]);
@@ -33,10 +31,7 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
   const fileRef = useRef(null);
   const scrollAreaRef = useRef(null);
 
-  // 偵測 URL 變化以更新 currentGroupId
   useEffect(() => {
-    // 嘗試從路徑中解析 groupId，例如 /groups/123 -> groupId = 123
-    // 這是一個簡化的例子，您可能需要更健壯的解析邏輯
     const pathSegments = pathname.split('/');
     if (
       pathSegments.length > 2 &&
@@ -44,51 +39,58 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
       pathSegments[2]
     ) {
       const potentialGroupId = pathSegments[2];
-      // 驗證 potentialGroupId 是否為有效的 ID 格式 (例如數字)
       if (
         /^\d+$/.test(potentialGroupId) ||
         typeof potentialGroupId === 'string'
       ) {
-        // 根據您的 groupId 格式調整
         setCurrentGroupId(potentialGroupId);
       } else {
         setCurrentGroupId(null);
       }
     } else {
-      setCurrentGroupId(null); // 如果路徑不匹配，則沒有當前群組
+      setCurrentGroupId(null);
     }
   }, [pathname]);
 
-  // 當 currentGroupId 變化或聊天視窗開啟時，檢查授權並連接 Socket
   useEffect(() => {
     if (open && currentGroupId && currentUser && socket) {
       setIsCheckingGroupAuth(true);
-      setIsChatAllowedForGroup(false); // 重設授權狀態
+      setIsChatAllowedForGroup(false);
 
       const checkAuthorizationAndConnect = async () => {
         try {
           const response = await fetch(
-            `${apiBase}/api/group/groupchat/${currentGroupId}/authorize`
+            `${apiBase}/api/group/groupchat/${currentGroupId}/authorize`,
+            {
+              method: 'GET', // 明確指定方法
+              credentials: 'include', // << --- 新增：確保攜帶 cookie
+            }
           );
           if (response.ok) {
             const data = await response.json();
             if (data.authorized) {
               setIsChatAllowedForGroup(true);
               if (!socket.connected) {
-                socket.connect(); // 授權成功後連接 socket
+                socket.connect();
               }
-              // 連接成功後 (在 socket 'connect' 事件中) 再加入房間
             } else {
               console.warn(
                 `使用者未被授權加入群組 ${currentGroupId} 的聊天室: ${data.message}`
               );
-              onOpenChange(false); // 未授權則關閉聊天視窗
+              onOpenChange(false);
             }
           } else {
-            const errData = await response.json().catch(() => ({}));
+            // 如果回應不是 ok，嘗試解析 JSON 錯誤訊息
+            let errMessage = `授權檢查 API 錯誤: ${response.status}`;
+            try {
+              const errData = await response.json();
+              errMessage = errData.message || errData.error || errMessage;
+            } catch (e) {
+              // 如果解析 JSON 失敗，使用原始狀態文字
+              errMessage = `授權檢查 API 錯誤: ${response.status} - ${response.statusText}`;
+            }
             console.error(
-              `授權檢查 API 錯誤 (群組 ${currentGroupId}): ${response.status}`,
-              errData.message || ''
+              `授權檢查 API 錯誤 (群組 ${currentGroupId}): ${errMessage}`
             );
             onOpenChange(false);
           }
@@ -101,17 +103,14 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
       };
       checkAuthorizationAndConnect();
     } else if (socket && socket.connected && !currentGroupId) {
-      // 如果從有 groupId 的頁面切換到沒有 groupId 的頁面，且 socket 仍連接，則斷開
       socket.disconnect();
       setIsConnected(false);
-      setMsgs([]); // 清空訊息
+      setMsgs([]);
     }
   }, [open, currentGroupId, currentUser, socket, apiBase, onOpenChange]);
 
-  // Socket.IO 連線和事件處理
   useEffect(() => {
     if (!socket || !isChatAllowedForGroup || !currentGroupId) {
-      // 如果 socket 存在但未被授權或沒有 groupId，確保它是斷開的
       if (socket && socket.connected) {
         socket.disconnect();
       }
@@ -119,10 +118,9 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
       return;
     }
 
-    // 只有在授權通過且有 currentGroupId 時才處理 socket 事件
-    if (!socket.connected) {
-      // 避免重複註冊事件，或在 socket.connect() 成功後再註冊
-      // socket.connect(); // 移到授權成功後
+    if (!socket.connected && isChatAllowedForGroup && currentGroupId) {
+      // 確保在授權後才嘗試連接
+      socket.connect();
     }
 
     socket.on('connect', () => {
@@ -156,14 +154,11 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
     });
 
     return () => {
-      // 移除事件監聽器，避免記憶體洩漏
       socket.off('connect');
       socket.off('disconnect');
       socket.off('chatMessage');
       socket.off('joinedRoomSuccess');
       socket.off('joinRoomError');
-      // 斷開連接的邏輯可以根據 open 和 currentGroupId 狀態更細緻地處理
-      // if (socket.connected) socket.disconnect();
     };
   }, [
     socket,
@@ -172,9 +167,8 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
     currentUser?.id,
     onOpenChange,
     isChatAllowedForGroup,
-  ]); // 加入 isChatAllowedForGroup
+  ]);
 
-  // ... (訊息列表滾動、清空未讀的 useEffect 不變) ...
   useEffect(() => {
     if (scrollAreaRef.current) {
       const scrollViewport = scrollAreaRef.current.querySelector(
@@ -225,6 +219,7 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
       const res = await fetch(`${apiBase}/api/group/groupchat/upload`, {
         method: 'POST',
         body: form,
+        credentials: 'include', // << --- 新增：確保攜帶 cookie (如果上傳也需要驗證)
       });
       if (!res.ok) {
         const errData = await res
@@ -252,7 +247,6 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
     }
   };
 
-  // 如果聊天視窗未開啟，或者正在檢查群組授權，則不渲染聊天內容視窗
   const shouldRenderChatWindow =
     open && currentGroupId && isChatAllowedForGroup && !isCheckingGroupAuth;
   const chatWindowTitle =
@@ -264,15 +258,13 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
 
   return (
     <>
-      {/* 聊天頭 (總是可見，如果 currentUser 存在) */}
       {currentUser && (
         <Button
           variant="secondary"
           className="fixed bottom-6 right-6 rounded-full p-4 shadow-lg z-50"
           onClick={() => {
-            // 如果沒有 currentGroupId 或正在檢查權限，點擊時可以不打開，或提示
             if (!currentGroupId && !open) {
-              alert('請先進入特定群組頁面以使用聊天功能。'); // 或其他提示方式
+              alert('請先進入特定群組頁面以使用聊天功能。');
               return;
             }
             if (isCheckingGroupAuth && !open) {
@@ -295,7 +287,6 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
         </Button>
       )}
 
-      {/* 側邊小視窗 - 只有在 open 且有 currentGroupId 且已授權時才完整顯示內容 */}
       {open && (
         <div className="fixed bottom-20 right-6 w-80 h-[500px] max-h-[70vh] bg-white border border-gray-200 shadow-xl rounded-lg flex flex-col z-40">
           <div className="flex items-center justify-between p-3 border-b bg-slate-50 rounded-t-lg">
@@ -333,7 +324,6 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
                 ref={scrollAreaRef}
                 className="flex-1 p-3 space-y-3 bg-slate-50"
               >
-                {/* 訊息列表渲染邏輯 */}
                 {msgs.map((m, i) => (
                   <div
                     key={m.id || `msg-${i}`}
