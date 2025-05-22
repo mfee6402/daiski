@@ -29,7 +29,7 @@ export const nextUrl = isDev ? local.nextUrl : production.nextUrl;
 // 這裡是設定不需要Layout的路由
 export const noLayoutPaths = ['/ship/callback'];
 // 登入頁路由
-export const loginRoute = '/user';
+export const loginRoute = '/auth/login';
 // 隱私頁面路由，未登入時會，檢查後跳轉至登入頁路由
 export const protectedRoutes = [
   // 這代表/dashboard/底下的所有路由都會被保護
@@ -38,7 +38,18 @@ export const protectedRoutes = [
   '/user/status',
   '/user/profile',
   '/user/profile-password',
-]
+  '/cart',
+  '/coupons',
+  '/groups/create',
+  '/profile',
+];
+
+export const protectedRoutesPatterns = [
+  // 課程註冊頁面
+  /^\/courses\/[^/]+\/sign-up$/,
+  // 揪團編輯頁面
+  /^\/groups\/[^/]+\/edit$/
+];
 
 // breadcrumb面包屑使用
 // 用pathname英文對照中文的名稱(類似關聯陣列的物件)

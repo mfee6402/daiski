@@ -4,7 +4,7 @@ import { useContext, createContext, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthGet } from '@/services/rest-client/use-user';
 // 登入頁路由與隱私頁面路由，未登入時會檢查後跳轉至登入頁路由
-import { loginRoute, protectedRoutes } from '@/config';
+import { loginRoute, protectedRoutes, protectedRoutesPatterns } from '@/config';
 
 // 建立Context
 const AuthContext = createContext(null);
@@ -37,7 +37,12 @@ export const AuthProvider = ({ children }) => {
       if (protectedRoutes.includes(pathname)) {
         router.push(loginRoute);
       }
+      // 正規表達式判斷
+      if (protectedRoutesPatterns.some((regex) => regex.test(pathname))) {
+        router.push(loginRoute);
+      }
     }
+
     // eslint-disable-next-line
   }, [pathname]);
   // #endregion
