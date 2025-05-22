@@ -153,14 +153,16 @@ export default function ProductList({ products, favIds, onToggleFavorite }) {
             </div>
 
             <Card>
-              <CardHeader className="w-full aspect-[4/3] overflow-hidden rounded-xl">
-                <Image
-                  src={p.image || '/placeholder.jpg'}
-                  alt={p.name}
-                  width={10}
-                  height={10}
-                  className="w-full h-full object-cover transition duration-300 hover:scale-110"
-                />
+              <CardHeader className="w-full  overflow-hidden p-4">
+                <div className="aspect-[4/3]">
+                  <Image
+                    src={p.image || '/placeholder.jpg'}
+                    alt={p.name}
+                    width={10}
+                    height={10}
+                    className="w-full h-full object-contain transition duration-300 hover:scale-110"
+                  />
+                </div>
               </CardHeader>
               <CardContent>
                 <CardTitle className="text-lg font-bold mt-2 line-clamp-2 hover:text-primary-500">
