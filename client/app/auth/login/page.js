@@ -12,7 +12,8 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Toaster } from 'sonner';
 // import { register } from 'module';
-
+// 為了跳轉頁面（App Router）
+import { useRouter } from "next/navigation"
 
 export default function UserPage() {
   // 輸入表單用的狀態
@@ -48,8 +49,9 @@ export default function UserPage() {
       // 呼叫useAuthGet的mutate方法
       // 將會進行重新驗證(revalidation)(將資料標記為已過期並觸發重新請求)
       mutate();
-
-      toast.success('已成功登入');
+      router.push("/")
+      // toast.success("已成功登入");
+      // toast.success("已成功登入", { onClose: () => router.push("/profile") });
     } else {
       toast.error(`登入失敗`);
     }
@@ -87,9 +89,8 @@ export default function UserPage() {
       </div>
     );
   }
-  //自己嘗試修正register
-  // ② 從 useForm 拿到 register
-  // const {register, handleSubmit, formState: { errors }, } = useForm();            
+  //取用router，為了跳轉頁面
+  const router = useRouter();             
 
   return (
     <>
@@ -123,14 +124,14 @@ export default function UserPage() {
                 className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
               />
             </label>
-            <Link href="/">
+           
             <button
               onClick={handleLogin}
               className="w-full mt-16 px-4 py-3 bg-[#2770ea] rounded-md hover:text-amber-100"
             >
               登入(login)
             </button>
-            </Link>
+            
           </div>
 
           <div className="mt-16">
@@ -171,7 +172,9 @@ export default function UserPage() {
       </div>
 
       {/* 土司訊息視窗用 */}
-      <ToastContainer />
+      <ToastContainer position="bottom-right"
+          autoClose={1000}
+          closeOnClick/>
     </>
   );
 }

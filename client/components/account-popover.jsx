@@ -117,13 +117,13 @@ export function AccountPopover() {
           </Link>
           </PopoverClose>
           <PopoverClose asChild>
+          <Link href="/auth/login">
           {!isAuth && (
-            <Link href="/auth/login">
-              <div className="w-full text-left px-2 py-1 rounded hover:bg-gray-100">
+              <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100">
                 登入
-              </div>
-            </Link>
+              </button>
           )}
+          </Link>
           </PopoverClose>
         </div>
         
