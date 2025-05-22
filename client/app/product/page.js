@@ -3,7 +3,7 @@ import Container from '@/components/container';
 import ProductList from './_components/product-list';
 import ProductPagination from './_components/product-pagination';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import ProductSidebar from './_components/product-sidebar';
 import useSWR from 'swr';
 import { useDebounce } from 'use-debounce';
@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { X, Sliders } from 'lucide-react';
 
+import { useFavorite } from '@/hooks/use-favorite';
 import { useAuth } from '@/hooks/use-auth';
 
 // 1. Next.js Server Component（可直接 await fetch）
@@ -44,7 +45,9 @@ import { useAuth } from '@/hooks/use-auth';
 */
 // SWR fetcher：把 URL 拿去 fetch 然後轉成 JSON
 const fetcher = (url) =>
-  fetch(`http://localhost:3005${url}`).then((res) => res.json());
+  fetch(`http://localhost:3005${url}`, { credentials: 'include' }).then((r) =>
+    r.json()
+  );
 
 export default function ProductPage() {
   const { user, isAuth, isLoading } = useAuth();
@@ -229,6 +232,42 @@ export default function ProductPage() {
 
   const products = productRes?.data || [];
   const totalPages = Math.max(1, Math.ceil(pageInfo.total / pageInfo.limit));
+
+  // 取得收藏清單
+  const { data: favIds = [], mutate: mutateFav } = useSWR(
+    isAuth ? '/api/profile/favorites' : null,
+    fetcher
+  );
+
+  const toggleFavorite = useCallback(
+    async (productId) => {
+      const isFav = favIds.includes(productId);
+      const next = isFav
+        ? favIds.filter((id) => id !== productId)
+        : [...favIds, productId];
+      // 樂觀更新
+      mutateFav(next, false);
+      try {
+        if (isFav) {
+          await fetch(
+            `http://localhost:3005/api/profile/favorites/${productId}`,
+            { method: 'DELETE', credentials: 'include' }
+          );
+        } else {
+          await fetch('http://localhost:3005/api/profile/favorites', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId }),
+          });
+        }
+        mutateFav();
+      } catch {
+        mutateFav();
+      }
+    },
+    [favIds, mutateFav]
+  );
 
   // ─── 5. 各種篩選操作 handler ───
   const goToPage = (newPage) => {
@@ -526,7 +565,11 @@ export default function ProductPage() {
         </div>
 
         <div className="flex flex-col gap-10 flex-1">
-          <ProductList products={products} />
+          <ProductList
+            products={products}
+            favIds={favIds}
+            onToggleFavorite={toggleFavorite}
+          />
           {productError && (
             <div className="text-red-500">載入商品時發生錯誤</div>
           )}

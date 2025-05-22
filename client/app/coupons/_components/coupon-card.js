@@ -26,7 +26,7 @@ export default function CouponCard({
       <div
         className={`flex w-full max-w-[22rem] sm:max-w-[44rem]  
         border border-primary-600 sm:px-5 sm:py-3 p-1
-        items-center gap-4
+        items-center gap-4 rounded-lg
         ${statusClass}
         `}
       >
@@ -57,7 +57,7 @@ export default function CouponCard({
         <button
           className={`
           flex-none w-[72px] h-8 flex items-center justify-center
-          border font-tw transition
+          border font-tw transition  cursor-pointer
           ${buttonClass}
         `}
           onClick={onUse}

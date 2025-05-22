@@ -3,6 +3,7 @@ import express from 'express';
 import { PrismaClient, ActivityType } from '@prisma/client'; // 確保 ActivityType 被正確引入
 import multer from 'multer';
 import path from 'path';
+import authenticate from '../../middlewares/authenticate.js'; // <--- 引入您的 authenticate 中介軟體，請確保路徑正確
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -25,112 +26,127 @@ function parseYMD(str) {
   const d = new Date(str + 'T00:00:00Z'); // 使用 UTC 以避免時區問題
   return isNaN(d.getTime()) ? null : d;
 }
-async function getUserIdFromRequest(req) {
-  const testOrganizerId =
-    req.body.organizerId ||
-    req.query.organizerId ||
-    req.headers['x-user-id'] ||
-    2; // 嘗試從多個地方獲取，預設為 1
-  if (process.env.NODE_ENV !== 'production') {
-    console.warn(
-      `警告：正在使用測試 userId: ${testOrganizerId}。在生產環境中，請務必替換為安全的身份驗證邏輯來獲取 userId。`
-    );
-  }
-  const numericUserId = Number(testOrganizerId);
-  return isNaN(numericUserId) ? null : numericUserId;
-}
 
 // POST /api/group (創建揪團的路由)
-router.post('/', upload.single('cover'), async (req, res, next) => {
-  try {
-    const {
-      type: rawType,
-      title,
-      start_date,
-      end_date,
-      location: locationInput, // 前端傳來的地點，可能是 location_id (滑雪) 或 地點名稱 (聚餐)
-      customLocation: customLocationInput, // 前端可能也會傳這個，或者合併到 locationInput 處理
-      min_people,
-      max_people,
-      price,
-      allow_newbie,
-      description,
-      // userId, // 正式環境應從 session 或 token 獲取
-    } = req.body;
+router.post(
+  '/',
+  authenticate,
+  upload.single('cover'),
+  async (req, res, next) => {
+    try {
+      const {
+        type: rawType,
+        title,
+        start_date,
+        end_date,
+        location: locationInput, // 前端傳來的地點，可能是 location_id (滑雪) 或 地點名稱 (聚餐)
+        customLocation: customLocationInput, // 前端可能也會傳這個，或者合併到 locationInput 處理
+        min_people,
+        max_people,
+        price,
+        allow_newbie,
+        description,
+        // userId, // 正式環境應從 session 或 token 獲取
+      } = req.body;
 
-    // 假設 userId 暫時寫死為 1，您需要替換成實際的 userId 獲取邏輯
-    const organizerId = 1;
+      // **直接從 req.user (由 authenticate 中介軟體設定) 獲取 organizerId **
+      const organizerId = req.user?.id; // 假設 JWT payload 中的使用者 ID 欄位是 'id'
+      if (!organizerId) {
+        // 這個情況理論上不應該發生，因為 authenticate 中介軟體會先處理
+        // 但作為防禦性程式設計，可以保留
+        console.error(
+          '[POST /group] authenticate 中介軟體通過，但 req.user.id 未定義'
+        );
+        return res.status(401).json({ error: '未授權操作，無法識別用戶。' });
+      }
 
-    const labelToKey = { 滑雪: ActivityType.SKI, 聚餐: ActivityType.MEAL };
-    let typeKey;
-    if (labelToKey[rawType]) {
-      typeKey = labelToKey[rawType];
-    } else if (Object.values(ActivityType).includes(rawType)) {
-      typeKey = rawType;
-    } else {
-      return res.status(400).json({ error: `無效的活動類型：${rawType}` });
-    }
+      const labelToKey = { 滑雪: ActivityType.SKI, 聚餐: ActivityType.MEAL };
+      let typeKey;
+      if (labelToKey[rawType]) {
+        typeKey = labelToKey[rawType];
+      } else if (Object.values(ActivityType).includes(rawType)) {
+        typeKey = rawType;
+      } else {
+        return res.status(400).json({ error: `無效的活動類型：${rawType}` });
+      }
 
-    const sd = parseYMD(start_date);
-    const ed = parseYMD(end_date);
-    if (!sd || !ed) {
-      return res.status(400).json({ error: '日期格式錯誤，請用 yyyy-MM-dd' });
-    }
-    if (ed < sd) {
-      return res.status(400).json({ error: '結束日期不能早於開始日期' });
-    }
+      const sd = parseYMD(start_date);
+      const ed = parseYMD(end_date);
+      if (!sd || !ed) {
+        return res.status(400).json({ error: '日期格式錯誤，請用 yyyy-MM-dd' });
+      }
+      if (ed < sd) {
+        return res.status(400).json({ error: '結束日期不能早於開始日期' });
+      }
 
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+      const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
-    const data = {
-      organizerId, // 關聯到創建者
-      type: typeKey,
-      title,
-      startDate: sd,
-      endDate: ed,
-      minPeople: Number(min_people),
-      maxPeople: Number(max_people),
-      price: Number(price),
-      allowNewbie: allow_newbie === '1' || allow_newbie === true,
-      description,
-      // createdAt 會自動生成
-    };
+      const data = {
+        organizerId: Number(organizerId), // 關聯到創建者
+        type: typeKey,
+        title,
+        startDate: sd,
+        endDate: ed,
+        minPeople: Number(min_people),
+        maxPeople: Number(max_people),
+        price: Number(price),
+        allowNewbie: allow_newbie === '1' || allow_newbie === true,
+        description,
+        // createdAt 會自動生成
+      };
 
-    if (typeKey === ActivityType.SKI) {
-      if (!locationInput)
-        return res.status(400).json({ error: '滑雪活動必須選擇地點 ID' });
-      data.locationId = Number(locationInput); // 直接設定 locationId
-    } else {
-      // 例如 MEAL 或其他類型使用 customLocation
-      if (!customLocationInput && !locationInput)
+      if (typeKey === ActivityType.SKI) {
+        if (!locationInput)
+          return res.status(400).json({ error: '滑雪活動必須選擇地點 ID' });
+        data.locationId = Number(locationInput); // 直接設定 locationId
+      } else {
+        // 例如 MEAL 或其他類型使用 customLocation
+        if (!customLocationInput && !locationInput)
+          return res
+            .status(400)
+            .json({ error: '活動必須提供地點或自訂地點名稱' });
+        data.customLocation = customLocationInput || locationInput;
+      }
+
+      const newGroup = await prisma.group.create({ data });
+
+      if (imageUrl) {
+        await prisma.groupImage.create({
+          data: {
+            groupId: newGroup.id,
+            imageUrl,
+            sortOrder: 0,
+          },
+        });
+      }
+
+      res.status(201).json(newGroup);
+    } catch (err) {
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({ error: `圖片上傳錯誤: ${err.message}` });
+      }
+      if (err.message === '僅允許上傳圖片檔案！') {
+        return res.status(400).json({ error: err.message });
+      }
+      if (
+        err.code === 'P2003' &&
+        err.meta?.field_name?.includes('organizerId')
+      ) {
         return res
           .status(400)
-          .json({ error: '活動必須提供地點或自訂地點名稱' });
-      data.customLocation = customLocationInput || locationInput; // 如果 customLocationInput 沒提供，嘗試使用 locationInput
+          .json({ error: '提供的創建者 ID 無效或不存在。' });
+      }
+      if (
+        err.code === 'P2003' &&
+        err.meta?.field_name?.includes('locationId')
+      ) {
+        return res.status(400).json({ error: '提供的地點 ID 無效或不存在。' });
+      }
+      console.error('創建揪團失敗:', err);
+      return res.status(500).json({ error: '伺服器內部錯誤，創建揪團失敗。' });
     }
-
-    const newGroup = await prisma.group.create({ data });
-
-    if (imageUrl) {
-      await prisma.groupImage.create({
-        data: {
-          groupId: newGroup.id,
-          imageUrl,
-          sortOrder: 0,
-        },
-      });
-    }
-
-    res.status(201).json(newGroup);
-  } catch (err) {
-    if (err.code === 'P2002' && err.meta?.target?.includes('locationId')) {
-      // 假設是外鍵約束錯誤
-      return res.status(400).json({ error: '提供的地點 ID 無效或不存在。' });
-    }
-    console.error('創建揪團失敗:', err);
-    next(err);
   }
-});
+);
 // GET /api/group?onlyTypes=true  或  GET /api/group
 router.get('/', async (req, res, next) => {
   try {
@@ -268,50 +284,7 @@ router.get('/', async (req, res, next) => {
     next(err);
   }
 });
-router.post('/:groupId/comments', async (req, res, next) => {
-  try {
-    const groupId = parseInt(req.params.groupId, 10);
-    const { content } = req.body;
-    const userId = await getUserIdFromRequest(req); // 獲取留言者 ID
 
-    if (isNaN(groupId)) {
-      return res.status(400).json({ error: '無效的群組 ID' });
-    }
-    if (!userId) {
-      return res
-        .status(401)
-        .json({ error: '未經授權或無法識別用戶以發表留言' });
-    }
-    if (!content || typeof content !== 'string' || content.trim() === '') {
-      return res.status(400).json({ error: '留言內容不可為空' });
-    }
-
-    const groupExists = await prisma.group.findUnique({
-      where: { id: groupId },
-    });
-    if (!groupExists) {
-      return res.status(404).json({ error: '找不到指定的群組' });
-    }
-
-    const newComment = await prisma.groupComment.create({
-      data: {
-        content: content.trim(),
-        groupId: groupId,
-        userId: userId,
-      },
-      include: {
-        // 返回留言時，帶上留言者的資訊
-        user: {
-          select: { id: true, name: true, avatar: true },
-        },
-      },
-    });
-    res.status(201).json(newComment);
-  } catch (err) {
-    console.error('Error posting comment:', err);
-    next(err);
-  }
-});
 // GET /api/group/:id  → 回傳一筆 group 的完整資料
 router.get('/:groupId', async (req, res, next) => {
   try {
@@ -371,5 +344,239 @@ router.get('/:groupId', async (req, res, next) => {
     next(err);
   }
 });
+// POST /api/group/:groupId/comments (新增留言)
+router.post('/:groupId/comments', authenticate, async (req, res, next) => {
+  try {
+    const groupId = parseInt(req.params.groupId, 10);
+    const { content } = req.body;
+    const userId = req.user?.id;
 
+    if (isNaN(groupId)) return res.status(400).json({ error: '無效的群組 ID' });
+    if (!userId)
+      return res
+        .status(401)
+        .json({ error: '未授權操作，請先登入以發表留言。' });
+    if (!content || typeof content !== 'string' || content.trim() === '')
+      return res.status(400).json({ error: '留言內容不可為空' });
+
+    const groupExists = await prisma.group.findUnique({
+      where: { id: groupId },
+    });
+    if (!groupExists)
+      return res.status(404).json({ error: '找不到指定的群組' });
+
+    const newComment = await prisma.groupComment.create({
+      data: {
+        content: content.trim(),
+        groupId: Number(groupId),
+        userId: Number(userId),
+      }, // 確保是數字
+      include: { user: { select: { id: true, name: true, avatar: true } } },
+    });
+    res.status(201).json(newComment);
+  } catch (err) {
+    console.error('新增留言失敗:', err);
+    if (err.code === 'P2003' && err.meta?.field_name?.includes('userId')) {
+      return res.status(400).json({ error: '提供的留言者 ID 無效或不存在。' });
+    }
+    return res.status(500).json({ error: '伺服器內部錯誤，新增留言失敗。' });
+  }
+});
+// PUT /api/group/:groupId (編輯揪團)
+router.put(
+  '/:groupId',
+  authenticate,
+  upload.single('cover'),
+  async (req, res, next) => {
+    try {
+      const groupId = Number(req.params.groupId);
+      if (isNaN(groupId))
+        return res.status(400).json({ error: '無效的揪團 ID' });
+
+      const userId = req.user?.id;
+      // if (!userId)
+      //   return res
+      //     .status(401)
+      //     .json({ error: '未授權操作，無法獲取用戶ID (測試模式問題)' });
+
+      const groupToUpdate = await prisma.group.findUnique({
+        where: { id: groupId },
+      });
+      if (!groupToUpdate)
+        return res.status(404).json({ error: '找不到要編輯的揪團' });
+      if (groupToUpdate.organizerId !== userId) {
+        console.log(
+          `權限檢查: 資料庫 organizerId (${groupToUpdate.organizerId}) !== 測試 userId (${userId})`
+        );
+        return res
+          .status(403)
+          .json({ error: '您沒有權限編輯此揪團 (測試模式下的權限檢查)' });
+      }
+
+      const {
+        type: rawType,
+        title,
+        start_date,
+        end_date,
+        location: locationInput,
+        customLocation: customLocationInput,
+        difficulty,
+        min_people,
+        max_people,
+        price,
+        allow_newbie,
+        description,
+      } = req.body;
+
+      const dataToUpdate = {};
+
+      if (rawType) {
+        const labelToKey = { 滑雪: ActivityType.SKI, 聚餐: ActivityType.MEAL };
+        if (labelToKey[rawType]) dataToUpdate.type = labelToKey[rawType];
+        else if (Object.values(ActivityType).includes(rawType))
+          dataToUpdate.type = rawType;
+        else
+          return res.status(400).json({ error: `無效的活動類型：${rawType}` });
+      }
+
+      if (title !== undefined) dataToUpdate.title = title;
+      if (start_date) {
+        const sd = parseYMD(start_date);
+        if (!sd) return res.status(400).json({ error: '開始日期格式錯誤' });
+        dataToUpdate.startDate = sd;
+      }
+      if (end_date) {
+        const ed = parseYMD(end_date);
+        if (!ed) return res.status(400).json({ error: '結束日期格式錯誤' });
+        dataToUpdate.endDate = ed;
+      }
+
+      const finalStartDate = dataToUpdate.startDate || groupToUpdate.startDate;
+      const finalEndDate = dataToUpdate.endDate || groupToUpdate.endDate;
+      if (finalEndDate < finalStartDate)
+        return res.status(400).json({ error: '結束日期不能早於開始日期' });
+
+      if (min_people !== undefined) dataToUpdate.minPeople = Number(min_people);
+      if (max_people !== undefined) dataToUpdate.maxPeople = Number(max_people);
+      if (price !== undefined) dataToUpdate.price = Number(price);
+      if (allow_newbie !== undefined)
+        dataToUpdate.allowNewbie =
+          allow_newbie === '1' || allow_newbie === true;
+      if (description !== undefined) dataToUpdate.description = description;
+
+      const effectiveType = dataToUpdate.type || groupToUpdate.type;
+      if (effectiveType === ActivityType.SKI) {
+        if (locationInput !== undefined) {
+          if (locationInput) {
+            dataToUpdate.locationId = Number(locationInput);
+            dataToUpdate.customLocation = null;
+          } else {
+            dataToUpdate.locationId = null;
+          }
+        }
+        if (difficulty !== undefined) dataToUpdate.difficulty = difficulty;
+        else if (locationInput !== undefined && !difficulty)
+          dataToUpdate.difficulty = null;
+      } else {
+        if (customLocationInput !== undefined || locationInput !== undefined) {
+          const newCustomLocation = customLocationInput || locationInput;
+          if (newCustomLocation) {
+            dataToUpdate.customLocation = newCustomLocation;
+            dataToUpdate.locationId = null;
+          } else {
+            dataToUpdate.customLocation = null;
+          }
+        }
+        dataToUpdate.difficulty = null;
+      }
+
+      if (req.file) {
+        const newImageUrl = `/uploads/${req.file.filename}`;
+        const existingImage = await prisma.groupImage.findFirst({
+          where: { groupId },
+        });
+        if (existingImage) {
+          await prisma.groupImage.update({
+            where: { id: existingImage.id },
+            data: { imageUrl: newImageUrl },
+          });
+        } else {
+          await prisma.groupImage.create({
+            data: { groupId, imageUrl: newImageUrl, sortOrder: 0 },
+          });
+        }
+      }
+
+      if (Object.keys(dataToUpdate).length === 0 && !req.file) {
+        return res.status(400).json({ error: '沒有提供任何需要更新的資料' });
+      }
+
+      const updatedGroup = await prisma.group.update({
+        where: { id: groupId },
+        data: dataToUpdate,
+      });
+      res.status(200).json(updatedGroup);
+    } catch (err) {
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({ error: `圖片上傳錯誤: ${err.message}` });
+      }
+      if (err.message === '僅允許上傳圖片檔案！') {
+        return res.status(400).json({ error: err.message });
+      }
+      console.error(`編輯揪團 ${req.params.groupId} 失敗:`, err);
+      if (err.code === 'P2025')
+        return res
+          .status(404)
+          .json({ error: '找不到要更新的揪團或相關資源。' });
+      if (err.code === 'P2003' && err.meta?.field_name?.includes('locationId'))
+        return res.status(400).json({ error: '提供的地點 ID 無效或不存在。' });
+      return res.status(500).json({ error: '伺服器內部錯誤，更新揪團失敗。' });
+    }
+  }
+);
+
+// DELETE /api/group/:groupId (刪除揪團)
+router.delete('/:groupId', async (req, res, next) => {
+  try {
+    const groupId = Number(req.params.groupId);
+    if (isNaN(groupId)) return res.status(400).json({ error: '無效的揪團 ID' });
+
+    const userId = req.user?.id; // ** 從 req.user 獲取 **
+    if (!userId)
+      return res
+        .status(401)
+        .json({ error: '未授權操作，請先登入以刪除揪團。' });
+
+    const groupToDelete = await prisma.group.findUnique({
+      where: { id: groupId },
+    });
+    if (!groupToDelete)
+      return res.status(404).json({ error: '找不到要刪除的揪團' });
+    if (groupToDelete.organizerId !== Number(userId)) {
+      // 確保比較的是數字
+      console.log(
+        `權限檢查: 資料庫 organizerId (${groupToDelete.organizerId}) !== req.user.id (${userId})`
+      );
+      return res.status(403).json({ error: '您沒有權限刪除此揪團' });
+    }
+
+    await prisma.group.delete({ where: { id: groupId } });
+
+    res.status(200).json({ message: '揪團已成功刪除' });
+  } catch (err) {
+    // ... (錯誤處理保持不變)
+    console.error(`刪除揪團 ${req.params.groupId} 失敗:`, err);
+    if (err.code === 'P2025')
+      return res.status(404).json({ error: '找不到要刪除的揪團。' });
+    if (err.code === 'P2003') {
+      return res
+        .status(409)
+        .json({
+          error:
+            '無法刪除揪團，可能因為它仍被其他資料引用。請確認資料庫關聯設定。',
+        });
+    }
+    return res.status(500).json({ error: '伺服器內部錯誤，刪除揪團失敗。' });
+  }
+});
 export default router;
