@@ -30,15 +30,6 @@ export default function SignUpPage({ params }) {
     birthday: '',
     terms: false,
   });
-  // const [birthdate, setbirthDate] = useState('');
-  // 記錄更新的欄位
-  // const [signupCourse, setsigninCourse] = useState({
-  //   name: '',
-  //   phone: '',
-  //   email: '',
-  //   birthday: '',
-  // });
-  // 變更表單欄位
 
   // 載入課程資料
   useEffect(() => {
@@ -63,14 +54,6 @@ export default function SignUpPage({ params }) {
       [e.target.id]: e.target.value,
     }));
   };
-  // 處理輸入變更
-  // const handleChange = (e) => {
-  //   const { id: key, value, type, checked } = e.target;
-  //   setForm((prev) => ({
-  //     ...prev,
-  //     [id]: type === 'checkbox' ? checked : value,
-  //   }));
-  // };
 
   // 送出報名
   const handleSubmit = async (e) => {
@@ -108,34 +91,6 @@ export default function SignUpPage({ params }) {
     } finally {
       setSubmitting(false);
     }
-    // 載入中狀態
-    // if (!course) {
-    //   return <div className="text-center p-6">載入中…</div>;
-    // }
-    // const handleChange = (e) => {
-    //   const { id, value } = e.target;
-    //   setForm((prev) => ({ ...prev, [id]: value }));
-    // };
-    // 輸入欄位變動
-
-    //
-    // const handleSubmit = async (e) => {
-    //   // 防止表單預設送出
-    //   e.preventDefault();
-    //   // 透過signinCourse(data)填寫表單
-    //   const res = await signupCourse(signupCourse);
-    //   const resData = await res.json()();
-    //   // 除錯用
-    //   if (isDev) console.log(resData);
-
-    //   if (resData.status === 'success') {
-    //     // 清除填寫資料
-    //     setsigninCourse({ name: '', phone: '', email: '', birthday: '' });
-    //     // 訊息
-    //     toast.success('新增成功');
-    //   } else {
-    //     toast.error('新增失敗');
-    //   }
   };
   if (!course) {
     return <div className="text-center p-6">載入中...</div>;
@@ -254,20 +209,6 @@ export default function SignUpPage({ params }) {
                 主辦單位將提供延期或全額退費選項，無須負擔手續費。
               </ScrollArea>
             </CardFooter>
-            {/* <div className="flex justify-center px-6">
-              <Checkbox 
-              id="terms" 
-              checked={form.terms} 
-              onCheckedChange={(checked)}
-                setForm(prev => ({...prev, terms: checked}))
-              />
-              <label
-                htmlFor="terms"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                我已閱讀並同意上述《報名須知與退費政策》內容。
-              </label>
-            </div> */}
             <div className="flex justify-center px-6 space-x-2">
               <Checkbox
                 id="terms"

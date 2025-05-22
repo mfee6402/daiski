@@ -158,13 +158,12 @@ router.get('/:id', async (req, res) => {
             price: true,
             duration: true,
             // location_id: true,
-
             coach: {
               select: { id: true, name: true },
             },
-            // courseImg: {
-            //   select: { img: true },
-            // },
+            courseImg: {
+              select: { img: true },
+            },
             location: {
               select: {
                 id: true,
@@ -239,37 +238,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// router.post('/:id/sign-up', async function (req, res) {
-//   const id = Number(req.params.id); // ← 1. 從 URL 讀
-//   if (Number.isNaN(id)) {
-//     return res
-//       .status(400)
-//       .json({ status: 'fail', message: '無效的 course_variant_id' });
-//   }
-//   try {
-//     let { name, phone, email, birthday, course_variant_id, user_id } = req.body;
-//     course_variant_id = +course_variant_id;
-//     user_id = +user_id;
-//     console.log(req.body);
-
-//     const re = await prisma.courseVariantUser.create({
-//       data: {
-//         name,
-//         phone,
-//         email,
-//         course_variant_id,
-//         user_id,
-//         birthday: birthday ? new Date(birthday) : null,
-//         course_variant: { connect: { id } },
-//         user: { connect: { id } },
-//       },
-//     });
-//     return res.json({ status: 'success', re });
-//   } catch (error) {
-//     console.log(error);
-//     return res.json({ status: 'success', data: null });
-//   }
-// });
 router.post('/:id/sign-up', async (req, res) => {
   // 1. 取出 URL 上的 course_variant_id
   const courseVariantId = Number(req.params.id);
