@@ -21,7 +21,7 @@ router.get('/', async (req, res, next) => {
 
   try {
     // 1. 組基礎 where
-    const where = { delete_at: null };
+    const where = { deleted_at: null };
 
     // 2. 如果有 search，就加上 name 模糊搜尋
     if (typeof search === 'string' && search.trim().length >= 2) {
@@ -158,7 +158,7 @@ router.get('/', async (req, res, next) => {
         created_at: true,
         publish_at: true,
         unpublish_at: true,
-        delete_at: true,
+        deleted_at: true,
       },
       ...pagination,
     });
@@ -194,7 +194,7 @@ router.get('/search-suggestions', async (req, res, next) => {
 
     const suggestions = await prisma.product.findMany({
       where: {
-        delete_at: null,
+        deleted_at: null,
         name: {
           contains: keyword,
         },
@@ -321,7 +321,7 @@ router.get('/sizes', async (req, res, next) => {
           deleted_at: null,
           size_id: { not: null },
           product: {
-            delete_at: null,
+            deleted_at: null,
             category_id: { in: categoryIds },
           },
         },
@@ -370,7 +370,7 @@ router.get('/brands', async (req, res, next) => {
       // b. 從 product 找出這些分類下所有未刪除且有 brand_id 的商品
       const productRows = await prisma.product.findMany({
         where: {
-          delete_at: null,
+          deleted_at: null,
           brand_id: { not: null },
           category_id: { in: categoryIds },
         },
@@ -460,7 +460,7 @@ router.get('/:id', async (req, res, next) => {
     // 2. 撈同子分類（最多 4 筆，排除自己）
     let related = await prisma.product.findMany({
       where: {
-        delete_at: null,
+        deleted_at: null,
         category_id: catId,
         id: { not: product.id },
       },
@@ -485,7 +485,7 @@ router.get('/:id', async (req, res, next) => {
       const excludeIds = [product.id, ...related.map((p) => p.id)];
       const siblings = await prisma.product.findMany({
         where: {
-          delete_at: null,
+          deleted_at: null,
           // 取該 parentId 底下的所有子分類商品
           product_category: { parent_id: parentId },
           id: { notIn: excludeIds },
