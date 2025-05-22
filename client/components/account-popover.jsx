@@ -77,15 +77,12 @@ export function AccountPopover() {
         className="w-48 p-2"
       >
         {/* <div className="text-sm font-medium text-gray-500 mb-2">帳號選單</div> */}
-        <div className="space-y-1">
-        <Link href="/profile">
+        <div className="flex flex-col gap-1">
+        <Link href="/profile" >
           <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100">
             個人資料
           </button>
           </Link>
-          <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100">
-            訂單記錄
-          </button>
           <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100">
             優惠券
           </button>
