@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { io } from 'socket.io-client';
-import { usePathname, useParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,23 +15,36 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
   const [text, setText] = useState('');
   const [unread, setUnread] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
-  const [currentGroupId, setCurrentGroupId] = useState(null);
-  const [isChatAllowedForGroup, setIsChatAllowedForGroup] = useState(false);
   const [isCheckingGroupAuth, setIsCheckingGroupAuth] = useState(false);
+  const [isChatAllowedForActiveGroup, setIsChatAllowedForActiveGroup] =
+    useState(false);
+  const [joinedGroups, setJoinedGroups] = useState([]);
+  const [isLoadingGroups, setIsLoadingGroups] = useState(false);
+  const [activeChatGroupId, setActiveChatGroupId] = useState(null);
+  const [showGroupList, setShowGroupList] = useState(true);
 
   const pathname = usePathname();
-
-  const socket = useMemo(() => {
-    if (apiBase) {
-      return io(apiBase, { autoConnect: false });
-    }
-    return null;
-  }, [apiBase]);
-
   const fileRef = useRef(null);
   const scrollAreaRef = useRef(null);
+  const socketRef = useRef(null);
 
   useEffect(() => {
+    if (apiBase && !socketRef.current) {
+      socketRef.current = io(apiBase, {
+        autoConnect: false,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 3000,
+      });
+    }
+    return () => {
+      if (socketRef.current?.connected) {
+        socketRef.current.disconnect();
+      }
+      socketRef.current = null;
+    };
+  }, [apiBase]);
+
+  const getGroupIdFromUrl = () => {
     const pathSegments = pathname.split('/');
     if (
       pathSegments.length > 2 &&
@@ -41,155 +54,242 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
       const potentialGroupId = pathSegments[2];
       if (
         /^\d+$/.test(potentialGroupId) ||
-        typeof potentialGroupId === 'string'
+        (typeof potentialGroupId === 'string' && potentialGroupId.trim() !== '')
       ) {
-        setCurrentGroupId(potentialGroupId);
-      } else {
-        setCurrentGroupId(null);
+        return potentialGroupId;
       }
-    } else {
-      setCurrentGroupId(null);
     }
-  }, [pathname]);
+    return null;
+  };
 
-  useEffect(() => {
-    if (open && currentGroupId && currentUser && socket) {
-      setIsCheckingGroupAuth(true);
-      setIsChatAllowedForGroup(false);
-
-      const checkAuthorizationAndConnect = async () => {
-        try {
-          const response = await fetch(
-            `${apiBase}/api/group/groupchat/${currentGroupId}/authorize`,
-            {
-              method: 'GET', // 明確指定方法
-              credentials: 'include', // << --- 新增：確保攜帶 cookie
-            }
-          );
-          if (response.ok) {
-            const data = await response.json();
-            if (data.authorized) {
-              setIsChatAllowedForGroup(true);
-              if (!socket.connected) {
-                socket.connect();
-              }
-            } else {
-              console.warn(
-                `使用者未被授權加入群組 ${currentGroupId} 的聊天室: ${data.message}`
-              );
-              onOpenChange(false);
-            }
-          } else {
-            // 如果回應不是 ok，嘗試解析 JSON 錯誤訊息
-            let errMessage = `授權檢查 API 錯誤: ${response.status}`;
-            try {
-              const errData = await response.json();
-              errMessage = errData.message || errData.error || errMessage;
-            } catch (e) {
-              // 如果解析 JSON 失敗，使用原始狀態文字
-              errMessage = `授權檢查 API 錯誤: ${response.status} - ${response.statusText}`;
-            }
-            console.error(
-              `授權檢查 API 錯誤 (群組 ${currentGroupId}): ${errMessage}`
-            );
-            onOpenChange(false);
-          }
-        } catch (error) {
-          console.error(`呼叫授權 API 失敗 (群組 ${currentGroupId}):`, error);
-          onOpenChange(false);
-        } finally {
-          setIsCheckingGroupAuth(false);
+  const fetchJoinedGroups = async () => {
+    if (!currentUser?.id || !apiBase) return;
+    setIsLoadingGroups(true);
+    try {
+      const response = await fetch(
+        `${apiBase}/api/group/groupchat/my-joined-list`,
+        {
+          credentials: 'include',
         }
-      };
-      checkAuthorizationAndConnect();
-    } else if (socket && socket.connected && !currentGroupId) {
-      socket.disconnect();
-      setIsConnected(false);
-      setMsgs([]);
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) setJoinedGroups(data.groups || []);
+        else setJoinedGroups([]);
+      } else {
+        setJoinedGroups([]);
+      }
+    } catch (error) {
+      console.error('[fetchJoinedGroups] API call error:', error); // 保留錯誤日誌
+      setJoinedGroups([]);
+    } finally {
+      setIsLoadingGroups(false);
     }
-  }, [open, currentGroupId, currentUser, socket, apiBase, onOpenChange]);
+  };
+
+  const selectGroupAndEnterChat = async (groupId) => {
+    if (!groupId || !currentUser || !socketRef.current || !apiBase) {
+      return;
+    }
+    setActiveChatGroupId(groupId);
+    setShowGroupList(false);
+    setIsCheckingGroupAuth(true);
+    setIsChatAllowedForActiveGroup(false);
+    setMsgs([]);
+
+    try {
+      const response = await fetch(
+        `${apiBase}/api/group/groupchat/${groupId}/authorize`,
+        {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store',
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data.authorized) {
+          setIsChatAllowedForActiveGroup(true);
+          if (!socketRef.current.connected) {
+            socketRef.current.connect();
+          } else {
+            socketRef.current.emit('joinGroupChat', groupId, currentUser.id);
+          }
+        } else {
+          setIsChatAllowedForActiveGroup(false);
+          setShowGroupList(true);
+          setActiveChatGroupId(null);
+        }
+      } else {
+        const errText = await response.text();
+        console.error(
+          `[selectGroupAndEnterChat] Auth API HTTP error for group ${groupId}: ${response.status}`,
+          errText
+        ); // 保留錯誤日誌
+        setIsChatAllowedForActiveGroup(false);
+        setShowGroupList(true);
+        setActiveChatGroupId(null);
+      }
+    } catch (error) {
+      console.error(
+        `[selectGroupAndEnterChat] Auth API call failed for group ${groupId}:`,
+        error
+      ); // 保留錯誤日誌
+      setIsChatAllowedForActiveGroup(false);
+      setShowGroupList(true);
+      setActiveChatGroupId(null);
+    } finally {
+      setIsCheckingGroupAuth(false);
+    }
+  };
 
   useEffect(() => {
-    if (!socket || !isChatAllowedForGroup || !currentGroupId) {
-      if (socket && socket.connected) {
-        socket.disconnect();
+    if (open && currentUser?.id) {
+      fetchJoinedGroups();
+      const groupIdFromUrl = getGroupIdFromUrl();
+      if (groupIdFromUrl) {
+        if (activeChatGroupId !== groupIdFromUrl) {
+          selectGroupAndEnterChat(groupIdFromUrl);
+        }
+      } else {
+        setShowGroupList(true);
+        setActiveChatGroupId(null);
+        setIsChatAllowedForActiveGroup(false);
+        if (socketRef.current?.connected) socketRef.current.disconnect();
+      }
+    } else if (!open) {
+      if (socketRef.current?.connected) {
+        socketRef.current.disconnect();
+      }
+      setActiveChatGroupId(null);
+      setIsChatAllowedForActiveGroup(false);
+      setShowGroupList(true);
+      setMsgs([]);
+      setUnread(0);
+    }
+  }, [open, currentUser?.id, apiBase]);
+
+  useEffect(() => {
+    const groupIdFromUrl = getGroupIdFromUrl();
+    if (open && currentUser?.id) {
+      if (groupIdFromUrl) {
+        if (groupIdFromUrl !== activeChatGroupId) {
+          selectGroupAndEnterChat(groupIdFromUrl);
+        }
+      } else {
+        if (activeChatGroupId && !showGroupList) {
+          setShowGroupList(true);
+          if (socketRef.current?.connected) socketRef.current.disconnect();
+          setActiveChatGroupId(null);
+          setIsChatAllowedForActiveGroup(false);
+          setMsgs([]);
+        } else if (!activeChatGroupId) {
+          setShowGroupList(true);
+        }
+      }
+    }
+  }, [pathname, open, currentUser?.id]);
+
+  useEffect(() => {
+    const currentSocket = socketRef.current;
+    if (
+      !currentSocket ||
+      !activeChatGroupId ||
+      !isChatAllowedForActiveGroup ||
+      !currentUser?.id
+    ) {
+      if (currentSocket?.connected) {
+        currentSocket.disconnect();
       }
       setIsConnected(false);
       return;
     }
 
-    if (!socket.connected && isChatAllowedForGroup && currentGroupId) {
-      // 確保在授權後才嘗試連接
-      socket.connect();
+    if (!currentSocket.connected) {
+      currentSocket.connect();
     }
 
-    socket.on('connect', () => {
-      console.log('Socket.IO 已連接 (ChatBubble):', socket.id);
+    const handleConnect = () => {
       setIsConnected(true);
-      if (currentGroupId && currentUser?.id) {
-        socket.emit('joinGroupChat', currentGroupId, currentUser.id);
-        console.log(
-          `已發送 joinGroupChat 事件: 群組 ${currentGroupId}, 使用者 ${currentUser.id}`
-        );
-      }
-    });
-
-    socket.on('disconnect', () => {
-      console.log('Socket.IO 已離線 (ChatBubble)');
+      currentSocket.emit('joinGroupChat', activeChatGroupId, currentUser.id);
+    };
+    const handleDisconnect = () => {
       setIsConnected(false);
-    });
-
-    socket.on('chatMessage', (m) => {
-      setMsgs((prevMsgs) => [...prevMsgs, m]);
-      if (!open) {
-        setUnread((prevUnread) => prevUnread + 1);
+    };
+    const handleChatMessage = (m) => {
+      if (
+        m.groupId === activeChatGroupId ||
+        (m.room && m.room.toString() === activeChatGroupId)
+      ) {
+        setMsgs((prev) => [...prev, m]);
+        if (!open) setUnread((u) => u + 1);
       }
-    });
-    socket.on('joinedRoomSuccess', (data) =>
-      console.log(`成功加入房間 ${data.groupId}: ${data.message}`)
-    );
-    socket.on('joinRoomError', (data) => {
-      console.error(`加入房間 ${data.groupId} 失敗: ${data.message}`);
-      onOpenChange(false);
-    });
+    };
+    const handleJoinedRoomSuccess = (data) => {
+      if (data.groupId === activeChatGroupId)
+        console.log(`[Socket] Joined room ${data.groupId} successfully.`);
+    }; // 保留一個成功日誌
+    const handleJoinRoomError = (data) => {
+      if (data.groupId === activeChatGroupId) {
+        console.error(
+          `[Socket] Join room ${data.groupId} error:`,
+          data.message
+        );
+        setIsChatAllowedForActiveGroup(false);
+        setShowGroupList(true);
+        setActiveChatGroupId(null);
+        if (currentSocket.connected) currentSocket.disconnect();
+      }
+    };
+
+    currentSocket.on('connect', handleConnect);
+    currentSocket.on('disconnect', handleDisconnect);
+    currentSocket.on('chatMessage', handleChatMessage);
+    currentSocket.on('joinedRoomSuccess', handleJoinedRoomSuccess);
+    currentSocket.on('joinRoomError', handleJoinRoomError);
 
     return () => {
-      socket.off('connect');
-      socket.off('disconnect');
-      socket.off('chatMessage');
-      socket.off('joinedRoomSuccess');
-      socket.off('joinRoomError');
+      currentSocket.off('connect', handleConnect);
+      currentSocket.off('disconnect', handleDisconnect);
+      currentSocket.off('chatMessage', handleChatMessage);
+      currentSocket.off('joinedRoomSuccess', handleJoinedRoomSuccess);
+      currentSocket.off('joinRoomError', handleJoinRoomError);
     };
   }, [
-    socket,
-    open,
-    currentGroupId,
+    socketRef,
+    activeChatGroupId,
     currentUser?.id,
-    onOpenChange,
-    isChatAllowedForGroup,
+    isChatAllowedForActiveGroup,
   ]);
 
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      const scrollViewport = scrollAreaRef.current.querySelector(
+    if (open && scrollAreaRef.current) {
+      const sv = scrollAreaRef.current.querySelector(
         'div[style*="overflow: scroll"]'
       );
-      if (scrollViewport) {
-        scrollViewport.scrollTop = scrollViewport.scrollHeight;
-      }
+      if (sv) setTimeout(() => (sv.scrollTop = sv.scrollHeight), 100);
     }
-  }, [msgs]);
-
+  }, [msgs, open]);
   useEffect(() => {
     if (open) setUnread(0);
   }, [open]);
 
   const sendMessage = (messageData) => {
-    if (!socket || !isConnected || !currentGroupId || !isChatAllowedForGroup) {
-      console.error('Socket 未連接、無群組ID或未授權，無法發送訊息');
+    if (
+      !socketRef.current ||
+      !isConnected ||
+      !activeChatGroupId ||
+      !isChatAllowedForActiveGroup
+    ) {
+      console.error('[sendMessage] Aborted: Conditions not met.'); // 保留錯誤日誌
+      alert('訊息無法發送：未連接到聊天室或未授權。');
       return;
     }
-    socket.emit('sendMessage', messageData, currentGroupId.toString());
+    socketRef.current.emit(
+      'sendMessage',
+      messageData,
+      activeChatGroupId.toString()
+    );
   };
 
   const sendText = () => {
@@ -211,7 +311,12 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
 
   const uploadImage = async (e) => {
     const file = e.target.files?.[0];
-    if (!file || !currentUser || !currentGroupId || !isChatAllowedForGroup)
+    if (
+      !file ||
+      !currentUser ||
+      !activeChatGroupId ||
+      !isChatAllowedForActiveGroup
+    )
       return;
     const form = new FormData();
     form.append('file', file);
@@ -219,7 +324,7 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
       const res = await fetch(`${apiBase}/api/group/groupchat/upload`, {
         method: 'POST',
         body: form,
-        credentials: 'include', // << --- 新增：確保攜帶 cookie (如果上傳也需要驗證)
+        credentials: 'include',
       });
       if (!res.ok) {
         const errData = await res
@@ -241,20 +346,57 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
       };
       sendMessage(msg);
     } catch (err) {
-      console.error('圖片上傳或處理失敗:', err);
+      console.error('[uploadImage] Failed:', err); // 保留錯誤日誌
+      alert(`圖片上傳失敗: ${err.message}`);
     } finally {
       if (fileRef.current) fileRef.current.value = null;
     }
   };
 
-  const shouldRenderChatWindow =
-    open && currentGroupId && isChatAllowedForGroup && !isCheckingGroupAuth;
-  const chatWindowTitle =
-    currentGroupId && isChatAllowedForGroup
-      ? `群組聊天室 (群組 ${currentGroupId})`
-      : isCheckingGroupAuth
-        ? '檢查權限中...'
-        : '聊天室';
+  const canInteractWithChat =
+    isConnected &&
+    activeChatGroupId &&
+    isChatAllowedForActiveGroup &&
+    !isCheckingGroupAuth;
+  const displayTitle =
+    activeChatGroupId && isChatAllowedForActiveGroup && !showGroupList
+      ? `群組 ${activeChatGroupId}`
+      : showGroupList
+        ? '選擇聊天群組'
+        : isCheckingGroupAuth
+          ? '檢查權限中...'
+          : activeChatGroupId
+            ? `群組 ${activeChatGroupId} (無法進入)`
+            : '聊天室';
+  const handleChatHeadClick = () => {
+    if (!currentUser) {
+      alert('請先登入以使用聊天功能。');
+      return;
+    }
+    if (open) {
+      onOpenChange(false);
+    } else {
+      onOpenChange(true);
+      const groupIdFromUrl = getGroupIdFromUrl();
+      if (!groupIdFromUrl) {
+        setShowGroupList(true);
+      }
+      // fetchJoinedGroups 和 selectGroupAndEnterChat 的邏輯主要由 useEffect 依賴 open 狀態觸發
+    }
+  };
+
+  const shouldShowGroupList = !isLoadingGroups && showGroupList;
+  const shouldShowCheckingAuth = activeChatGroupId && isCheckingGroupAuth;
+  const shouldShowNotAllowed =
+    activeChatGroupId &&
+    !isCheckingGroupAuth &&
+    !isChatAllowedForActiveGroup &&
+    !showGroupList;
+  const shouldShowChatContent =
+    activeChatGroupId &&
+    isChatAllowedForActiveGroup &&
+    !isCheckingGroupAuth &&
+    !showGroupList;
 
   return (
     <>
@@ -262,17 +404,7 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
         <Button
           variant="secondary"
           className="fixed bottom-6 right-6 rounded-full p-4 shadow-lg z-50"
-          onClick={() => {
-            if (!currentGroupId && !open) {
-              alert('請先進入特定群組頁面以使用聊天功能。');
-              return;
-            }
-            if (isCheckingGroupAuth && !open) {
-              alert('正在檢查聊天室權限，請稍候。');
-              return;
-            }
-            onOpenChange(!open);
-          }}
+          onClick={handleChatHeadClick}
           aria-label="聊天室"
         >
           💬
@@ -286,158 +418,211 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
           )}
         </Button>
       )}
-
-      {open && (
-        <div className="fixed bottom-20 right-6 w-80 h-[500px] max-h-[70vh] bg-white border border-gray-200 shadow-xl rounded-lg flex flex-col z-40">
-          <div className="flex items-center justify-between p-3 border-b bg-slate-50 rounded-t-lg">
-            <h4 className="font-semibold text-slate-700">{chatWindowTitle}</h4>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-              aria-label="關閉聊天室"
-              className="text-slate-500 hover:text-slate-700"
-            >
-              ✕
-            </Button>
-          </div>
-
-          {!currentGroupId && (
-            <div className="flex-1 p-3 flex items-center justify-center text-sm text-gray-500">
-              請導航至特定群組頁面以載入聊天室。
-            </div>
-          )}
-          {currentGroupId && isCheckingGroupAuth && (
-            <div className="flex-1 p-3 flex items-center justify-center text-sm text-gray-500">
-              正在檢查聊天室權限...
-            </div>
-          )}
-          {currentGroupId && !isCheckingGroupAuth && !isChatAllowedForGroup && (
-            <div className="flex-1 p-3 flex items-center justify-center text-sm text-red-500">
-              您沒有權限進入此聊天室或群組不存在。
-            </div>
-          )}
-
-          {shouldRenderChatWindow && (
-            <>
-              <ScrollArea
-                ref={scrollAreaRef}
-                className="flex-1 p-3 space-y-3 bg-slate-50"
-              >
-                {msgs.map((m, i) => (
-                  <div
-                    key={m.id || `msg-${i}`}
-                    className={`flex flex-col max-w-[85%] ${m.user.id === currentUser.id ? 'self-end items-end ml-auto' : 'self-start items-start mr-auto'}`}
+      {open && currentUser && (
+        <div className="fixed bottom-20 right-6 w-80 h-[500px] max-h-[70vh] bg-white border border-gray-300 shadow-xl rounded-lg flex flex-col z-40 overflow-hidden">
+          <div className="flex items-center justify-between p-3 border-b bg-slate-100 rounded-t-lg flex-shrink-0">
+            <h4 className="font-semibold text-slate-800 text-sm truncate pr-2">
+              {displayTitle}
+            </h4>
+            <div>
+              {activeChatGroupId &&
+                isChatAllowedForActiveGroup &&
+                !showGroupList && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setShowGroupList(true);
+                      if (socketRef.current?.connected)
+                        socketRef.current.disconnect();
+                      setActiveChatGroupId(null);
+                      setIsChatAllowedForActiveGroup(false);
+                      setMsgs([]);
+                    }}
+                    className="text-slate-500 hover:text-slate-700 mr-1 text-xs p-1"
                   >
-                    <div className="flex items-end gap-2">
-                      {m.user.id !== currentUser.id && (
-                        <Image
-                          src={m.user.avatar || '/default-avatar.png'}
-                          alt={m.user.name || '用戶'}
-                          width={24}
-                          height={24}
-                          className="rounded-full"
-                        />
+                    返回列表
+                  </Button>
+                )}
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+                aria-label="關閉聊天室"
+                className="text-slate-500 hover:text-slate-700 p-1"
+              >
+                ✕
+              </Button>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {isLoadingGroups && showGroupList && (
+              <div className="p-3 text-sm text-center text-gray-500">
+                載入您的群組列表中...
+              </div>
+            )}
+            {shouldShowGroupList && (
+              <ScrollArea className="h-full">
+                <div className="p-2 space-y-1">
+                  {joinedGroups.length > 0
+                    ? joinedGroups.map((group) => (
+                        <Button
+                          key={group.id}
+                          variant="ghost"
+                          className="w-full justify-start text-left h-auto py-2 px-3"
+                          onClick={() =>
+                            selectGroupAndEnterChat(group.id.toString())
+                          }
+                        >
+                          <span className="truncate">
+                            {group.title || `群組 ${group.id}`}
+                          </span>
+                        </Button>
+                      ))
+                    : !isLoadingGroups && (
+                        <p className="p-3 text-sm text-center text-gray-500">
+                          您尚未加入任何可聊天的群組，或沒有群組的聊天權限。
+                        </p>
                       )}
-                      <div
-                        className={`px-3 py-2 rounded-xl shadow-sm ${m.user.id === currentUser.id ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-800'}`}
-                      >
+                </div>
+              </ScrollArea>
+            )}
+            {shouldShowCheckingAuth && (
+              <div className="p-3 text-sm text-center text-gray-500">
+                正在檢查群組 {activeChatGroupId} 的權限...
+              </div>
+            )}
+            {shouldShowNotAllowed && (
+              <div className="flex-1 p-3 flex items-center justify-center text-sm text-red-600">
+                您目前無法進入群組 {activeChatGroupId} 的聊天室。
+              </div>
+            )}
+            {shouldShowChatContent && (
+              <>
+                <ScrollArea
+                  ref={scrollAreaRef}
+                  className="h-full p-3 space-y-3 bg-slate-50"
+                >
+                  {msgs.map((m, i) => (
+                    <div
+                      key={m.id || `msg-${i}-${m.time}`}
+                      className={`flex flex-col max-w-[85%] ${m.user.id === currentUser.id ? 'self-end items-end ml-auto' : 'self-start items-start mr-auto'}`}
+                    >
+                      <div className="flex items-end gap-1.5">
                         {m.user.id !== currentUser.id && (
-                          <p className="text-xs font-semibold mb-0.5">
-                            {m.user.name || '匿名用戶'}
-                          </p>
-                        )}
-                        {m.type === 'text' ? (
-                          <p className="text-sm whitespace-pre-wrap break-words">
-                            {m.content}
-                          </p>
-                        ) : (
                           <Image
-                            src={
-                              m.imageUrl.startsWith('http')
-                                ? m.imageUrl
-                                : `${apiBase}${m.imageUrl}`
-                            }
-                            alt="聊天圖片"
-                            width={200}
-                            height={150}
-                            className="max-w-full h-auto rounded-md object-cover cursor-pointer"
-                            onClick={() =>
-                              window.open(
-                                m.imageUrl.startsWith('http')
-                                  ? m.imageUrl
-                                  : `${apiBase}${m.imageUrl}`,
-                                '_blank'
-                              )
-                            }
+                            src={m.user.avatar || '/default-avatar.png'}
+                            alt={m.user.name || '用戶'}
+                            width={24}
+                            height={24}
+                            className="rounded-full self-end mb-1"
                           />
                         )}
+                        <div
+                          className={`px-3 py-2 rounded-xl shadow-sm ${m.user.id === currentUser.id ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800'}`}
+                        >
+                          {m.user.id !== currentUser.id && (
+                            <p className="text-xs font-semibold mb-0.5 text-gray-700">
+                              {m.user.name || '匿名用戶'}
+                            </p>
+                          )}
+                          {m.type === 'text' ? (
+                            <p className="text-sm whitespace-pre-wrap break-words">
+                              {m.content}
+                            </p>
+                          ) : (
+                            <Image
+                              src={
+                                m.imageUrl.startsWith('http') ||
+                                m.imageUrl.startsWith('blob:')
+                                  ? m.imageUrl
+                                  : `${apiBase}${m.imageUrl}`
+                              }
+                              alt="聊天圖片"
+                              width={200}
+                              height={150}
+                              className="max-w-full h-auto rounded-md object-cover cursor-pointer"
+                              onClick={() =>
+                                window.open(
+                                  m.imageUrl.startsWith('http') ||
+                                    m.imageUrl.startsWith('blob:')
+                                    ? m.imageUrl
+                                    : `${apiBase}${m.imageUrl}`,
+                                  '_blank'
+                                )
+                              }
+                              unoptimized={m.imageUrl.startsWith('blob:')}
+                            />
+                          )}
+                        </div>
                       </div>
+                      <span
+                        className={`text-xs text-gray-400 mt-0.5 px-1 ${m.user.id === currentUser.id ? 'self-end' : 'self-start'}`}
+                      >
+                        {new Date(m.time).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
                     </div>
-                    <span
-                      className={`text-xs text-gray-400 mt-1 ${m.user.id === currentUser.id ? 'self-end' : 'self-start'}`}
-                    >
-                      {new Date(m.time).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                  </div>
-                ))}
-                {!isConnected && currentGroupId && (
-                  <p className="text-xs text-center text-red-500 py-2">
-                    連線中斷，嘗試重新連接...
-                  </p>
-                )}
-              </ScrollArea>
-              <div className="flex items-center gap-2 p-3 border-t bg-white rounded-b-lg">
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={fileRef}
-                  className="hidden"
-                  onChange={uploadImage}
-                  aria-label="選擇圖片"
-                />
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => fileRef.current?.click()}
-                  aria-label="上傳圖片"
-                  className="text-slate-500 hover:text-slate-700"
-                  disabled={!isConnected || !isChatAllowedForGroup}
-                >
-                  📎
-                </Button>
-                <Input
-                  placeholder={
-                    isConnected && isChatAllowedForGroup
-                      ? '輸入訊息...'
-                      : currentGroupId
-                        ? '無法連接...'
-                        : '請選擇群組'
-                  }
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === 'Enter' &&
-                    !e.shiftKey &&
-                    (sendText(), e.preventDefault())
-                  }
-                  className="flex-1 text-sm"
-                  disabled={!isConnected || !isChatAllowedForGroup}
-                />
-                <Button
-                  onClick={sendText}
-                  disabled={
-                    !text.trim() || !isConnected || !isChatAllowedForGroup
-                  }
-                  className="text-sm"
-                >
-                  送出
-                </Button>
-              </div>
-            </>
+                  ))}
+                  {!isConnected && (
+                    <p className="text-xs text-center text-red-500 py-2">
+                      連線中斷，嘗試重新連接...
+                    </p>
+                  )}
+                  {msgs.length === 0 && !isCheckingGroupAuth && (
+                    <p className="text-xs text-center text-gray-400 py-2">
+                      還沒有訊息，開始聊天吧！
+                    </p>
+                  )}
+                </ScrollArea>
+              </>
+            )}
+          </div>
+          {shouldShowChatContent && (
+            <div className="flex items-center gap-2 p-3 border-t bg-white rounded-b-lg flex-shrink-0">
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileRef}
+                className="hidden"
+                onChange={uploadImage}
+                aria-label="選擇圖片"
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => fileRef.current?.click()}
+                aria-label="上傳圖片"
+                className="text-slate-500 hover:text-slate-700"
+                disabled={!canInteractWithChat}
+              >
+                📎
+              </Button>
+              <Input
+                placeholder={
+                  canInteractWithChat ? '輸入訊息...' : '無法連接...'
+                }
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) =>
+                  e.key === 'Enter' &&
+                  !e.shiftKey &&
+                  canInteractWithChat &&
+                  (sendText(), e.preventDefault())
+                }
+                className="flex-1 text-sm"
+                disabled={!canInteractWithChat}
+              />
+              <Button
+                onClick={sendText}
+                disabled={!text.trim() || !canInteractWithChat}
+                className="text-sm"
+              >
+                送出
+              </Button>
+            </div>
           )}
         </div>
       )}
