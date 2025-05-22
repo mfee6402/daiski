@@ -10,7 +10,9 @@ import {
 } from '@/services/rest-client/use-user';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { color } from 'framer-motion';
+import { Toaster } from 'sonner';
+// import { register } from 'module';
+
 
 export default function UserPage() {
   // 輸入表單用的狀態
@@ -85,6 +87,9 @@ export default function UserPage() {
       </div>
     );
   }
+  //自己嘗試修正register
+  // ② 從 useForm 拿到 register
+  // const {register, handleSubmit, formState: { errors }, } = useForm();            
 
   return (
     <>
@@ -94,9 +99,7 @@ export default function UserPage() {
             <h1 className="text-h2-tw">登入</h1>
             <p>
               還不是會員？
-              <a href="">
-                <span className="text-primary-600">現在加入！</span>
-              </a>
+                <Link href="/auth/register"><span className="text-primary-600">現在加入！</span></Link>
             </p>
           </div>
           <div className="max-w-md mx-auto mt-6">
@@ -120,13 +123,14 @@ export default function UserPage() {
                 className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
               />
             </label>
-
+            <Link href="/">
             <button
               onClick={handleLogin}
               className="w-full mt-16 px-4 py-3 bg-[#2770ea] rounded-md hover:text-amber-100"
             >
               登入(login)
             </button>
+            </Link>
           </div>
 
           <div className="mt-16">
