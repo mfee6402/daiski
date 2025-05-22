@@ -5,6 +5,10 @@ import '@/styles/globals.css';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { ThemeProvider } from '@/components/theme-provider';
+//shadCN的sonner
+import { Toaster } from "sonner";
+
+
 
 export const metadata = {
   title: 'DAISKI',
@@ -27,6 +31,9 @@ export default function RootLayout({ children }) {
             <Footer></Footer>
           </Providers>
         </ThemeProvider>
+        {/* richColors套用更飽和、對比更高的背景與文字色;position決定通知在螢幕上的停靠位置;expand為 true 後，所有 toast 一出現即為展開狀態 */}
+        <Toaster  position="bottom-right"  />
+
       </body>
     </html>
   );

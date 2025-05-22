@@ -4,61 +4,166 @@ import React, { useState, useEffect } from 'react';
 import CouponCard from './_components/coupon-card';
 import Container from '@/components/container';
 import CouponSelected from './_components/coupon-selected';
-import useSWR from 'swr';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/use-auth';
+import { useMemo } from 'react';
+
+import useSWR from 'swr';
+// import useSWRMutation from 'swr/dist/mutation';
+import useSWRMutation from 'swr/mutation';
+import { mutate } from 'swr';
 
 export default function CouponsPage(props) {
   // 在 useSWR 呼叫時，就直接傳 inline fetcher
-  const { data, error, isLoading } = useSWR(
+  const {
+    data,
+    error,
+    isLoading,
+    mutate: mutateCoupons,
+  } = useSWR(
     'http://localhost:3005/api/coupons',
     // 這就是 inline fetcher：直接用 fetch 回傳 Promise
     (url) =>
-      fetch(url).then((res) => {
+      fetch(url, {
+        credentials: 'include',
+      }).then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
   );
-  // 幫你加的
   const coupons = data?.coupons;
 
+  // console.log(data);
+
+  // 使用useSWRMutation來管理讀取post
+  const { trigger } = useSWRMutation(
+    'http://localhost:3005/api/coupons/claimcoupon',
+    (url, { arg }) => {
+      return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // 若靠 cookie 登入，一定要加
+        body: JSON.stringify(arg), // arg 會是 trigger 傳進來的參數 { userId, couponId }
+      }).then((r) => {
+        if (!r.ok) throw new Error('領取失敗');
+        return r.json(); // 後端回資料
+      });
+    }
+  );
+
+  // 讀取會員ＩＤ
+  const { user, isAuth } = useAuth();
+
+  // 執行一次領券
+  const handleClaim = async (coupon) => {
+    try {
+      if (!isAuth) return alert('請先登錄');
+      await trigger({ couponId: coupon.id }); // 這行才真的 fetch
+      mutateCoupons();
+
+      toast.success('已領取優惠券！');
+    } catch (e) {
+      alert(e.message);
+    }
+    mutateCoupons((prev) => {
+      return {
+        ...prev,
+        coupons: prev.coupons.map((c) =>
+          c.id === coupon.id ? { ...c, _used: true } : c
+        ),
+      };
+    }, false);
+  };
+
+  // 執行多次領券
+  const handleClaimAll = async () => {
+    try {
+      if (!isAuth) return alert('請先登錄');
+      // 先判斷狀態 讓他是可領取和未領取的
+      const claimable = couponsWithStatus?.filter(
+        (c) => c.status === '可領取' && !c._used
+      );
+      // 如果沒有可以領的訊息
+      if (!claimable?.length) {
+        return toast.info('目前沒有可領取的優惠券');
+      }
+      // 領取的動作
+      await Promise.all(
+        claimable.map((c) => trigger({ userId: user.id, couponId: c.id }))
+      );
+      mutateCoupons();
+      toast.success('已領取優惠券！');
+    } catch (e) {
+      alert(e.message);
+    }
+    mutateCoupons((prev) => {
+      return {
+        ...prev,
+        coupons: couponsWithStatus.map((c) => {
+          if (c.status === '可領取') {
+            return {
+              ...c,
+              _used: true,
+            };
+          }
+          return c;
+        }),
+      };
+    }, false);
+  };
+
   // 管理每張卡的 已領取 狀態
-  const [used, setUsed] = useState({});
-
-  // 單張領取
-  const handleUse = (id) => {
-    setUsed((prev) => ({ ...prev, [id]: true }));
-    toast.success('已領取優惠券！');
-  };
-
-  // 一鍵領取：把所有 coupon.id 全部設為 true
-  const handleClaimAll = () => {
-    const newUsed = {};
-    coupons.forEach((c) => {
-      newUsed[c.id] = true;
-    });
-    setUsed(newUsed);
-    toast('已一鍵領取所有優惠券！');
-  };
+  // const [used, setUsed] = useState([]);
 
   // 格式化時間
   const formatDateTime = (d) => {
+    new Date(d.setHours(d.getHours() + 8));
     const [date, time] = d.toISOString().split('T');
     return `${date} ${time.split('.')[0]}`;
   };
 
-  // 篩選
-  const [selectedTarget, setSelectedTarget] = useState('全部');
+  // 狀態的判斷
+  function getStatus(coupon) {
+    const now = Date.now();
+    const start = new Date(coupon.startAt).getTime();
+    const end = new Date(coupon.endAt).getTime();
 
-  const filteredData =
-    selectedTarget === '全部'
-      ? coupons
-      : coupons?.filter((item) => item.target === selectedTarget);
+    if (coupon._used) return '已領取';
 
-  const targets = ['全部', '課程', '全站', '商品'];
+    if (now < start) return '尚未開始';
+    if (now > end) return '已過期';
+    return '可領取';
+  }
 
-  // sonner
-  // const showSonner = useSonner();
+  // 為了避免點了篩選又重新檢查一次狀態
+  const couponsWithStatus = coupons?.map((c) => ({
+    ...c,
+    status: getStatus(c),
+  })); // 只依賴 coupons
+  // [coupons]
+  const [selectedTarget, setSelectedTarget] = useState('可領取');
+
+  // 用 filter 寫出對狀態和分類的篩選
+  const filteredData = couponsWithStatus?.filter((c) => {
+    // if (c.status === '已領取') return true;
+    if (selectedTarget === '可領取') {
+      return c.status === selectedTarget || c.status === '已領取';
+    }
+    if (selectedTarget === '尚未開始') {
+      return c.status === selectedTarget;
+    }
+    if (['全站', '商品', '課程'].includes(selectedTarget)) {
+      //不顯示不能領取的優惠卷
+      return (
+        c.target === selectedTarget &&
+        (c.status === '可領取' || c.status === '已領取')
+      );
+    }
+    return true;
+  });
+
+  const targets = ['可領取', '尚未開始', '全站', '商品', '課程'];
 
   // loading / error 處理
   if (isLoading) return <p className="text-center py-4">載入中…</p>;
@@ -100,6 +205,7 @@ export default function CouponsPage(props) {
                 <CouponSelected
                   key={target}
                   target={target}
+                  // filteredData={filteredData}
                   selectedTarget={selectedTarget}
                   setSelectedTarget={setSelectedTarget}
                 />
@@ -113,14 +219,10 @@ export default function CouponsPage(props) {
         {/* 優惠劵 */}
         <ul className="grid grid-cols-1 justify-items-center gap-x-25 gap-y-6 lg:grid-cols-2 my-10">
           {filteredData?.map((c) => {
-            const now = Date.now();
-            const start = new Date(c.startAt).getTime();
-            const end = new Date(c.endAt).getTime();
-
-            // 完整狀態判斷
-            const isUpcoming = now < start;
-            const isExpired = now > end;
-            const isUsed = !!used[c.id];
+            // 顯示狀態
+            const isUpcoming = c.status === '尚未開始';
+            const isExpired = c.status === '已過期';
+            const isUsed = c.status === '已領取';
 
             // 顯示時間與標籤
             const displayTime = formatDateTime(
@@ -133,7 +235,7 @@ export default function CouponsPage(props) {
             if (isUsed) buttonText = '已領取';
             else if (isUpcoming) buttonText = '尚未開始';
             else if (isExpired) buttonText = '已過期';
-            const disabled = isExpired || isUsed;
+            const disabled = isExpired || isUsed || isUpcoming;
 
             // 卡片與按鈕樣式
             let statusClass = '';
@@ -163,7 +265,7 @@ export default function CouponsPage(props) {
                   buttonText={buttonText}
                   disabled={disabled}
                   // 互動
-                  onUse={() => handleUse(c.id)}
+                  onUse={() => handleClaim(c)}
                 />
               </li>
             );
