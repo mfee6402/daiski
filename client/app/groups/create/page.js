@@ -29,6 +29,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
+import { Image } from '@radix-ui/react-avatar';
 
 // 步驟定義
 const STEPS_CONFIG = [
@@ -143,11 +144,13 @@ const LivePreviewCard = ({
       </CardHeader>
       <CardContent>
         {coverPreview ? (
-          <img
+          <Image
             src={coverPreview}
             alt="封面預覽"
-            className="w-full h-48 object-cover rounded-md mb-4 bg-muted dark:bg-muted-dark border border-border dark:border-border-dark"
-          />
+            className="w-full h-48 object-cover rounded-md mb-4
+            bg-muted dark:bg-muted-dark border border-border
+            dark:border-border-dark"
+          ></Image>
         ) : (
           <div className="w-full h-48 bg-muted dark:bg-muted-dark rounded-md mb-4 flex flex-col items-center justify-center text-muted-foreground dark:text-muted-foreground-dark border border-dashed border-border dark:border-border-dark">
             <span className="text-3xl">🖼️</span>
@@ -891,7 +894,7 @@ export default function CreateGroupPage() {
                       >
                         {coverPreview ? (
                           <div className="relative w-full h-full group">
-                            <img
+                            <Image
                               src={coverPreview}
                               alt="封面預覽"
                               className="h-full w-full object-contain rounded-lg"
