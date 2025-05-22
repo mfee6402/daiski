@@ -1,32 +1,3 @@
-// 'use client'
-
-// import { useAuth } from '@/hooks/use-auth'
-// // 使用Link元件取代a標記(連結)
-// // 為了保持目前的狀態值(尤其是針對context中的狀態)
-// import Link from 'next/link'
-
-// export default function LoginPage() {
-//   // context套用第2步: 在後代元件中使用useContext獲得Provider提供的value值
-//   // 改為useAuth (相當於useContext(AuthContext)
-//   const { isAuth, login, logout } = useAuth()
-
-//   return (
-//     <>
-//       <h1>登入頁</h1>
-//       <Link href="/cs-05-props/context-user/profile">個人資料頁</Link>
-//       <hr />
-//       <p>會員狀態: {isAuth ? '登入中' : '尚未登入'}</p>
-//       <div>
-//         {isAuth ? (
-//           <button onClick={logout}>登出</button>
-//         ) : (
-//           <button onClick={login}>會員登入</button>
-//         )}
-//       </div>
-//     </>
-//   )
-// }
-
 'use client';
 
 import { useState } from 'react';
@@ -39,6 +10,7 @@ import {
 } from '@/services/rest-client/use-user';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { color } from 'framer-motion';
 
 export default function UserPage() {
   // 輸入表單用的狀態
@@ -116,48 +88,83 @@ export default function UserPage() {
 
   return (
     <>
-      <h1>會員登入認証&授權測試(JWT)</h1>
-      <p>會員狀態:{isAuth ? '已登入' : '未登入'}</p>
-      <hr />
-      <label>
-        帳號:
-        <input
-          type="text"
-          name="account"
-          value={userInput.account}
-          onChange={handleFieldChange}
-        />
-      </label>
-      <label>
-        密碼:
-        <input
-          type="text"
-          name="password"
-          value={userInput.password}
-          onChange={handleFieldChange}
-        />
-      </label>
-      <br />
-      <button
-        onClick={() => {
-          // 測試帳號 harry/11111
-          setUserInput({ account: 'harry', password: '11111' });
-        }}
-      >
-        一鍵輸入範例
-      </button>
-      <button onClick={handleLogin}>登入(login)</button>
-      <hr />
-      <button onClick={handleLogout}>登出(logout)</button>
-      <button onClick={handleCheckAuth}>檢查登入狀況(check login)</button>
-      <hr />
+      <div className="flex container justify-center  mx-auto  gap-1">
+        <div className="w-1/2 px-6 py-12">
+          <div className="text-center ">
+            <h1 className="text-h2-tw">登入</h1>
+            <p>
+              還不是會員？
+              <a href="">
+                <span className="text-primary-600">現在加入！</span>
+              </a>
+            </p>
+          </div>
+          <div className="max-w-md mx-auto mt-6">
+            <label>
+              帳號:
+              <input
+                type="text"
+                name="account"
+                value={userInput.account}
+                onChange={handleFieldChange}
+                className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+              />
+            </label>
+            <label className="">
+              密碼:
+              <input
+                type="text"
+                name="password"
+                value={userInput.password}
+                onChange={handleFieldChange}
+                className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+              />
+            </label>
 
-      <p>
-        以下連結為測試會員隱私資料頁，如果未登入完成會跳轉回登入頁(本頁)，實作程式碼詳見useAuth勾子
-      </p>
-      <p>
-        <Link href="/auth/login/status">存取會員隱私資料</Link>
-      </p>
+            <button
+              onClick={handleLogin}
+              className="w-full mt-16 px-4 py-3 bg-[#2770ea] rounded-md hover:text-amber-100"
+            >
+              登入(login)
+            </button>
+          </div>
+
+          <div className="mt-16">
+            <button
+              onClick={() => {
+                // 測試帳號 harry/11111
+                setUserInput({ account: 'harry', password: '11111' });
+              }}
+            >
+              一鍵輸入範例
+            </button>
+            <hr />
+            {/* <h1>會員登入認証&授權測試(JWT)</h1> */}
+            <p>會員狀態:{isAuth ? '已登入' : '未登入'}</p>
+            <hr />
+            <button onClick={handleLogout}>登出(logout)</button>
+            <hr />
+            <button onClick={handleCheckAuth}>檢查登入狀況(check login)</button>
+            <hr />
+
+            {/* <p>
+            以下連結為測試會員隱私資料頁，如果未登入完成會跳轉回登入頁(本頁)，實作程式碼詳見useAuth勾子
+          </p> */}
+            <p>
+              <Link href="/auth/login/status">存取會員隱私資料</Link>
+            </p>
+          </div>
+        </div>
+        <div className="w-1/2 sr-only sm:not-sr-only">
+          <figure>
+            <img
+              src="/login.png"
+              alt="Login Image"
+              className="w-full shadow-lg"
+            />
+          </figure>
+        </div>
+      </div>
 
       {/* 土司訊息視窗用 */}
       <ToastContainer />
