@@ -14,81 +14,138 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { isDev } from '@/config';
+// import { isDev } from '@/config';
 import { toast, ToastContainer } from 'react-toastify';
+import { useParams } from 'next/navigation';
+// import { json } from 'stream/consumers';
 
 export default function SignUpPage({ params }) {
+  const { id } = useParams();
+  const [submitting, setSubmitting] = useState(false);
+  const [course, setCourse] = useState();
   const [form, setForm] = useState({
     name: '',
     phone: '',
     email: '',
-    birthdate: '',
-  });
-  const [submitting, setSubmitting] = useState(false);
-  const [birthdate, setbirthDate] = useState('');
-  const [course, setCourse] = useState();
-  // 記錄更新的欄位
-  const [signupCourse, setsigninCourse] = useState({
-    name: '',
-    phone: '',
-    email: '',
     birthday: '',
+    terms: false,
   });
+  // const [birthdate, setbirthDate] = useState('');
+  // 記錄更新的欄位
+  // const [signupCourse, setsigninCourse] = useState({
+  //   name: '',
+  //   phone: '',
+  //   email: '',
+  //   birthday: '',
+  // });
   // 變更表單欄位
-  const handleChange = (e) => {
-    const { id, value } = e.target;
-    setForm((prev) => ({ ...prev, [id]: value }));
-  };
-  // 輸入欄位變動
-  const handleFieldChange = (e) => {
-    signupCourse({ ...signupCourse, [e.target.id]: e.target.value });
-  };
-  //
-  const handleSubmit = async (e) => {
-    // 防止表單預設送出
-    e.preventDefault();
-    // 透過signinCourse(data)填寫表單
-    const res = await signupCourse(signupCourse);
-    const resData = await res.json()();
-    // 除錯用
-    if (isDev) console.log(resData);
 
-    if (resData.status === 'success') {
-      // 清除填寫資料
-      setsigninCourse({ name: '', phone: '', email: '', birthday: '' });
-      // 訊息
-      toast.success('新增成功');
-    } else {
-      toast.error('新增失敗');
-    }
-  };
-
+  // 載入課程資料
   useEffect(() => {
     async function fetchCourse() {
       try {
         const res = await fetch(
-          `http://localhost:3005/api/courses/${params.id}/sign-up`
+          `http://localhost:3005/api/courses/${id}/sign-up`
         );
         if (!res.ok) throw new Error('不ok');
         const data = await res.json();
         setCourse(data);
       } catch (error) {
-        console.error('Error fetching course:', error);
+        console.error('載入課程資料失敗:', error);
       }
     }
     fetchCourse();
-  }, [params.id]);
-  // 載入中狀態
-  if (!course) {
-    return <div className="text-center p-6">載入中…</div>;
-  }
+  }, [id]);
 
+  const handleChange = (e) => {
+    setForm((prev) => ({
+      ...prev,
+      [e.target.id]: e.target.value,
+    }));
+  };
+  // 處理輸入變更
+  // const handleChange = (e) => {
+  //   const { id: key, value, type, checked } = e.target;
+  //   setForm((prev) => ({
+  //     ...prev,
+  //     [id]: type === 'checkbox' ? checked : value,
+  //   }));
+  // };
+
+  // 送出報名
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.terms) {
+      return toast.warn('請先同意報名須知');
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch(
+        `http://localhost:3005/api/courses/${id}/sign-up`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: form.name,
+            phone: form.phone,
+            email: form.email,
+            birthday: form.birthday,
+            // user_id: 後端可從 session 拿，如果開發階段就先塞一個測試 id
+            user_id: 1,
+          }),
+        }
+      );
+      const json = await res.json();
+      if (!res.ok || json.status !== 'success') {
+        throw new Error(json.message || '報名失敗');
+      }
+      toast.success('報名成功！');
+      // 清空表單
+      setForm({ name: '', phone: '', email: '', birthday: '', terms: false });
+    } catch (err) {
+      console.log(err);
+      toast.error(`報名失敗：${err.message}`);
+    } finally {
+      setSubmitting(false);
+    }
+    // 載入中狀態
+    // if (!course) {
+    //   return <div className="text-center p-6">載入中…</div>;
+    // }
+    // const handleChange = (e) => {
+    //   const { id, value } = e.target;
+    //   setForm((prev) => ({ ...prev, [id]: value }));
+    // };
+    // 輸入欄位變動
+
+    //
+    // const handleSubmit = async (e) => {
+    //   // 防止表單預設送出
+    //   e.preventDefault();
+    //   // 透過signinCourse(data)填寫表單
+    //   const res = await signupCourse(signupCourse);
+    //   const resData = await res.json()();
+    //   // 除錯用
+    //   if (isDev) console.log(resData);
+
+    //   if (resData.status === 'success') {
+    //     // 清除填寫資料
+    //     setsigninCourse({ name: '', phone: '', email: '', birthday: '' });
+    //     // 訊息
+    //     toast.success('新增成功');
+    //   } else {
+    //     toast.error('新增失敗');
+    //   }
+  };
+  if (!course) {
+    return <div className="text-center p-6">載入中...</div>;
+  }
   // 取第一筆 variant 作為報名對象
   const variant = course.variants[0];
   return (
     <>
       <main className="mt-6 mb-6">
-        <form className="max-w-3xl mx-auto">
+        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
           <Card className="p-8 space-y-6">
             <CardHeader>
               <CardTitle className="text-2xl">{course.name} </CardTitle>
@@ -110,7 +167,7 @@ export default function SignUpPage({ params }) {
             </CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 px-6">
               <div className="grid gap-2">
-                <Label htmlFor="email">姓名</Label>
+                <Label htmlFor="name">姓名</Label>
                 <Input
                   type="text"
                   id="name"
@@ -143,13 +200,13 @@ export default function SignUpPage({ params }) {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="email">生日</Label>
+                <Label htmlFor="birthday">生日</Label>
                 <Input
-                  id="birthdate"
+                  id="birthday"
                   type="date"
-                  value={form.birthdate}
+                  value={form.birthday}
                   onChange={handleChange}
-                />{' '}
+                />
               </div>
             </div>
             <hr />
@@ -197,31 +254,51 @@ export default function SignUpPage({ params }) {
                 主辦單位將提供延期或全額退費選項，無須負擔手續費。
               </ScrollArea>
             </CardFooter>
-            <div className="flex justify-center px-6">
-              <Checkbox id="terms" />
+            {/* <div className="flex justify-center px-6">
+              <Checkbox 
+              id="terms" 
+              checked={form.terms} 
+              onCheckedChange={(checked)}
+                setForm(prev => ({...prev, terms: checked}))
+              />
               <label
                 htmlFor="terms"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
                 我已閱讀並同意上述《報名須知與退費政策》內容。
               </label>
+            </div> */}
+            <div className="flex justify-center px-6 space-x-2">
+              <Checkbox
+                id="terms"
+                checked={form.terms}
+                onCheckedChange={(checked) =>
+                  setForm((prev) => ({ ...prev, terms: checked }))
+                }
+              />
+              <Label htmlFor="terms" className="text-sm">
+                我已閱讀並同意《報名須知與退費政策》
+              </Label>
             </div>
+
             <hr />
             <div className="flex justify-center px-6 gap-4">
               <Button
                 variant="outline"
+                type="button"
                 onClick={() =>
                   setForm({ name: '', phone: '', email: '', birthday: '' })
                 }
               >
                 取消
               </Button>
-              <Button disabled={submitting} type="submit">
-                加入購物車
+              <Button type="submit" disabled={submitting || !form.terms}>
+                {submitting ? '填寫中' : '加入購物車'}
               </Button>
             </div>
           </Card>
         </form>
+        <ToastContainer className="" />
       </main>
     </>
   );
