@@ -20,3 +20,4 @@ yarn-error.log*
 /config/development.json
 .env.local-nouse
 /testing
+.DS_Store
