@@ -14,29 +14,94 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-export default function SignUpPage(props) {
-  const [birthdate, setbirthDate] = useState('');
+import { isDev } from '@/config';
+import { toast, ToastContainer } from 'react-toastify';
 
+export default function SignUpPage({ params }) {
+  const [form, setForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    birthdate: '',
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [birthdate, setbirthDate] = useState('');
+  const [course, setCourse] = useState();
+  // 記錄更新的欄位
+  const [signupCourse, setsigninCourse] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    birthday: '',
+  });
+  // 變更表單欄位
+  const handleChange = (e) => {
+    const { id, value } = e.target;
+    setForm((prev) => ({ ...prev, [id]: value }));
+  };
+  // 輸入欄位變動
+  const handleFieldChange = (e) => {
+    signupCourse({ ...signupCourse, [e.target.id]: e.target.value });
+  };
+  //
+  const handleSubmit = async (e) => {
+    // 防止表單預設送出
+    e.preventDefault();
+    // 透過signinCourse(data)填寫表單
+    const res = await signupCourse(signupCourse);
+    const resData = await res.json()();
+    // 除錯用
+    if (isDev) console.log(resData);
+
+    if (resData.status === 'success') {
+      // 清除填寫資料
+      setsigninCourse({ name: '', phone: '', email: '', birthday: '' });
+      // 訊息
+      toast.success('新增成功');
+    } else {
+      toast.error('新增失敗');
+    }
+  };
+
+  useEffect(() => {
+    async function fetchCourse() {
+      try {
+        const res = await fetch(
+          `http://localhost:3005/api/courses/${params.id}/sign-up`
+        );
+        if (!res.ok) throw new Error('不ok');
+        const data = await res.json();
+        setCourse(data);
+      } catch (error) {
+        console.error('Error fetching course:', error);
+      }
+    }
+    fetchCourse();
+  }, [params.id]);
+  // 載入中狀態
+  if (!course) {
+    return <div className="text-center p-6">載入中…</div>;
+  }
+
+  // 取第一筆 variant 作為報名對象
+  const variant = course.variants[0];
   return (
     <>
       <main className="mt-6 mb-6">
         <form className="max-w-3xl mx-auto">
           <Card className="p-8 space-y-6">
             <CardHeader>
-              <CardTitle className="text-2xl">
-                S3 第三彈 野澤溫泉&東京五日行
-              </CardTitle>
+              <CardTitle className="text-2xl">{course.name} </CardTitle>
               {/* 課程日期 */}
               <CardDescription className="mt-4">
-                日期: 2025/01/12 ~ 2025/01/16
+                日期: {course.period}
               </CardDescription>
-              {/* 時長 */}
-              <CardDescription className="mt-4">時數: 20小時</CardDescription>
               {/* 上課地點 */}
-              <CardDescription className="mt-4">地點: 野澤溫泉</CardDescription>
+              <CardDescription className="mt-4">地點:</CardDescription>
               {/* 售價 */}
               <CardDescription className="mt-4">
-                費用: <span className=" text-red">NT$65,900</span>
+                費用:{' '}
+                <span className=" text-red">NT${variant.price || ''}</span>
               </CardDescription>
             </CardHeader>
             <hr />
@@ -50,12 +115,21 @@ export default function SignUpPage(props) {
                   type="text"
                   id="name"
                   placeholder="請輸入真實姓名"
+                  value={form.name}
+                  onChange={handleChange}
                   required
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="email">電話</Label>
-                <Input type="text" id="phone" placeholder="" required />
+                <Label htmlFor="phone">電話</Label>
+                <Input
+                  type="text"
+                  id="phone"
+                  placeholder=""
+                  value={form.phone}
+                  onChange={handleChange}
+                  required
+                />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="email">電子郵件</Label>
@@ -63,52 +137,43 @@ export default function SignUpPage(props) {
                   type="email"
                   id="email"
                   placeholder="example@mail.com"
+                  value={form.email}
+                  onChange={handleChange}
                   required
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="email">生日</Label>
                 <Input
-                  id="bd"
+                  id="birthdate"
                   type="date"
-                  value={birthdate}
-                  onChange={(e) => setbirthDate(e.target.value)}
+                  value={form.birthdate}
+                  onChange={handleChange}
                 />{' '}
               </div>
             </div>
             <hr />
             <CardContent>
+              <p>課程簡介</p>
+            </CardContent>
+            <div className=" sm:grid-cols-2 gap-6 px-6 space-y-3">
+              {course.description &&
+                course.description.split('\n').map((line, idx) => (
+                  <div key={idx}>
+                    <p className="text-sm text-gray-600">{line}</p>
+                  </div>
+                ))}
+            </div>
+            <CardContent>
               <p>課程內容</p>
             </CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 px-6 space-y-3">
-              <div>
-                <p className="font-medium">第一天：集合 & 技術檢測</p>
-                <p className="text-sm text-gray-600">
-                  抵達滑雪場、裝備檢查、技巧分組
-                </p>
-              </div>
-              <div>
-                <p className="font-medium">第二天：姿勢優化與轉彎控制</p>
-                <p className="text-sm text-gray-600">
-                  學習重心轉換與平行轉彎技巧
-                </p>
-              </div>
-              <div>
-                <p className="font-medium">第三天：雪況應對實作</p>
-                <p className="text-sm text-gray-600">
-                  在不同雪況下練習滑行與控制
-                </p>
-              </div>
-              <div>
-                <p className="font-medium">第四天：模擬競賽與挑戰</p>
-                <p className="text-sm text-gray-600">接力滑行、障礙路線訓練</p>
-              </div>
-              <div>
-                <p className="font-medium">第五天：成果驗收與頒獎</p>
-                <p className="text-sm text-gray-600">
-                  技能檢核、證書頒發與自由時間
-                </p>
-              </div>
+            <div className=" sm:grid-cols-2 gap-6 px-6 space-y-3">
+              {course.content &&
+                course.content.split('\n').map((line, idx) => (
+                  <div key={idx}>
+                    <p className="text-sm text-gray-600">{line}</p>
+                  </div>
+                ))}
             </div>
             <hr />
             <CardContent className="flex justify-center px-6">
@@ -143,8 +208,17 @@ export default function SignUpPage(props) {
             </div>
             <hr />
             <div className="flex justify-center px-6 gap-4">
-              <Button variant="outline">取消</Button>
-              <Button>加入購物車</Button>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  setForm({ name: '', phone: '', email: '', birthday: '' })
+                }
+              >
+                取消
+              </Button>
+              <Button disabled={submitting} type="submit">
+                加入購物車
+              </Button>
             </div>
           </Card>
         </form>
