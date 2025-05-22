@@ -5,21 +5,52 @@ import { Card } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-// import { FaPaperPlane } from 'react-icons/fa'; // 如果您想使用圖示
+import { useAuth } from '@/hooks/use-auth'; // 引入 useAuth hook
+// import { loginRoute } from '@/config'; // 移除了 loginRoute 的導入
 
 export default function CommentSection({
   groupId,
   initialComments = [],
   API_BASE,
-  currentUserId, // 當前登入使用者的 ID
-  currentUserInfo, // 當前登入使用者的資訊 { id, name, avatar }
   isClient,
-  onCommentPosted, // 新增回呼函數，當留言成功後通知父組件
+  onCommentPosted,
 }) {
+  const { user, isAuth, isLoading: isAuthLoading } = useAuth();
+  const currentUserId = user?.id;
+  const currentUserInfo = user
+    ? { id: user.id, name: user.name, avatar: user.avatar }
+    : null;
+
   const [comments, setComments] = useState(initialComments || []);
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    // 確保 comments 陣列存在且不為空
+    if (!comments || comments.length === 0) {
+      return;
+    }
+
+    const ids = comments.map((c) => c.id);
+    const uniqueIds = new Set(ids);
+
+    if (ids.length !== uniqueIds.size) {
+      console.warn('偵測到重複的 comment IDs:', JSON.stringify(ids)); // 印出所有 ID 方便查看
+
+      // 找出具體哪些 ID 重複了
+      const idCounts = ids.reduce((acc, id) => {
+        acc[id] = (acc[id] || 0) + 1;
+        return acc;
+      }, {});
+
+      const duplicateIds = Object.entries(idCounts)
+        .filter(([id, count]) => count > 1)
+        .map(([id]) => id);
+
+      console.warn('重複的 ID 是:', JSON.stringify(duplicateIds));
+    }
+  }, [comments]);
 
   useEffect(() => {
     setComments(initialComments || []);
@@ -27,18 +58,19 @@ export default function CommentSection({
 
   const handlePostComment = async (e) => {
     e.preventDefault();
-    if (!newComment.trim() || !groupId || isSubmitting || !currentUserId) {
-      if (!currentUserId) {
-        setError('請先登入才能發表留言。');
-      }
+
+    if (!isAuth) {
+      setError('請先登入才能發表留言。');
+      return;
+    }
+
+    if (!newComment.trim() || !groupId || isSubmitting) {
       return;
     }
 
     setIsSubmitting(true);
     setError('');
 
-    // 為了即時反饋，先在前端模擬加入留言
-    // 確保 currentUserInfo 存在且包含必要資訊
     const tempUser = currentUserInfo || {
       id: currentUserId,
       name: '您',
@@ -49,14 +81,17 @@ export default function CommentSection({
       id: tempCommentId,
       content: newComment,
       createdAt: new Date().toISOString(),
-      user: tempUser,
-      isTemporary: true, // 標記為臨時留言
+      user: {
+        id: tempUser.id,
+        name: tempUser.name || '您',
+        avatar: tempUser.avatar || null,
+      },
+      isTemporary: true,
     };
 
-    // 先將臨時留言加到列表最前面
     setComments((prevComments) => [optimisticComment, ...prevComments]);
-    const commentToSubmit = newComment; // 保存當前的留言內容
-    setNewComment(''); // 清空輸入框
+    const commentToSubmit = newComment;
+    setNewComment('');
 
     try {
       const response = await fetch(
@@ -65,52 +100,62 @@ export default function CommentSection({
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            // 如果您的 API 需要身份驗證 (例如 JWT Token)
-            // 'Authorization': `Bearer ${localStorage.getItem('your_auth_token')}`,
-            // 或是透過 header 傳遞 userId (後端 getUserIdFromRequest 會讀取)
-            'x-user-id': String(currentUserId),
           },
-          body: JSON.stringify({ content: commentToSubmit }), // 後端會從 token 或 header 獲取 userId
+          body: JSON.stringify({ content: commentToSubmit }),
+          credentials: 'include', // 如果 API_BASE 是不同網域且需要 cookie，請取消註解此行
         }
       );
 
       if (!response.ok) {
         const errData = await response
           .json()
-          .catch(() => ({ error: '發表留言失敗，無法解析錯誤回應' }));
-        throw new Error(errData.error || `伺服器錯誤: ${response.status}`);
+          .catch(() => ({ message: '發表留言失敗，無法解析錯誤回應' }));
+        if (response.status === 401 || response.status === 403) {
+          throw new Error(
+            errData.message || '您可能需要重新登入，或沒有權限執行此操作。'
+          );
+        }
+        throw new Error(
+          errData.error || errData.message || `伺服器錯誤: ${response.status}`
+        );
       }
 
-      const savedComment = await response.json(); // API 應返回包含 user 資訊的完整留言物件
+      const savedComment = await response.json();
 
-      // 用伺服器回傳的留言替換臨時留言
       setComments((prevComments) => [
         savedComment,
         ...prevComments.filter((c) => c.id !== tempCommentId),
       ]);
 
       if (onCommentPosted) {
-        onCommentPosted(savedComment); // 通知父組件有新留言
+        onCommentPosted(savedComment);
       }
     } catch (err) {
       console.error('發表留言錯誤:', err);
       setError(`發表留言失敗: ${err.message}`);
-      // API 失敗則移除臨時留言，並還原輸入框內容
       setComments((prevComments) =>
         prevComments.filter((c) => c.id !== tempCommentId)
       );
-      setNewComment(commentToSubmit); // 允許使用者重新編輯或提交
+      setNewComment(commentToSubmit);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (isAuthLoading) {
+    return (
+      <p className="p-4 text-center text-muted-foreground">
+        正在載入使用者資訊...
+      </p>
+    );
+  }
 
   return (
     <Card className="w-full max-w-screen-2xl mx-auto shadow-lg p-6 rounded-lg border-t border-border bg-card text-foreground mt-8">
       <h3 className="text-lg font-semibold mb-4 text-primary-800">
         留言區 ({comments?.length || 0})
       </h3>
-      {currentUserId ? (
+      {isAuth ? (
         <form onSubmit={handlePostComment} className="mb-6">
           <Textarea
             value={newComment}
@@ -127,7 +172,6 @@ export default function CommentSection({
               className="px-4 py-2 bg-primary-500 text-white hover:bg-primary-600 transition active:scale-95 active:shadow-sm rounded-md text-p-tw"
               disabled={isSubmitting || !newComment.trim()}
             >
-              {/* <FaPaperPlane className="mr-2 h-3.5 w-3.5" /> */}
               {isSubmitting ? '發送中...' : '送出留言'}
             </Button>
           </div>
@@ -135,7 +179,8 @@ export default function CommentSection({
       ) : (
         <p className="mb-6 text-sm text-muted-foreground">
           請先
-          <a href="/login" className="text-primary-500 hover:underline">
+          {/* 將連結修改為固定的 "/auth/login" 路徑 */}
+          <a href="/auth/login" className="text-primary-500 hover:underline">
             登入
           </a>
           以發表留言。
@@ -149,14 +194,10 @@ export default function CommentSection({
               className={`border-b border-border pb-4 last:border-b-0 ${comment.isTemporary ? 'opacity-60' : ''}`}
             >
               <div className="flex items-start space-x-3 mb-1">
-                {' '}
-                {/* 改為 items-start 以便頭像和文字對齊 */}
                 <Avatar className="w-8 h-8 flex-shrink-0">
-                  {' '}
-                  {/* flex-shrink-0 避免頭像被壓縮 */}
                   <AvatarImage
                     src={
-                      comment.user?.avatar // 假設 avatar 已經是完整的 URL 或後端處理過的路徑
+                      comment.user?.avatar
                         ? comment.user.avatar.startsWith('http') ||
                           comment.user.avatar.startsWith('/uploads/')
                           ? comment.user.avatar
@@ -172,8 +213,6 @@ export default function CommentSection({
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-grow">
-                  {' '}
-                  {/* 讓文字內容佔據剩餘空間 */}
                   <div className="flex items-center space-x-2 mb-0.5">
                     <p className="font-semibold text-sm text-foreground">
                       {comment.user?.name || '匿名用戶'}
@@ -196,8 +235,6 @@ export default function CommentSection({
                     </p>
                   </div>
                   <p className="text-sm text-secondary-800 whitespace-pre-wrap break-words">
-                    {' '}
-                    {/* break-words 處理長單字換行 */}
                     {comment.content}
                   </p>
                 </div>

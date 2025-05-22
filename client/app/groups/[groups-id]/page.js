@@ -153,7 +153,9 @@ export default function GroupDetailPage() {
   }, []);
 
   const handleJoinGroup = () =>
-    alert(`功能待開發：加入揪團 ${group?.title || groupId}`);
+    alert(
+      `功能待開發：加入揪團 ${group?.title || groupId}，group_id為${group.id}`
+    );
   const handleJoinChat = () =>
     alert(`功能待開發：加入 ${group?.title || groupId} 的聊天室`);
   const handleEditGroup = () => router.push(`/groups/${groupId}/edit`);
