@@ -28,7 +28,7 @@ import {
   CardDescription,
   CardFooter,
 } from '@/components/ui/card'; // 引入 Card 相關元件
-
+import Image from 'next/image';
 // 預設的表單值
 const DEFAULT_FORM_VALUES = {
   type: '',
@@ -626,11 +626,12 @@ export default function GroupForm({
             >
               {coverPreview ? (
                 <div className="relative w-full h-full group">
-                  <img
+                  <Image
                     src={coverPreview}
                     alt="封面預覽"
-                    className="h-full w-full object-contain rounded-lg"
-                  />
+                    className="h-full w-full object-contain
+                    rounded-lg"
+                  ></Image>
                   <Button
                     type="button"
                     variant="ghost"

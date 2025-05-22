@@ -27,13 +27,14 @@ model User {
 
   deleted_at DateTime? @map("deleted_at")
 
-  favorites    UserFavorite[]
-  Group        Group[]
-  GroupMember  GroupMember[]
-  GroupComment GroupComment[]
-  ChatMessage  ChatMessage[]
-  GameScore    GameScore[]
-  UserCoupon   UserCoupon[]
+  favorites         UserFavorite[]
+  Group             Group[]
+  GroupMember       GroupMember[]
+  GroupComment      GroupComment[]
+  ChatMessage       ChatMessage[]
+  GameScore         GameScore[]
+  UserCoupon        UserCoupon[]
+  CourseVariantUser CourseVariantUser[]
 
   @@map("user")
 }
@@ -140,7 +141,7 @@ model ProductImage {
   product_id Int
   url        String    @db.VarChar(255)
   sort_order Int?      @default(0)
-  created_at DateTime  @default(now()) @db.Timestamp(0)
+  created_at DateTime  @default(now()) @db.DateTime(0)
   updated_at DateTime  @default(now()) @db.DateTime(0)
   deleted_at DateTime? @db.DateTime(0)
   product    Product   @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "product_image_ibfk_1")
@@ -226,7 +227,8 @@ model Location {
   createdAt DateTime @default(now()) @map("created_at")
 
   // relations
-  groups Group[]
+  groups        Group[]
+  CourseVariant CourseVariant[]
 
   @@map("location")
 }
@@ -429,9 +431,11 @@ model CourseVariant {
   deleted_at    DateTime?    @map("deleted_at")
   CartCourse    CartCourse[]
 
-  course    Course    @relation(fields: [course_id], references: [id])
-  coach     Coach     @relation(fields: [coach_id], references: [id])
-  courseImg CourseImg @relation(fields: [course_img_id], references: [id])
+  course            Course              @relation(fields: [course_id], references: [id])
+  coach             Coach               @relation(fields: [coach_id], references: [id])
+  courseImg         CourseImg           @relation(fields: [course_img_id], references: [id])
+  location          Location            @relation(fields: [location_id], references: [id])
+  CourseVariantUser CourseVariantUser[]
 
   @@map("course_variant")
 }
@@ -471,6 +475,23 @@ model BoardtypeCoach {
   coach     Coach     @relation(fields: [coach_id], references: [id])
 
   @@map("boardtype_coach")
+}
+
+model CourseVariantUser {
+  id                Int       @id @default(autoincrement())
+  course_variant_id Int
+  user_id           Int
+  name              String
+  phone             String
+  email             String
+  birthday          DateTime?
+  joined_at         DateTime  @default(now())
+  paid_at           DateTime?
+
+  course_variant CourseVariant @relation(fields: [course_variant_id], references: [id])
+  user           User          @relation(fields: [user_id], references: [id])
+
+  @@map("course_variant_user")
 }
 
 // #endregion
@@ -547,7 +568,7 @@ model GameScore {
 // cart
 model Cart {
   id          Int           @id @default(autoincrement())
-  userId      Int           @map("user_id")
+  userId      Int           @unique @map("user_id")
   CartProduct CartProduct[]
   CartCourse  CartCourse[]
   CartGroup   CartGroup[]

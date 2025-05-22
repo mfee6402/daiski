@@ -9,7 +9,7 @@ CREATE TABLE `product` (
     `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
     `publish_at` DATETIME(0) NULL,
     `unpublish_at` DATETIME(0) NULL,
-    `delete_at` DATETIME(0) NULL,
+    `deleted_at` DATETIME(0) NULL,
 
     INDEX `category_id`(`category_id`),
     INDEX `fk_product_brand`(`brand_id`),
@@ -123,7 +123,7 @@ CREATE TABLE `Users` (
     `avatar` VARCHAR(191) NOT NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
-    `delete_at` DATETIME(3) NULL,
+    `deleted_at` DATETIME(3) NULL,
 
     UNIQUE INDEX `Users_account_key`(`account`),
     UNIQUE INDEX `Users_name_key`(`name`),
