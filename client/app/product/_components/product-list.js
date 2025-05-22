@@ -144,7 +144,7 @@ export default function ProductList({ products, favIds, onToggleFavorite }) {
           {/* 將整張卡片包在 Link 裡，設定為 block 讓它填滿 li */}
           <Link href={`/product/${p.id}`} className="block relative">
             {/* 收藏按鈕：內部已 stopPropagation，不會觸發 Link */}
-            <div className="absolute top-2 right-2 z-10">
+            <div className="absolute top-2 right-2 z-5">
               <FavoriteButton
                 isFav={favIds.includes(p.id)}
                 onToggle={() => onToggleFavorite(p.id)}
