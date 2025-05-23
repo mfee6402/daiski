@@ -50,26 +50,30 @@ export default function PaypalPage(props) {
       router.push('/cart/summary');
     } catch (error) {
       console.log(error);
-      router.push('/cancel-payment');
+      router.push('/cart/checkout/paypal/cancel');
     }
   };
 
   const onError = (error) => {
     console.log('PayPal error', error);
-    router.push('/cancel-payment');
+    router.push('/cart/checkout/paypal/cancel');
   };
 
   return (
-    <PayPalScriptProvider options={initialOptions}>
-      <PayPalButtons
-        style={styles}
-        createOrder={onCreateOrder}
-        onApprove={onApprove}
-        onError={onError}
-        // 只顯示paypal按鈕，限定paypal付款
-        fundingSource="paypal"
-      ></PayPalButtons>
-    </PayPalScriptProvider>
+    <>
+      <p>{'帳號:sb-7idsw42487819@personal.example.com'}</p>
+      <p>{'密碼:bF]TT4/a'}</p>
+      <PayPalScriptProvider options={initialOptions}>
+        <PayPalButtons
+          style={styles}
+          createOrder={onCreateOrder}
+          onApprove={onApprove}
+          onError={onError}
+          // 只顯示paypal按鈕，限定paypal付款
+          fundingSource="paypal"
+        ></PayPalButtons>
+      </PayPalScriptProvider>
+    </>
   );
 
   //
