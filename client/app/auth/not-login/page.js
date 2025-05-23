@@ -35,7 +35,7 @@ export default function CreateGroupLayout({ children }) {
           </CardHeader>
           <CardContent>
             <p className="text-slate-700 dark:text-slate-300 mb-6">
-              您需要登入才能建立揪團。
+              您需要登入才能繼續操作。
             </p>
             <Button
               onClick={() => router.push('/auth/login')}
