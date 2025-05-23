@@ -7,7 +7,7 @@ import CouponSelected from './_components/coupon-selected';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/use-auth';
-import { useMemo } from 'react';
+import Image from 'next/image';
 
 import useSWR from 'swr';
 // import useSWRMutation from 'swr/dist/mutation';
@@ -140,8 +140,8 @@ export default function CouponsPage(props) {
   const couponsWithStatus = coupons?.map((c) => ({
     ...c,
     status: getStatus(c),
-  })); // 只依賴 coupons
-  // [coupons]
+  }));
+
   const [selectedTarget, setSelectedTarget] = useState('可領取');
 
   // 用 filter 寫出對狀態和分類的篩選
@@ -179,9 +179,12 @@ export default function CouponsPage(props) {
           {/* 開頭 */}
           <div className="flex flex-row items-center justify-between">
             <h5 className="font-tw text-h5-tw">領取優惠劵</h5>
-            <button className="font-tw leading-p-tw cursor-pointer">
-              我的優惠劵
-            </button>
+            <a
+              href="http://localhost:3000/profile"
+              className="font-tw leading-p-tw cursor-pointer hover:underline decoration-red decoration-2 underline-offset-4 "
+            >
+              查看我的優惠劵
+            </a>
           </div>
 
           {/* 領取 */}
@@ -217,60 +220,67 @@ export default function CouponsPage(props) {
         </section>
 
         {/* 優惠劵 */}
-        <ul className="grid grid-cols-1 justify-items-center gap-x-25 gap-y-6 lg:grid-cols-2 my-10">
-          {filteredData?.map((c) => {
-            // 顯示狀態
-            const isUpcoming = c.status === '尚未開始';
-            const isExpired = c.status === '已過期';
-            const isUsed = c.status === '已領取';
+        {filteredData.length === 0 ? (
+          <div className="w-[30%] h-[30%]">
+            {/* <Image src="/coupon.png" alt="最遠景" className="w-full" fill /> */}
+            <p>沒有更多</p>
+          </div>
+        ) : (
+          <ul className="grid grid-cols-1 justify-items-center gap-x-25 gap-y-6 lg:grid-cols-2 my-10">
+            {filteredData?.map((c) => {
+              // 顯示狀態
+              const isUpcoming = c.status === '尚未開始';
+              const isExpired = c.status === '已過期';
+              const isUsed = c.status === '已領取';
 
-            // 顯示時間與標籤
-            const displayTime = formatDateTime(
-              new Date(isUpcoming ? c.startAt : c.endAt)
-            );
-            const timeLabel = isUpcoming ? '開始' : '結束';
+              // 顯示時間與標籤
+              const displayTime = formatDateTime(
+                new Date(isUpcoming ? c.startAt : c.endAt)
+              );
+              const timeLabel = isUpcoming ? '開始' : '結束';
 
-            // 按鈕文字 & disabled
-            let buttonText = '領取';
-            if (isUsed) buttonText = '已領取';
-            else if (isUpcoming) buttonText = '尚未開始';
-            else if (isExpired) buttonText = '已過期';
-            const disabled = isExpired || isUsed || isUpcoming;
+              // 按鈕文字 & disabled
+              let buttonText = '領取';
+              if (isUsed) buttonText = '已領取';
+              else if (isUpcoming) buttonText = '尚未開始';
+              else if (isExpired) buttonText = '已過期';
+              const disabled = isExpired || isUsed || isUpcoming;
 
-            // 卡片與按鈕樣式
-            let statusClass = '';
-            if (isUsed) statusClass = 'bg-[#404040]/10';
-            else if (isUpcoming) statusClass = '';
-            else if (isExpired) statusClass = 'bg-[#404040]/10';
+              // 卡片與按鈕樣式
+              let statusClass = '';
+              if (isUsed) statusClass = 'bg-[#404040]/10';
+              else if (isUpcoming) statusClass = '';
+              else if (isExpired) statusClass = 'bg-[#404040]/10';
 
-            const buttonClass = disabled
-              ? 'bg-secondary-800 text-white cursor-default'
-              : 'hover:bg-secondary-800 hover:text-white';
+              const buttonClass = disabled
+                ? 'bg-secondary-800 text-white cursor-default'
+                : 'hover:bg-secondary-800 hover:text-white';
 
-            return (
-              <li key={c.id}>
-                <CouponCard
-                  // 原始資料
-                  type={c.type}
-                  target={c.target}
-                  amount={c.amount}
-                  minPurchase={c.minPurchase}
-                  name={c.name}
-                  // 時間顯示
-                  displayTime={displayTime}
-                  timeLabel={timeLabel}
-                  // 狀態
-                  statusClass={statusClass}
-                  buttonClass={buttonClass}
-                  buttonText={buttonText}
-                  disabled={disabled}
-                  // 互動
-                  onUse={() => handleClaim(c)}
-                />
-              </li>
-            );
-          })}
-        </ul>
+              return (
+                <li key={c.id}>
+                  <CouponCard
+                    // 原始資料
+                    type={c.type}
+                    target={c.target}
+                    amount={c.amount}
+                    minPurchase={c.minPurchase}
+                    name={c.name}
+                    // 時間顯示
+                    displayTime={displayTime}
+                    timeLabel={timeLabel}
+                    // 狀態
+                    statusClass={statusClass}
+                    buttonClass={buttonClass}
+                    buttonText={buttonText}
+                    disabled={disabled}
+                    // 互動
+                    onUse={() => handleClaim(c)}
+                  />
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </Container>
       <Toaster position="bottom-right" richColors />
     </>

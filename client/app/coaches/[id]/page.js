@@ -105,7 +105,7 @@ export default function CoachIdPage(props) {
             </div>
           </div>
         </div>
-        <div className="mt-12">
+        <div className="mt-12" id="courses">
           <h2 className="text-2xl mb-6">課程資訊</h2>
           {coach.courses.map((c) => (
             <div

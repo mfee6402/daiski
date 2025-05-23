@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import Link from 'next/link';
 
 export default function CoachesPage() {
   // 篩選狀態
@@ -142,13 +143,15 @@ export default function CoachesPage() {
             key={t.id}
             className="w-75 mx-auto border-2 bordered rounded-2xl p-6 text-center"
           >
-            <Image
-              src={`http://localhost:3005/${t.profilephoto}`}
-              alt={t.name}
-              className="w-32 h-32 rounded-full mx-auto object-cover"
-              width={150}
-              height={150}
-            />
+            <Link href={`/coaches/${t.id}`}>
+              <Image
+                src={`http://localhost:3005/${t.profilephoto}`}
+                alt={t.name}
+                className="w-32 h-32 rounded-full mx-auto object-cover"
+                width={150}
+                height={150}
+              />
+            </Link>
             <h2 className="mt-4 text-xl font-semibold flex items-center justify-center">
               <span className="mr-2">{t.name}</span>
             </h2>
@@ -159,9 +162,11 @@ export default function CoachesPage() {
               語言：{t.languages || '無資料'}
             </p>
             {/* <p className="mt-1 text-gray-700">{t.intro}</p> */}
-            <button className="mt-6 bg-gray-800 text-white text-sm px-6 py-2 rounded-full hover:bg-gray-700 transition">
-              查看課程
-            </button>
+            <Link href={`/coaches/${t.id}#courses`}>
+              <button className="mt-6 bg-gray-800 text-white text-sm px-6 py-2 rounded-full hover:bg-gray-700 transition">
+                查看課程
+              </button>
+            </Link>
           </div>
         ))}
       </div>
