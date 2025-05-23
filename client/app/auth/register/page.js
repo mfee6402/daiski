@@ -7,6 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
 import { Toaster } from 'sonner';
+import Image from 'next/image';
 
 // newUser資料範例(物件) 註: name改為在profile資料表中
 // {
@@ -56,13 +57,13 @@ export default function RegisterPage() {
     <>
       <div className="flex container justify-center  mx-auto  gap-1">
         <div className="w-1/2 sr-only sm:not-sr-only">
-          <figure>
-            <img
-              src="/register.png"
-              alt="Login Image"
-              className="w-full shadow-lg"
-            />
-          </figure>
+          <Image
+            src="/register.png"
+            alt="register Image"
+            width={100}
+            height={100}
+            className="object-cover shadow-lg w-full"
+          />
         </div>
         <div className="w-1/2 px-6 py-12">
           <div className="text-center ">
@@ -70,7 +71,7 @@ export default function RegisterPage() {
             <p>
               已經有帳號？
               <Link href="/auth/login">
-                <span className="text-primary-600">點擊登入！</span>
+                <span className="text-primary-500">點擊登入！</span>
               </Link>
             </p>
           </div>
@@ -105,7 +106,12 @@ export default function RegisterPage() {
                 className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
               />
             </label>
-            <button type="submit" className="w-full mt-16 px-4 py-3 bg-[#2770ea] rounded-md hover:text-amber-100">註冊</button>
+            <button
+              type="submit"
+              className="w-full mt-16 px-4 py-3 hover:bg-primary-500 rounded-md text-white bg-primary-600"
+            >
+              註冊
+            </button>
           </div>
         </div>
       </div>

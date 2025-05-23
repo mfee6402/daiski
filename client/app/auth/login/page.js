@@ -14,7 +14,7 @@ import { Toaster } from 'sonner';
 // import { register } from 'module';
 // 為了跳轉頁面（App Router）
 import { useRouter } from 'next/navigation';
-// import Image from 'next/image';
+import Image from 'next/image';
 
 export default function UserPage() {
   // 輸入表單用的狀態
@@ -91,8 +91,6 @@ export default function UserPage() {
       </div>
     );
   }
-  //取用router，為了跳轉頁面
-  const router = useRouter();
 
   return (
     <>
@@ -103,7 +101,7 @@ export default function UserPage() {
             <p>
               還不是會員？
               <Link href="/auth/register">
-                <span className="text-primary-600">現在加入！</span>
+                <span className="text-primary-500">現在加入！</span>
               </Link>
             </p>
           </div>
@@ -131,7 +129,7 @@ export default function UserPage() {
 
             <button
               onClick={handleLogin}
-              className="w-full mt-16 px-4 py-3 bg-[#2770ea] rounded-md hover:text-amber-100"
+              className="w-full mt-16 px-4 py-3 hover:bg-primary-500 rounded-md text-white bg-primary-600"
             >
               登入(login)
             </button>
@@ -163,7 +161,7 @@ export default function UserPage() {
             </p>
           </div>
         </div>
-        <div className="w-1/2 sr-only sm:not-sr-only">
+        {/* <div className="w-1/2 sr-only sm:not-sr-only">
           <figure>
             <img
               src="/login.png"
@@ -171,19 +169,16 @@ export default function UserPage() {
               className="w-full shadow-lg"
             />
           </figure>
-        </div>
-        {/* <div className="w-1/2 sr-only sm:not-sr-only">
-          <figure className="relative w-full aspect-[16/9]">
-            <Image
-              src="/login.png"
-              alt="Login Image"
-              fill 
-              sizes="(max-width: 640px) 100vw, 50vw"
-              className="object-cover shadow-lg"
-              priority
-            />
-          </figure>
         </div> */}
+        <div className="w-1/2 sr-only sm:not-sr-only">
+          <Image
+            src="/login.png"
+            alt="Login Image"
+            width={100}
+            height={100}
+            className="object-cover shadow-lg w-full"
+          />
+        </div>
       </div>
 
       {/* 土司訊息視窗用 */}

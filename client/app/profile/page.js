@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 
+import Container from '@/components/container';
 //Bio區塊的驗證 schema  限制字數上限
 const FormSchema = z.object({
   bio: z.string().max(2000, {
@@ -64,7 +65,7 @@ export default function MemberPage() {
 
   return (
     <div className="min-h-screen bg-[url('/home-images/layer2.png')] bg-cover bg-center bg-no-repeat">
-      <div className="w-full max-w-5xl mx-auto px-4 py-10 space-y-10  ">
+      <Container className="  ">
         {/* Header */}
         <header className="flex flex-col items-center gap-4">
           {/* Avatar */}
@@ -242,7 +243,7 @@ export default function MemberPage() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
+      </Container>
     </div>
   );
 }
