@@ -14,6 +14,7 @@ import { Toaster } from 'sonner';
 // import { register } from 'module';
 // 為了跳轉頁面（App Router）
 import { useRouter } from 'next/navigation';
+// import Image from 'next/image';
 
 export default function UserPage() {
   // 輸入表單用的狀態
@@ -90,6 +91,8 @@ export default function UserPage() {
       </div>
     );
   }
+  //取用router，為了跳轉頁面
+  const router = useRouter();
 
   return (
     <>
@@ -169,6 +172,18 @@ export default function UserPage() {
             />
           </figure>
         </div>
+        {/* <div className="w-1/2 sr-only sm:not-sr-only">
+          <figure className="relative w-full aspect-[16/9]">
+            <Image
+              src="/login.png"
+              alt="Login Image"
+              fill 
+              sizes="(max-width: 640px) 100vw, 50vw"
+              className="object-cover shadow-lg"
+              priority
+            />
+          </figure>
+        </div> */}
       </div>
 
       {/* 土司訊息視窗用 */}

@@ -5,6 +5,8 @@ import { useUserRegister } from '@/services/rest-client/use-user';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from '@/hooks/use-auth';
+import Link from 'next/link';
+import { Toaster } from 'sonner';
 
 // newUser資料範例(物件) 註: name改為在profile資料表中
 // {
@@ -52,22 +54,62 @@ export default function RegisterPage() {
 
   return (
     <>
-    <div className="flex container justify-center  mx-auto  gap-1">
-      <div className="w-1/2 sr-only sm:not-sr-only">
-      <figure>
+      <div className="flex container justify-center  mx-auto  gap-1">
+        <div className="w-1/2 sr-only sm:not-sr-only">
+          <figure>
             <img
               src="/register.png"
               alt="Login Image"
               className="w-full shadow-lg"
             />
           </figure>
+        </div>
+        <div className="w-1/2 px-6 py-12">
+          <div className="text-center ">
+            <h1 className="text-h2-tw">會員註冊</h1>
+            <p>
+              已經有帳號？
+              <Link href="/auth/login">
+                <span className="text-primary-600">點擊登入！</span>
+              </Link>
+            </p>
+          </div>
+          <div className="max-w-md mx-auto mt-6">
+            <label>
+              帳號:
+              <input
+                type="text"
+                name="username"
+                value={userInput.username}
+                onChange={handleFieldChange}
+                className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+              />
+            </label>
+            <label>
+              密碼:
+              <input
+                type="text"
+                name="password"
+                value={userInput.password}
+                onChange={handleFieldChange}
+                className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+              />
+            </label>
+            <label>
+              電子郵件信箱:
+              <input
+                type="text"
+                name="email"
+                value={userInput.email}
+                onChange={handleFieldChange}
+                className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+              />
+            </label>
+            <button type="submit" className="w-full mt-16 px-4 py-3 bg-[#2770ea] rounded-md hover:text-amber-100">註冊</button>
+          </div>
+        </div>
       </div>
-      <div className="w-1/2 px-6 py-12">
-    
-      </div>
-    </div>
-      <h1>會員註冊</h1>
-      <hr />
+
       <p>
         規則:
         註冊時，username與email不能與目前資料庫有相同的值。name是屬於profile資料表。
@@ -146,4 +188,3 @@ export default function RegisterPage() {
     </>
   );
 }
-
