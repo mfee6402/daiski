@@ -8,6 +8,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 // import 'leaflet/dist/leaflet.css';
 import Image from 'next/image';
 import { memo, useMemo } from 'react';
+import Container from '@/components/container';
 
 // 修正 Leaflet 預設圖標路徑
 // if (typeof window !== 'undefined') {
@@ -71,63 +72,58 @@ export default function CoursesIdPage() {
 
   return (
     <>
-      <main className=" py-8 bg-gray-100 min-h-screen">
-        <div className="flex max-w-[1080px] mx-auto px-4 py-8 h-auto">
-          {/* <article className="flex-1 pr-8"></article> */}
-          {/* 最寬1080 卡片容器 */}
-          {/* 主內容區 */}
-          <div className="flex-1 pr-8 bg-white">
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
-              {/* hero圖片 */}
-              <div className="relative">
-                <Image
-                  src={
-                    course.images
-                      ? `http://localhost:3005${course.images[0]}`
-                      : ''
-                  }
-                  alt="{course.name}"
-                  width={1080}
-                  height={360}
-                  className="w-full h-64 object-cover "
-                />
+      <main className=" py-8 bg-gray-100  min-h-screen">
+        {/* 主卡片 */}
+        <Container>
+          <div className="bg-white grid md:grid-cols-[3fr_1fr] gap-8 rounded-2xl shadow-lg mb-8 ">
+            {/* hero圖片 */}
+            <div className="relative md:col-span-2 ">
+              <Image
+                src={
+                  course.images
+                    ? `http://localhost:3005${course.images[0]}`
+                    : ''
+                }
+                alt="{course.name}"
+                width={1080}
+                height={360}
+                className="w-full h-64 object-cover  rounded-t-lg overflow-hidden "
+              />
 
-                {/* 標籤 */}
-                <div className=" px-8 flex flex-wrap gap-2 py-6">
-                  {course.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-3 py-1 text-white rounded bg-blue-400"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
+              {/* 標籤 */}
+              <div className="absolute left-0 px-8 flex flex-wrap gap-2 py-6">
+                {course.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-3 py-1 text-white rounded bg-blue-400"
+                  >
+                    {tag}
+                  </span>
+                ))}
               </div>
-              {/* 課程名稱 */}
-              <div className="p-6">
-                <h1 className="text-2xl mb-2 font-bold">{course.name}</h1>
-              </div>
-              <div className="px-8 py-6 space-y-6">
-                <ul>
-                  {/* 課程日期 */}
-                  <li>
-                    <Clock5 className="inline-block" />
-                    {course.period}
-                  </li>
-                  {/* 課程地點 */}
-                  <li>
-                    <MapPin className="inline-block" />
-                    {course.variants[0]?.location.city}
-                    {course.variants[0]?.location.country &&
-                      `,${course.variants[0].location.country}`}
-                    {course.variants[0]?.location.address &&
-                      `,${course.variants[0].location.address}`}
-                    {course.variants[0]?.location.name}
-                  </li>
-                  <li>{course.variants[0]?.location.name}</li>
-                </ul>
-              </div>
+            </div>
+
+            {/* 課程名稱 */}
+            <div className="p-6 space-y-8">
+              <h1 className="text-2xl mb-2 font-bold">{course.name}</h1>
+              <ul>
+                {/* 課程日期 */}
+                <li>
+                  <Clock5 className="inline-block" />
+                  {course.period}
+                </li>
+                {/* 課程地點 */}
+                <li>
+                  <MapPin className="inline-block" />
+                  {course.variants[0]?.location.city}
+                  {course.variants[0]?.location.country &&
+                    `,${course.variants[0].location.country}`}
+                  {course.variants[0]?.location.address &&
+                    `,${course.variants[0].location.address}`}
+                  {course.variants[0]?.location.name}
+                </li>
+                <li>{course.variants[0]?.location.name}</li>
+              </ul>
               <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6 w-[60%] ml-5">
                 {/* 難易度 */}
                 <div className="mb-6">
@@ -151,11 +147,50 @@ export default function CoursesIdPage() {
                 </div>
               </div>
             </div>
+            {/* <div className="px-8 py-6 space-y-6"></div> */}
 
-            {/* 課程基本資訊 */}
+            {/* ——— 右側側邊欄 ——— */}
+            <div className="w-80">
+              {/* sticky 直到距離頂端 6rem (= top-24) */}
+              <div className="sticky top-24  space-y-4">
+                {/* 报名卡片 */}
+                <div className="bg-white p-6 rounded-2xl shadow-lg">
+                  <div className="text-center">
+                    {/* 主辦方 Logo */}
+                    {course.organizer?.logo && (
+                      <Image
+                        src={course.organizer.logo}
+                        alt={course.organizer.name}
+                        width={48}
+                        height={48}
+                        className="rounded-full mx-auto"
+                      />
+                    )}
+                    <h3 className="mt-3 font-semibold text-lg">
+                      {course.organizer?.name}
+                    </h3>
+                  </div>
+                  <button className="mt-6 w-full px-4 py-2 bg-primary-600 text-white rounded-full hover:bg-primary-500 transition">
+                    立即報名
+                  </button>
 
-            {/* 地圖 */}
-            {/* <div className="h-64 w-full">
+                  {/* 下方提示卡片 */}
+                  {/* <div className="bg-pink-50 border border-pink-200 rounded-2xl p-4">
+                  <h4 className="font-semibold mb-2">線下活動</h4>
+                  <p className="text-sm text-gray-600 leading-relaxed"></p>
+                  <button className="mt-2 text-pink-600 underline text-sm">
+                    如何取票？
+                  </button>
+                </div> */}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 課程基本資訊 */}
+
+          {/* 地圖 */}
+          {/* <div className="h-64 w-full">
               <MapContainer
                 center={[latitude, longitude]}
                 zoom={14}
@@ -171,7 +206,7 @@ export default function CoursesIdPage() {
               </MapContainer>
             </div> */}
 
-            {/* <div className="mt-12">
+          {/* <div className="mt-12">
               <h2 className="text-2xl mb-8">教練資訊</h2>
               <div className="flex">
                 <div className="max-w-xs mx-auto border-2 border-blue-200 rounded-2xl p-6 text-center">
@@ -194,44 +229,9 @@ export default function CoursesIdPage() {
                 </div>
               </div>
             </div> */}
-          </div>
-          {/* ——— 右側側邊欄 ——— */}
-          <div className="w-80">
-            {/* sticky 直到距離頂端 6rem (= top-24) */}
-            <div className="sticky top-24 space-y-4">
-              {/* 报名卡片 */}
-              <div className="bg-white p-6 rounded-2xl shadow-lg">
-                <div className="text-center">
-                  {/* 主辦方 Logo */}
-                  {course.organizer?.logo && (
-                    <Image
-                      src={course.organizer.logo}
-                      alt={course.organizer.name}
-                      width={48}
-                      height={48}
-                      className="rounded-full mx-auto"
-                    />
-                  )}
-                  <h3 className="mt-3 font-semibold text-lg">
-                    {course.organizer?.name}
-                  </h3>
-                </div>
-                <button className="mt-6 w-full px-4 py-2 bg-primary-600 text-white rounded-full hover:bg-primary-500 transition">
-                  立即報名
-                </button>
-
-                {/* 下方提示卡片 */}
-                <div className="bg-pink-50 border border-pink-200 rounded-2xl p-4">
-                  <h4 className="font-semibold mb-2">線下活動</h4>
-                  <p className="text-sm text-gray-600 leading-relaxed"></p>
-                  <button className="mt-2 text-pink-600 underline text-sm">
-                    如何取票？
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+          {/* </div> */}
+          {/* </div> */}
+        </Container>
       </main>
     </>
   );
