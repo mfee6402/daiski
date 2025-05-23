@@ -13,35 +13,37 @@ import { createContext, useContext, useState, useEffect } from 'react';
  * @property {(itemId: string) => void} onIncrease - 用於增加購物車中某商品數量的函式。
  * @property {(itemId: string) => void} onDecrease - 用於減少購物車中某商品數量的函式。
  * @property {(itemId: string) => void} onRemove - 用於移除購物車中某商品的函式。
- * @property {(cartItem: { id: int; type: string; }) => void} onAdd - 用於將新商品加入購物車的函式。
+ * @property {(cartItem: { id: int; category: string; }) => void} onAdd - 用於將新商品加入購物車的函式。
  * @property {number} totalQty - 購物車中所有商品的總數量。
  * @property {number} totalAmount - 購物車中所有商品的總金額。
  */
 /**
  * 購物車上下文，用於提供購物車相關的狀態和操作函式。
  *
- * @type {React.Context<CartContextValue | null>}
+ * @category {React.Context<CartContextValue | null>}
  */
 const CartContext = createContext(null);
 // 設定displayName屬性(react devtools除錯用)
 CartContext.displayName = 'CartContext';
+
+import { useAuth } from './use-auth';
 
 // 有共享狀態的CartProvider元件，用來包裹套嵌的元件
 export function CartProvider({ children }) {
   // 購物車中的項目 與商品的物件屬性會相差一個count屬性(數字類型，代表購買數量)
   // const [items, setItems] = useState([]);
   const [cart, setCart] = useState({
-    product: [],
-    group: [],
-    course: [],
+    CartProduct: [],
+    CartGroup: [],
+    CartCourse: [],
   });
 
   // 代表是否完成第一次渲染呈現的布林狀態值(信號值)
   const [didMount, setDidMount] = useState(false);
 
   // // 處理遞增
-  // const onIncrease = (type, itemId) => {
-  //   const nextCart = cart[type].map((v) => {
+  // const onIncrease = (category, itemId) => {
+  //   const nextCart = cart[category].map((v) => {
   //     if (v.id === itemId) {
   //       // 如果比對出id=itemId的成員，則進行再拷貝物件，並且作修改`count: v.count+1`
   //       return { ...v, count: v.count + 1 };
@@ -55,8 +57,8 @@ export function CartProvider({ children }) {
   //   setCart(...cart, nextCart);
   // };
   // // 處理遞減
-  // const onDecrease = (type, itemId) => {
-  //   const nextCart = cart[type].map((v) => {
+  // const onDecrease = (category, itemId) => {
+  //   const nextCart = cart[category].map((v) => {
   //     if (v.id === itemId) {
   //       // 如果比對出id=itemId的成員，則進行再拷貝物件，並且作修改`count: v.count-1`
   //       return { ...v, count: v.count - 1 };
@@ -70,8 +72,8 @@ export function CartProvider({ children }) {
   //   setCart(...cart, nextCart);
   // };
   // // 處理刪除
-  // const onRemove = (type, itemId) => {
-  //   const nextCart = cart[type].filter((v) => {
+  // const onRemove = (category, itemId) => {
+  //   const nextCart = cart[category].filter((v) => {
   //     // 過濾出id不為itemId的物件資料
   //     return v.id !== itemId;
   //   });
@@ -79,24 +81,52 @@ export function CartProvider({ children }) {
   //   setCart(...cart, nextCart);
   // };
   // 處理新增
-  const onAdd = (type = '', itemId = 0) => {
-    // FIXME 如果沒有類別要return
-    // 判斷要加入的商品物件是否已經在購物車狀態
-    const foundIndex = cart[type].findIndex((v) => v.id === itemId.id);
 
-    if (foundIndex !== -1) {
-      // 如果有找到 ===> 遞增購物車狀態商品數量
-      // onIncrease(itemId.id);
-      console.log('已重複，要增加商品數量');
-    } else {
-      // 否則 ===> 新增到購物車狀態
-      // 擴增一個count屬性， 預設為1
-      const newItem = [...cart[type], { itemId, count: 1 }];
-      // 加到購物車狀態最前面
-      const nextCart = { ...cart, [type]: newItem };
-      // 設定到狀態
-      setCart(nextCart);
-      console.log(cart);
+  const onAdd = (category = '', itemId = 0) => {
+    // FIXME 如果沒有類別要return
+    // console.log(cart[category]);
+    // 判斷要加入的商品物件是否已經在購物車狀態
+    if (category === 'CartGroup') {
+      const foundIndex = cart[category].findIndex((v) => v.id === itemId.id);
+      // FIXME 測試用使用-2，記得改回-1
+      if (foundIndex === -2) {
+        // 如果有找到 ===> 遞增購物車狀態商品數量
+        // onIncrease(itemId.id);
+        console.log('已重複，要增加商品數量');
+      } else {
+        // 否則 ===> 新增到購物車狀態
+        // 擴增一個count屬性， 預設為1
+        async function fetchData() {
+          console.log('嘗試新增');
+          console.log(cart);
+          try {
+            const url = 'http://localhost:3005/api/cart';
+            const res = await fetch(url, {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                itemId: itemId,
+                category: category,
+              }),
+            });
+
+            const json = await res.json();
+            setCart(json.cart);
+          } catch (err) {
+            throw new Error(err);
+          }
+        }
+        fetchData();
+        const newItem = [...cart[category], { itemId, count: 1 }];
+        // 加到購物車狀態最前面
+        const nextCart = { ...cart, [category]: newItem };
+
+        // 設定到狀態
+        setCart(nextCart);
+      }
     }
   };
 
@@ -120,23 +150,43 @@ export function CartProvider({ children }) {
   // }
 
   // FIXME要改成讀資料庫
+
   // 第一次渲染完成後，從localStorage取出儲存購物車資料進行同步化
   // useEffect(() => {
-  //   // 讀取localStorage資料(key為cart)，如果不存在(null)會使用預設值空陣列([])
-  //   const storedItems = JSON.parse(localStorage.getItem('cart')) || [];
-  //   // 設定到購物車狀態中 localStroage (key=cart) ===> items
-  //   setCart(storedItems);
-  //   // 第一次渲染已完成
+
+  //   // 讀取資料庫資料，如果不存在(null)會使用預設值空陣列([])
+  //   async function fetchData() {
+  //     try {
+  //       const url = 'http://localhost:3005/api/cart';
+  //       const res = await fetch(url, { credentials: 'include' });
+
+  //       const json = await res.json();
+  //       setCart(json.cart);
+  //     } catch (err) {
+  //       throw new Error(err);
+  //     }
+  //   }
+  //   fetchData();
+  //   // 第一次渲染完成
   //   setDidMount(true);
   // }, []);
 
   // FIXME要改成讀資料庫
-  // 當狀態items有更動時，要進行和loalStorage寫入的同步化
+  // 當狀態cart有更動時，要進行和購物車寫入的同步化
   // useEffect(() => {
   //   // 排除第一次的渲染同步化工作
   //   if (didMount) {
-  //     // items ===>  localStroage (key=cart)
-  //     localStorage.setCart('cart', JSON.stringify(cart));
+  //     async function fetchData() {
+  //       try {
+  //         const url = 'http://localhost:3005/api/cart';
+  //         const res = await fetch(url, { credentials: 'include' });
+  //         const json = await res.json();
+  //         setCart(json.cart);
+  //       } catch (err) {
+  //         throw new Error(err);
+  //       }
+  //     }
+  //     fetchData();
   //   }
   //   // eslint-disable-next-line
   // }, [cart]);
