@@ -86,48 +86,46 @@ export function CartProvider({ children }) {
     // FIXME 如果沒有類別要return
     // console.log(cart[category]);
     // 判斷要加入的商品物件是否已經在購物車狀態
-    if (category === 'CartGroup') {
-      const foundIndex = cart[category].findIndex((v) => v.id === itemId.id);
-      // FIXME 測試用使用-2，記得改回-1
-      if (foundIndex === -2) {
-        // 如果有找到 ===> 遞增購物車狀態商品數量
-        // onIncrease(itemId.id);
-        console.log('已重複，要增加商品數量');
-      } else {
-        // 否則 ===> 新增到購物車狀態
-        // 擴增一個count屬性， 預設為1
-        async function fetchData() {
-          console.log('嘗試新增');
-          console.log(cart);
-          try {
-            const url = 'http://localhost:3005/api/cart';
-            const res = await fetch(url, {
-              method: 'POST',
-              credentials: 'include',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                itemId: itemId,
-                category: category,
-              }),
-            });
-
-            const json = await res.json();
-            setCart(json.cart);
-          } catch (err) {
-            throw new Error(err);
-          }
-        }
-        fetchData();
-        const newItem = [...cart[category], { itemId, count: 1 }];
-        // 加到購物車狀態最前面
-        const nextCart = { ...cart, [category]: newItem };
-
-        // 設定到狀態
-        setCart(nextCart);
-      }
-    }
+    // if (category === 'CartGroup') {
+    //   const foundIndex = cart[category].findIndex((v) => v.id === itemId.id);
+    //   // FIXME 測試用使用-2，記得改回-1
+    //   if (foundIndex === -2) {
+    //     // 如果有找到 ===> 遞增購物車狀態商品數量
+    //     // onIncrease(itemId.id);
+    //     console.log('已重複，要增加商品數量');
+    //   } else {
+    //     // 否則 ===> 新增到購物車狀態
+    //     // 擴增一個count屬性， 預設為1
+    //     async function fetchData() {
+    //       console.log('嘗試新增');
+    //       console.log(cart);
+    //       try {
+    //         const url = 'http://localhost:3005/api/cart';
+    //         const res = await fetch(url, {
+    //           method: 'POST',
+    //           credentials: 'include',
+    //           headers: {
+    //             'Content-Type': 'application/json',
+    //           },
+    //           body: JSON.stringify({
+    //             itemId: itemId,
+    //             category: category,
+    //           }),
+    //         });
+    //         const json = await res.json();
+    //         setCart(json.cart);
+    //       } catch (err) {
+    //         throw new Error(err);
+    //       }
+    //     }
+    //     fetchData();
+    //     const newItem = [...cart[category], { itemId, count: 1 }];
+    //     // 加到購物車狀態最前面
+    //     const nextCart = { ...cart, [category]: newItem };
+    //     // 設定到狀態
+    //     setCart(nextCart);
+    //   }
+    // }
   };
 
   // 使用陣列的迭代方法reduce(歸納, 累加)
@@ -152,24 +150,23 @@ export function CartProvider({ children }) {
   // FIXME要改成讀資料庫
 
   // 第一次渲染完成後，從localStorage取出儲存購物車資料進行同步化
-  // useEffect(() => {
+  useEffect(() => {
+    // 讀取資料庫資料，如果不存在(null)會使用預設值空陣列([])
+    async function fetchData() {
+      try {
+        const url = 'http://localhost:3005/api/cart';
+        const res = await fetch(url, { credentials: 'include' });
 
-  //   // 讀取資料庫資料，如果不存在(null)會使用預設值空陣列([])
-  //   async function fetchData() {
-  //     try {
-  //       const url = 'http://localhost:3005/api/cart';
-  //       const res = await fetch(url, { credentials: 'include' });
-
-  //       const json = await res.json();
-  //       setCart(json.cart);
-  //     } catch (err) {
-  //       throw new Error(err);
-  //     }
-  //   }
-  //   fetchData();
-  //   // 第一次渲染完成
-  //   setDidMount(true);
-  // }, []);
+        const json = await res.json();
+        setCart(json.cart);
+      } catch (err) {
+        throw new Error(err);
+      }
+    }
+    fetchData();
+    // 第一次渲染完成
+    setDidMount(true);
+  }, []);
 
   // FIXME要改成讀資料庫
   // 當狀態cart有更動時，要進行和購物車寫入的同步化
