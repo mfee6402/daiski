@@ -162,7 +162,12 @@ export default function GroupDetailPage() {
     onAdd('group', group.id);
 
     alert(
-      `功能待開發：加入揪團 ${group?.title || groupId}，group_id為${group.id}`
+      `功能待開發：加入揪團 ${group?.title || groupId}
+      group_id：${group.id}
+      揪團名稱：${group.title}
+      時間為：${group.startDate}~${group.endDate}
+      價格：${group.price}
+      圖片：${group.images[0].imageUrl}`
     );
   };
 

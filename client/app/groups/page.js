@@ -120,11 +120,19 @@ export default function GroupsPage() {
 
       {/* Hero Banner */}
       <section
-        className="relative bg-cover bg-[center_80%] bg-no-repeat py-36 text-center"
-        style={{
-          backgroundImage: "url('/26852e04-a393-422d-bd61-8042373024da.png')", // 請確認此圖片路徑正確
-        }}
+        className="relative py-36 text-center"
+        // style={{
+        //   backgroundImage: "url('/26852e04-a393-422d-bd61-8042373024da.png')", // 請確認此圖片路徑正確
+        // }}
       >
+        <video
+          className="absolute inset-0 w-full h-full object-cover"
+          src="/ProductHeroSection.mp4" // 把這裡改成影片檔路徑，放在 public 資料夾下即可用相對路徑引用
+          autoPlay
+          muted
+          loop
+          playsInline
+        />
         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />{' '}
         {/* 使用黑色疊加和模糊效果 */}
         {/* 背景使用 bg-white 加上透明度，或者如果 :root 的 --background 是白色，用 bg-background/85 */}
