@@ -21,9 +21,9 @@ export default function RegisterPage() {
   const { register } = useUserRegister();
   const [userInput, setUserInput] = useState({
     name: '',
-    email: '',
-    username: '',
+    account: '',
     password: '',
+    email: '',
   });
 
   const { isAuth } = useAuth();
@@ -71,124 +71,87 @@ export default function RegisterPage() {
             <p>
               已經有帳號？
               <Link href="/auth/login">
-                <span className="text-primary-500">點擊登入！</span>
+                <span className="text-primary-500">前往登入！</span>
               </Link>
             </p>
           </div>
           <div className="max-w-md mx-auto mt-6">
-            <label>
-              帳號:
-              <input
-                type="text"
-                name="username"
-                value={userInput.username}
-                onChange={handleFieldChange}
-                className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
-              />
-            </label>
-            <label>
-              密碼:
-              <input
-                type="text"
-                name="password"
-                value={userInput.password}
-                onChange={handleFieldChange}
-                className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
-              />
-            </label>
-            <label>
-              電子郵件信箱:
-              <input
-                type="text"
-                name="email"
-                value={userInput.email}
-                onChange={handleFieldChange}
-                className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
-              />
-            </label>
-            <button
-              type="submit"
-              className="w-full mt-16 px-4 py-3 hover:bg-primary-500 rounded-md text-white bg-primary-600"
-            >
-              註冊
-            </button>
+            <form onSubmit={handleSubmit}>
+              <label>
+                姓名:
+                <input
+                  type="text"
+                  name="name"
+                  value={userInput.name}
+                  onChange={handleFieldChange}
+                  className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                />
+              </label>
+              <label>
+                帳號:
+                <input
+                  type="text"
+                  name="account"
+                  value={userInput.username}
+                  onChange={handleFieldChange}
+                  className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                />
+              </label>
+              <label>
+                密碼:
+                <input
+                  type="text"
+                  name="password"
+                  value={userInput.password}
+                  onChange={handleFieldChange}
+                  className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                />
+              </label>
+              <label>
+                電子郵件信箱:
+                <input
+                  type="text"
+                  name="email"
+                  value={userInput.email}
+                  onChange={handleFieldChange}
+                  className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                />
+              </label>
+              <button
+                type="submit"
+                className="w-full mt-16 px-4 py-3 hover:bg-primary-500 rounded-md text-white bg-primary-600"
+              >
+                註冊
+              </button>
+            </form>
           </div>
         </div>
       </div>
-
+      <button
+        type="button"
+        onClick={() => {
+          // 測試帳號 herry/11111
+          setUserInput({
+            name: '榮恩',
+            email: 'ron@test.com',
+            username: 'ron',
+            password: '99999',
+          });
+        }}
+      >
+        一鍵輸入範例
+      </button>
+      <hr />
+      <p>會員狀態:{isAuth ? '已登入' : '未登入'}</p>
+      <hr />
       <p>
         規則:
         註冊時，username與email不能與目前資料庫有相同的值。name是屬於profile資料表。
       </p>
       <p>注意: 進行註冊時，應該要在會員登出狀態</p>
-      <p>會員狀態:{isAuth ? '已登入' : '未登入'}</p>
-      <p>
+      {/* <p>
         <a href="/user">會員登入認証&授權測試(JWT)</a>
-      </p>
-      <hr />
-      <form onSubmit={handleSubmit}>
-        <p>
-          <label>
-            姓名:
-            <input
-              type="text"
-              name="name"
-              value={userInput.name}
-              onChange={handleFieldChange}
-            />
-          </label>
-        </p>
-        <p>
-          <label>
-            電子郵件信箱:
-            <input
-              type="text"
-              name="email"
-              value={userInput.email}
-              onChange={handleFieldChange}
-            />
-          </label>
-        </p>
-        <p>
-          <label>
-            帳號:
-            <input
-              type="text"
-              name="username"
-              value={userInput.username}
-              onChange={handleFieldChange}
-            />
-          </label>
-        </p>
-        <p>
-          <label>
-            密碼:
-            <input
-              type="text"
-              name="password"
-              value={userInput.password}
-              onChange={handleFieldChange}
-            />
-          </label>
-        </p>
-        <br />
-        <button type="submit">註冊</button>
-        <br />
-        <button
-          type="button"
-          onClick={() => {
-            // 測試帳號 herry/11111
-            setUserInput({
-              name: '榮恩',
-              email: 'ron@test.com',
-              username: 'ron',
-              password: '99999',
-            });
-          }}
-        >
-          一鍵輸入範例
-        </button>
-      </form>
+      </p> */}
       {/* 土司訊息視窗用 */}
       <ToastContainer />
     </>
