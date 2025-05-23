@@ -10,7 +10,10 @@ import {
 } from '@/services/rest-client/use-user';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { color } from 'framer-motion';
+import { Toaster } from 'sonner';
+// import { register } from 'module';
+// 為了跳轉頁面（App Router）
+import { useRouter } from "next/navigation"
 
 export default function UserPage() {
   // 輸入表單用的狀態
@@ -46,8 +49,9 @@ export default function UserPage() {
       // 呼叫useAuthGet的mutate方法
       // 將會進行重新驗證(revalidation)(將資料標記為已過期並觸發重新請求)
       mutate();
-
-      toast.success('已成功登入');
+      router.push("/")
+      // toast.success("已成功登入");
+      // toast.success("已成功登入", { onClose: () => router.push("/profile") });
     } else {
       toast.error(`登入失敗`);
     }
@@ -85,6 +89,8 @@ export default function UserPage() {
       </div>
     );
   }
+  //取用router，為了跳轉頁面
+  const router = useRouter();             
 
   return (
     <>
@@ -94,9 +100,7 @@ export default function UserPage() {
             <h1 className="text-h2-tw">登入</h1>
             <p>
               還不是會員？
-              <a href="">
-                <span className="text-primary-600">現在加入！</span>
-              </a>
+                <Link href="/auth/register"><span className="text-primary-600">現在加入！</span></Link>
             </p>
           </div>
           <div className="max-w-md mx-auto mt-6">
@@ -120,13 +124,14 @@ export default function UserPage() {
                 className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
               />
             </label>
-
+           
             <button
               onClick={handleLogin}
               className="w-full mt-16 px-4 py-3 bg-[#2770ea] rounded-md hover:text-amber-100"
             >
               登入(login)
             </button>
+            
           </div>
 
           <div className="mt-16">
@@ -167,7 +172,9 @@ export default function UserPage() {
       </div>
 
       {/* 土司訊息視窗用 */}
-      <ToastContainer />
+      <ToastContainer position="bottom-right"
+          autoClose={1000}
+          closeOnClick/>
     </>
   );
 }

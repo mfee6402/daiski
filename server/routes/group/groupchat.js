@@ -1,17 +1,19 @@
-// routes/groupchat.js (或者您實際的 routes/group/chat.js)
+// routes/groupchat.js (或者您實際的 routes/group/index.js 或 routes/group/chat.js)
 
 import express from 'express';
 import multer from 'multer';
-import authenticate from '../../middlewares/authenticate.js'; // << --- 匯入您的 authenticate 中介軟體
-import { PrismaClient } from '@prisma/client'; // << --- 匯入 Prisma Client
+// 假設 authenticate.js 在 server/middlewares/authenticate.js
+import authenticate from '../../middlewares/authenticate.js'; // << --- 再次確認此路徑是否正確
+import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient(); // << --- 初始化 Prisma Client (建議在共用檔案中初始化並匯出單一實例)
+const prisma = new PrismaClient(); // 建議：將此實例化移至共享的 db.js 檔案中
 const router = express.Router();
 
 // --- 圖片上傳設定 (使用 multer) ---
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'public/uploads/'); // 確保 'public/uploads/' 資料夾存在
+    // 確保 'public/uploads/' 資料夾相對於您 server.js (或 index.js 主檔案) 存在
+    cb(null, 'public/uploads/');
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + '-' + file.originalname);
@@ -35,13 +37,21 @@ const upload = multer({
 });
 
 // --- HTTP API 路由定義 ---
-// http://localhost:3005/api/group/groupchat/${group.id}/authorize
+
+// Helper function to set no-cache headers
+const setNoCacheHeaders = (res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache'); // For HTTP/1.0 proxies
+  res.setHeader('Expires', '0'); // Proxies
+};
+
 /**
- * @route   POST /upload (實際路徑取決於 server.js 中的掛載點，例如 /api/groupchat/upload)
+ * @route   POST /upload
  * @desc    處理圖片上傳
  * @access  Private
  */
 router.post('/upload', authenticate, upload.single('file'), (req, res) => {
+  setNoCacheHeaders(res); // 加入快取控制
   if (!req.file) {
     return res
       .status(400)
@@ -55,27 +65,26 @@ router.post('/upload', authenticate, upload.single('file'), (req, res) => {
 });
 
 /**
- * @route   GET /:groupId/authorize (實際路徑取決於 server.js 中的掛載點)
+ * @route   GET /:groupId/authorize
  * @desc    檢查當前登入使用者是否有權限加入指定 groupId 的聊天室
  * @access  Private
- * @param   {string} groupId - 要檢查的群組 ID
  */
 router.get('/:groupId/authorize', authenticate, async (req, res) => {
-  const { groupId: groupIdString } = req.params; // 從路徑參數獲取 groupId (字串)
-  const userId = req.user?.id; // 從 authenticate 中介軟體獲取的 user id (假設是數字)
+  setNoCacheHeaders(res); // 加入快取控制
+  const { groupId: groupIdString } = req.params;
+  const userId = req.user?.id;
+  console.log('API /:groupId/authorize - req.user:', req.user);
+  console.log('API /:groupId/authorize - req.user.id:', req.user?.id);
 
   if (!userId) {
-    // 理論上 authenticate 失敗時不會到這裡
     return res
       .status(401)
       .json({ authorized: false, message: '未授權，無法識別使用者' });
   }
-
   if (!groupIdString) {
     return res.status(400).json({ authorized: false, message: '缺少群組 ID' });
   }
-
-  const groupId = parseInt(groupIdString, 10); // 將 groupId 字串轉換為數字
+  const groupId = parseInt(groupIdString, 10);
   if (isNaN(groupId)) {
     return res
       .status(400)
@@ -84,81 +93,104 @@ router.get('/:groupId/authorize', authenticate, async (req, res) => {
 
   try {
     console.log(`檢查授權: 使用者 ID ${userId}, 群組 ID ${groupId}`);
-
-    // 使用 Prisma 查詢 group_member 資料表
-    // 您的 GroupMember schema 中有 @@unique([groupId, userId])
-    // Prisma 會為此產生一個名為 groupId_userId 的複合唯一識別符 (請確認，或使用 findFirst)
     const memberRecord = await prisma.groupMember.findUnique({
       where: {
-        // Prisma 根據 @@unique([groupId, userId]) 自動產生的欄位名稱通常是 'groupId_userId'
-        // 如果不確定，可以檢查 node_modules/.prisma/client/index.d.ts 中的 GroupMemberWhereUniqueInput 型別
-        // 或者使用 findFirst 配合明確的 groupId 和 userId 條件
+        // 請再次確認您 Prisma schema 中 GroupMember 的 @@unique([groupId, userId])
+        // 所產生的複合唯一識別符名稱，預設通常是 'groupId_userId'
         groupId_userId: {
-          // << --- 這是 Prisma 根據 @@unique([groupId, userId]) 產生的複合鍵欄位名
           groupId: groupId,
           userId: userId,
         },
       },
       select: {
-        // 只選擇需要的欄位
         paidAt: true,
       },
     });
 
-    // 備選查詢方式 (如果 groupId_userId 名稱不確定或想更明確):
-    // const memberRecord = await prisma.groupMember.findFirst({
-    //   where: {
-    //     AND: [
-    //       { groupId: groupId },
-    //       { userId: userId }
-    //     ]
-    //   },
-    //   select: {
-    //     paidAt: true
-    //   }
-    // });
-
     if (memberRecord) {
-      // 如果找到了記錄，表示使用者是該群組的成員
       if (memberRecord.paidAt) {
-        // 檢查 paidAt 是否有值 (表示已付款)
         console.log(`使用者 ${userId} 在群組 ${groupId} 中已付款。`);
         res
           .status(200)
           .json({ authorized: true, message: '已授權，允許加入聊天室' });
       } else {
-        // 如果您目前階段允許未付款者也加入聊天，可以修改這裡的邏輯
         console.log(`使用者 ${userId} 在群組 ${groupId} 中已加入但未付款。`);
-        res
-          .status(403)
-          .json({
-            authorized: false,
-            message: '您已加入此揪團但尚未完成付款，暫時無法進入聊天室',
-          });
-        // 或者，如果目前允許未付款者聊天：
-        // res.status(200).json({ authorized: true, message: '允許加入聊天室 (尚未付款)' });
+        res.status(403).json({
+          authorized: false,
+          message: '您已加入此揪團但尚未完成付款，暫時無法進入聊天室',
+        });
       }
     } else {
-      // 找不到記錄，表示使用者不是該群組的成員
       console.log(`使用者 ${userId} 不是群組 ${groupId} 的成員。`);
-      res
-        .status(403)
-        .json({
-          authorized: false,
-          message: '您尚未加入此揪團，無法進入聊天室',
-        });
+      res.status(403).json({
+        authorized: false,
+        message: '您尚未加入此揪團，無法進入聊天室',
+      });
     }
   } catch (error) {
     console.error(`檢查群組 ${groupId} 聊天室授權時發生錯誤:`, error);
-    // 可以更細緻地處理 Prisma 相關的錯誤
     if (error.code) {
-      // Prisma 錯誤通常有 code 屬性
       console.error('Prisma 錯誤代碼:', error.code, '錯誤訊息:', error.message);
-      // 例如 P2025: Record to update not found. (如果用 update 而非 find)
     }
+    setNoCacheHeaders(res); // 錯誤回應也應避免快取
     res
       .status(500)
       .json({ authorized: false, message: '檢查授權時發生伺服器內部錯誤' });
+  }
+});
+
+/**
+ * @route   GET /my-joined-list
+ * @desc    獲取當前登入使用者已加入且有權限聊天的群組列表
+ * @access  Private
+ */
+router.get('/my-joined-list', authenticate, async (req, res) => {
+  setNoCacheHeaders(res); // 加入快取控制
+  const userId = req.user?.id;
+
+  if (!userId) {
+    return res
+      .status(401)
+      .json({ success: false, message: '未授權，無法識別使用者' });
+  }
+
+  try {
+    const groupMemberships = await prisma.groupMember.findMany({
+      where: {
+        userId: userId,
+        paidAt: {
+          not: null, // 只選擇已付款的 (根據您的授權邏輯)
+        },
+        group: {
+          deletedAt: null, // 確保相關的群組未被軟刪除
+        },
+      },
+      select: {
+        groupId: true,
+        group: {
+          select: {
+            title: true,
+          },
+        },
+      },
+      orderBy: {
+        joinedAt: 'desc',
+      },
+    });
+
+    const authorizedGroups = groupMemberships.map((gm) => ({
+      id: gm.groupId,
+      title: gm.group.title,
+    }));
+
+    res.status(200).json({ success: true, groups: authorizedGroups });
+  } catch (error) {
+    console.error(
+      `獲取使用者 ${userId} 已加入的聊天群組列表時發生錯誤:`,
+      error
+    );
+    setNoCacheHeaders(res); // 錯誤回應也應避免快取
+    res.status(500).json({ success: false, message: '獲取聊天群組列表失敗' });
   }
 });
 

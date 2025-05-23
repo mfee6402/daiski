@@ -64,6 +64,7 @@ model UserCoupon {
   coupon Coupon @relation(fields: [couponId], references: [id])
   user   User   @relation(fields: [userId], references: [id])
 
+  @@unique([userId, couponId], name: "uniq_user_coupon")
   @@map("user_coupon")
 }
 
