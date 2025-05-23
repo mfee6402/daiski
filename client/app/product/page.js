@@ -1039,14 +1039,24 @@ export default function ProductPage() {
     <>
       {/* Hero Banner */}
       <section
-        className="relative bg-cover bg-[center_80%] bg-no-repeat h-[30vh] md:h-[50vh]  text-center"
-        style={{
-          backgroundImage: "url('/26852e04-a393-422d-bd61-8042373024da.png')", // 請確認此圖片路徑正確
-        }}
+        className="relative bg-cover bg-[center_80%] bg-no-repeat h-[30vh] md:h-[60vh]  text-center"
+        // style={{
+        //   backgroundImage: "url('/26852e04-a393-422d-bd61-8042373024da.png')", // 請確認此圖片路徑正確
+        // }}
       >
-        <div className="absolute inset-0 " /> {/* 使用黑色疊加和模糊效果 */}
+        <video
+          className="absolute w-full h-full object-cover "
+          src="/ProductHeroSection.mp4" // 把這裡改成影片檔路徑，放在 public 資料夾下即可用相對路徑引用
+          autoPlay
+          muted
+          loop
+          playsInline
+        />
+        <div className="absolute inset-0  "></div>
+        {/* 使用黑色疊加和模糊效果 */}
         {/* 背景使用 bg-white 加上透明度，或者如果 :root 的 --background 是白色，用 bg-background/85 */}
       </section>
+
       <Container className="z-10 pt-4 md:pt-10 pb-20">
         {/* 顯示用戶歡迎訊息和 Email (如果用戶已登入) */}
         <div>
