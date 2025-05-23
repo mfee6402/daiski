@@ -221,9 +221,10 @@ export default function CouponsPage(props) {
 
         {/* 優惠劵 */}
         {filteredData.length === 0 ? (
-          <div className="w-[30%] h-[30%]">
-            {/* <Image src="/coupon.png" alt="最遠景" className="w-full" fill /> */}
-            <p>沒有更多</p>
+          <div className="flex flex-col justify-center items-center mt-15">
+            <Image src="/coupon.png" alt="沒卷" width={140} height={113} />
+            <p className="text-h6-tw">目前沒有更多的優惠券可以領取</p>
+            <p className="color-primary-800">多多關注我們隨時領取優惠券</p>
           </div>
         ) : (
           <ul className="grid grid-cols-1 justify-items-center gap-x-25 gap-y-6 lg:grid-cols-2 my-10">
