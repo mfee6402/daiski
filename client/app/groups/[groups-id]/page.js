@@ -231,9 +231,6 @@ export default function GroupDetailPage() {
     時間為：${group.startDate}~${group.endDate}
     價格：${group.price}
     圖片：${group.images[0].imageUrl}`);
-        // alert(
-
-        // );
       } else {
         setJoinError(data.message || `加入揪團失敗: ${response.status}`);
         alert(data.message || `加入揪團失敗: ${response.status}`);
