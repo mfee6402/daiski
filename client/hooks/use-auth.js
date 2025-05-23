@@ -47,8 +47,8 @@ export const AuthProvider = ({ children }) => {
   }, [pathname]);
   // #endregion
   if (
-    !protectedRoutes.includes(pathname) ||
-    protectedRoutesPatterns.some((regex) => regex.test(pathname))
+    !(!isAuth && didAuthMount) ||
+    !protectedRoutesPatterns.some((regex) => regex.test(pathname))
   ) {
     return (
       <AuthContext.Provider

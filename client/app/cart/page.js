@@ -10,8 +10,14 @@ import { produce } from 'immer';
 import CartItemList from './_components/cartItemList';
 
 import { useAuth } from '@/hooks/use-auth';
-// secondary
+import { useCart } from '@/hooks/use-cart';
+
 export default function CartPage({ setProcess }) {
+  const { cart } = useCart();
+  useEffect(() => {
+    console.log(cart);
+  });
+
   const url = 'http://localhost:3005/api/cart';
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -56,28 +62,25 @@ export default function CartPage({ setProcess }) {
   // if (loading) {
   // return <p>載入中</p>;
   // }
-  if (isAuth) {
-    return (
-      <>
-        <Process step="1"></Process>
-        <div className="flex justify-between">
-          <div className="w-full">
-            <CartItemList
-              data={data}
-              setData={setData}
-              category="CartProduct"
-            ></CartItemList>
-            <CartItemList
-              data={data}
-              setData={setData}
-              category="CartGroup"
-            ></CartItemList>
-          </div>
-          <Checkout data={data}></Checkout>
+
+  return (
+    <>
+      <Process step="1"></Process>
+      <div className="flex justify-between">
+        <div className="w-full">
+          <CartItemList
+            data={data}
+            setData={setData}
+            category="CartProduct"
+          ></CartItemList>
+          <CartItemList
+            data={data}
+            setData={setData}
+            category="CartGroup"
+          ></CartItemList>
         </div>
-      </>
-    );
-  } else {
-    return <>尚未登入</>;
-  }
+        <Checkout data={data}></Checkout>
+      </div>
+    </>
+  );
 }
