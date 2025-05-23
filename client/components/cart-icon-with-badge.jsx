@@ -7,8 +7,9 @@ import { useCart } from '@/hooks/use-cart';
 
 export function CartIconWithBadge({ href = '/cart' }) {
   const { items } = useCart();
-  const count = items.length;
-
+  // FIXME 等待實際數值
+  // const count = items.length;
+  const count = 0;
   return (
     <Link href={href} className=" rounded-full hover:bg-gray-100 transition">
       {/* 包住 SVG 和徽章，確保 badge 定位正確 */}
@@ -22,7 +23,7 @@ export function CartIconWithBadge({ href = '/cart' }) {
 */}
         {count >= 0 && (
           <Badge className="absolute -top-3 -right-3 h-5 w-5 p-0 text-xs flex items-center justify-center bg-[#2770EA]">
-            {count}
+            {/* {count} */}
           </Badge>
         )}
       </div>
