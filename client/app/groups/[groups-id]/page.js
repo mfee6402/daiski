@@ -14,9 +14,15 @@ import MobileStickyButtons from './_components/sticky-buttons';
 
 import { Button } from '@/components/ui/button';
 
+// 引入購物車鉤子
+import { useCart } from '@/hooks/use-cart';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3005';
 
 export default function GroupDetailPage() {
+  // 購物車鉤子
+  const { onAdd } = useCart();
+
   const params = useParams();
   const groupId = params['groups-id'];
   const router = useRouter();
@@ -152,8 +158,14 @@ export default function GroupDetailPage() {
     });
   }, []);
 
-  const handleJoinGroup = () =>
-    alert(`功能待開發：加入揪團 ${group?.title || groupId}`);
+  const handleJoinGroup = () => {
+    onAdd('group', group.id);
+
+    alert(
+      `功能待開發：加入揪團 ${group?.title || groupId}，group_id為${group.id}`
+    );
+  };
+
   const handleJoinChat = () =>
     alert(`功能待開發：加入 ${group?.title || groupId} 的聊天室`);
   const handleEditGroup = () => router.push(`/groups/${groupId}/edit`);

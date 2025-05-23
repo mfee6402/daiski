@@ -144,7 +144,7 @@ export default function ProductList({ products, favIds, onToggleFavorite }) {
           {/* 將整張卡片包在 Link 裡，設定為 block 讓它填滿 li */}
           <Link href={`/product/${p.id}`} className="block relative">
             {/* 收藏按鈕：內部已 stopPropagation，不會觸發 Link */}
-            <div className="absolute top-2 right-2 z-10">
+            <div className="absolute top-2 right-2 z-5">
               <FavoriteButton
                 isFav={favIds.includes(p.id)}
                 onToggle={() => onToggleFavorite(p.id)}
@@ -153,14 +153,16 @@ export default function ProductList({ products, favIds, onToggleFavorite }) {
             </div>
 
             <Card>
-              <CardHeader className="w-full aspect-[4/3] overflow-hidden rounded-xl">
-                <Image
-                  src={p.image || '/placeholder.jpg'}
-                  alt={p.name}
-                  width={10}
-                  height={10}
-                  className="w-full h-full object-cover transition duration-300 hover:scale-110"
-                />
+              <CardHeader className="w-full  overflow-hidden p-4">
+                <div className="aspect-[4/3]">
+                  <Image
+                    src={p.image || '/placeholder.jpg'}
+                    alt={p.name}
+                    width={10}
+                    height={10}
+                    className="w-full h-full object-contain transition duration-300 hover:scale-110"
+                  />
+                </div>
               </CardHeader>
               <CardContent>
                 <CardTitle className="text-lg font-bold mt-2 line-clamp-2 hover:text-primary-500">

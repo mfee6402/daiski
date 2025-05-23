@@ -52,6 +52,20 @@ export default function RegisterPage() {
 
   return (
     <>
+    <div className="flex container justify-center  mx-auto  gap-1">
+      <div className="w-1/2 sr-only sm:not-sr-only">
+      <figure>
+            <img
+              src="/register.png"
+              alt="Login Image"
+              className="w-full shadow-lg"
+            />
+          </figure>
+      </div>
+      <div className="w-1/2 px-6 py-12">
+    
+      </div>
+    </div>
       <h1>會員註冊</h1>
       <hr />
       <p>

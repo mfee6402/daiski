@@ -27,13 +27,14 @@ model User {
 
   deleted_at DateTime? @map("deleted_at")
 
-  favorites    UserFavorite[]
-  Group        Group[]
-  GroupMember  GroupMember[]
-  GroupComment GroupComment[]
-  ChatMessage  ChatMessage[]
-  GameScore    GameScore[]
-  UserCoupon   UserCoupon[]
+  favorites         UserFavorite[]
+  Group             Group[]
+  GroupMember       GroupMember[]
+  GroupComment      GroupComment[]
+  ChatMessage       ChatMessage[]
+  GameScore         GameScore[]
+  UserCoupon        UserCoupon[]
+  CourseVariantUser CourseVariantUser[]
 
   @@map("user")
 }
@@ -227,7 +228,8 @@ model Location {
   createdAt DateTime @default(now()) @map("created_at")
 
   // relations
-  groups Group[]
+  groups        Group[]
+  CourseVariant CourseVariant[]
 
   @@map("location")
 }
@@ -430,9 +432,11 @@ model CourseVariant {
   deleted_at    DateTime?    @map("deleted_at")
   CartCourse    CartCourse[]
 
-  course    Course    @relation(fields: [course_id], references: [id])
-  coach     Coach     @relation(fields: [coach_id], references: [id])
-  courseImg CourseImg @relation(fields: [course_img_id], references: [id])
+  course            Course              @relation(fields: [course_id], references: [id])
+  coach             Coach               @relation(fields: [coach_id], references: [id])
+  courseImg         CourseImg           @relation(fields: [course_img_id], references: [id])
+  location          Location            @relation(fields: [location_id], references: [id])
+  CourseVariantUser CourseVariantUser[]
 
   @@map("course_variant")
 }
@@ -472,6 +476,23 @@ model BoardtypeCoach {
   coach     Coach     @relation(fields: [coach_id], references: [id])
 
   @@map("boardtype_coach")
+}
+
+model CourseVariantUser {
+  id                Int       @id @default(autoincrement())
+  course_variant_id Int
+  user_id           Int
+  name              String
+  phone             String
+  email             String
+  birthday          DateTime?
+  joined_at         DateTime  @default(now())
+  paid_at           DateTime?
+
+  course_variant CourseVariant @relation(fields: [course_variant_id], references: [id])
+  user           User          @relation(fields: [user_id], references: [id])
+
+  @@map("course_variant_user")
 }
 
 // #endregion

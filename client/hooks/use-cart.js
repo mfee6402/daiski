@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react';
 
 // context套用第1步: 建立context
 // createContext的傳入參數defaultValue也有備援值(context套用失敗或錯誤出現的值)
@@ -13,7 +13,7 @@ import { createContext, useContext, useState, useEffect } from 'react'
  * @property {(itemId: string) => void} onIncrease - 用於增加購物車中某商品數量的函式。
  * @property {(itemId: string) => void} onDecrease - 用於減少購物車中某商品數量的函式。
  * @property {(itemId: string) => void} onRemove - 用於移除購物車中某商品的函式。
- * @property {(product: { id: string; price: number; name: string }) => void} onAdd - 用於將新商品加入購物車的函式。
+ * @property {(cartItem: { id: int; type: string; }) => void} onAdd - 用於將新商品加入購物車的函式。
  * @property {number} totalQty - 購物車中所有商品的總數量。
  * @property {number} totalAmount - 購物車中所有商品的總金額。
  */
@@ -22,118 +22,143 @@ import { createContext, useContext, useState, useEffect } from 'react'
  *
  * @type {React.Context<CartContextValue | null>}
  */
-const CartContext = createContext(null)
+const CartContext = createContext(null);
 // 設定displayName屬性(react devtools除錯用)
-CartContext.displayName = 'CartContext'
+CartContext.displayName = 'CartContext';
 
 // 有共享狀態的CartProvider元件，用來包裹套嵌的元件
 export function CartProvider({ children }) {
   // 購物車中的項目 與商品的物件屬性會相差一個count屬性(數字類型，代表購買數量)
-  const [items, setItems] = useState([])
+  // const [items, setItems] = useState([]);
+  const [cart, setCart] = useState({
+    product: [],
+    group: [],
+    course: [],
+  });
+
   // 代表是否完成第一次渲染呈現的布林狀態值(信號值)
-  const [didMount, setDidMount] = useState(false)
+  const [didMount, setDidMount] = useState(false);
 
-  // 處理遞增
-  const onIncrease = (itemId) => {
-    const nextItems = items.map((v) => {
-      if (v.id === itemId) {
-        // 如果比對出id=itemId的成員，則進行再拷貝物件，並且作修改`count: v.count+1`
-        return { ...v, count: v.count + 1 }
-      } else {
-        // 否則回傳原本物件
-        return v
-      }
-    })
+  // // 處理遞增
+  // const onIncrease = (type, itemId) => {
+  //   const nextCart = cart[type].map((v) => {
+  //     if (v.id === itemId) {
+  //       // 如果比對出id=itemId的成員，則進行再拷貝物件，並且作修改`count: v.count+1`
+  //       return { ...v, count: v.count + 1 };
+  //     } else {
+  //       // 否則回傳原本物件
+  //       return v;
+  //     }
+  //   });
 
-    // 3 設定到狀態
-    setItems(nextItems)
-  }
-  // 處理遞減
-  const onDecrease = (itemId) => {
-    const nextItems = items.map((v) => {
-      if (v.id === itemId) {
-        // 如果比對出id=itemId的成員，則進行再拷貝物件，並且作修改`count: v.count-1`
-        return { ...v, count: v.count - 1 }
-      } else {
-        // 否則回傳原本物件
-        return v
-      }
-    })
+  //   // 3 設定到狀態
+  //   setCart(...cart, nextCart);
+  // };
+  // // 處理遞減
+  // const onDecrease = (type, itemId) => {
+  //   const nextCart = cart[type].map((v) => {
+  //     if (v.id === itemId) {
+  //       // 如果比對出id=itemId的成員，則進行再拷貝物件，並且作修改`count: v.count-1`
+  //       return { ...v, count: v.count - 1 };
+  //     } else {
+  //       // 否則回傳原本物件
+  //       return v;
+  //     }
+  //   });
 
-    // 3 設定到狀態
-    setItems(nextItems)
-  }
-  // 處理刪除
-  const onRemove = (itemId) => {
-    const nextItems = items.filter((v, i) => {
-      // 過濾出id不為itemId的物件資料
-      return v.id !== itemId
-    })
-    // 3
-    setItems(nextItems)
-  }
+  //   // 3 設定到狀態
+  //   setCart(...cart, nextCart);
+  // };
+  // // 處理刪除
+  // const onRemove = (type, itemId) => {
+  //   const nextCart = cart[type].filter((v) => {
+  //     // 過濾出id不為itemId的物件資料
+  //     return v.id !== itemId;
+  //   });
+  //   // 3
+  //   setCart(...cart, nextCart);
+  // };
   // 處理新增
-  const onAdd = (product) => {
+  const onAdd = (type = '', itemId = 0) => {
+    // FIXME 如果沒有類別要return
     // 判斷要加入的商品物件是否已經在購物車狀態
-    const foundIndex = items.findIndex((v) => v.id === product.id)
+    const foundIndex = cart[type].findIndex((v) => v.id === itemId.id);
 
     if (foundIndex !== -1) {
       // 如果有找到 ===> 遞增購物車狀態商品數量
-      onIncrease(product.id)
+      // onIncrease(itemId.id);
+      console.log('已重複，要增加商品數量');
     } else {
       // 否則 ===> 新增到購物車狀態
       // 擴增一個count屬性， 預設為1
-      const newItem = { ...product, count: 1 }
+      const newItem = [...cart[type], { itemId, count: 1 }];
       // 加到購物車狀態最前面
-      const nextItems = [newItem, ...items]
+      const nextCart = { ...cart, [type]: newItem };
       // 設定到狀態
-      setItems(nextItems)
+      setCart(nextCart);
+      console.log(cart);
     }
-  }
+  };
 
   // 使用陣列的迭代方法reduce(歸納, 累加)
   // 稱為"衍生,派生"狀態(derived state)，意即是狀態的一部份，或是由狀態計算得來的值
-  const totalQty = items.reduce((acc, v) => acc + v.count, 0)
-  const totalAmount = items.reduce((acc, v) => acc + v.count * v.price, 0)
+  // const totalQty = {
+  //   product: 0,
+  //   group: 0,
+  //   course: 0,
+  // };
+  // for (const key in cart) {
+  //   totalQty[key] = cart[key].reduce((acc, v) => acc + v.count, 0);
+  // }
+  // const totalAmount = {
+  //   product: 0,
+  //   group: 0,
+  //   course: 0,
+  // };
+  // for (const key in cart) {
+  //   totalAmount[key] = cart[key].reduce((acc, v) => acc + v.count, 0);
+  // }
 
+  // FIXME要改成讀資料庫
   // 第一次渲染完成後，從localStorage取出儲存購物車資料進行同步化
-  useEffect(() => {
-    // 讀取localStorage資料(key為cart)，如果不存在(null)會使用預設值空陣列([])
-    const storedItems = JSON.parse(localStorage.getItem('cart')) || []
-    // 設定到購物車狀態中 localStroage (key=cart) ===> items
-    setItems(storedItems)
-    // 第一次渲染已完成
-    setDidMount(true)
-  }, [])
+  // useEffect(() => {
+  //   // 讀取localStorage資料(key為cart)，如果不存在(null)會使用預設值空陣列([])
+  //   const storedItems = JSON.parse(localStorage.getItem('cart')) || [];
+  //   // 設定到購物車狀態中 localStroage (key=cart) ===> items
+  //   setCart(storedItems);
+  //   // 第一次渲染已完成
+  //   setDidMount(true);
+  // }, []);
 
+  // FIXME要改成讀資料庫
   // 當狀態items有更動時，要進行和loalStorage寫入的同步化
-  useEffect(() => {
-    // 排除第一次的渲染同步化工作
-    if (didMount) {
-      // items ===>  localStroage (key=cart)
-      localStorage.setItem('cart', JSON.stringify(items))
-    }
-    // eslint-disable-next-line
-  }, [items])
+  // useEffect(() => {
+  //   // 排除第一次的渲染同步化工作
+  //   if (didMount) {
+  //     // items ===>  localStroage (key=cart)
+  //     localStorage.setCart('cart', JSON.stringify(cart));
+  //   }
+  //   // eslint-disable-next-line
+  // }, [cart]);
 
   return (
     <>
       <CartContext.Provider
         // 如果傳出的值很多時，建議可以將數值/函式分組，然後依英文字母排序
         value={{
-          items,
-          totalAmount,
-          totalQty,
+          cart,
+          // totalAmount,
+          // totalQty,
           onAdd,
-          onDecrease,
-          onIncrease,
-          onRemove,
+          // onDecrease,
+          // onIncrease,
+          // onRemove,
         }}
       >
         {children}
       </CartContext.Provider>
     </>
-  )
+  );
 }
 
 // 搭配上面的CartProvider專門客製化名稱的勾子，目的是提供更好的閱讀性
@@ -149,4 +174,4 @@ export function CartProvider({ children }) {
  * @example
  * const { items, onAdd, onRemove, totalQty, totalAmount } = useCart();
  */
-export const useCart = () => useContext(CartContext)
+export const useCart = () => useContext(CartContext);
