@@ -344,6 +344,92 @@ router.get('/:groupId', async (req, res, next) => {
     next(err);
   }
 });
+router.post('/:groupId/join', authenticate, async (req, res) => {
+  const { groupId: groupIdString } = req.params;
+  const userId = req.user?.id; // 從 authenticate 中介軟體獲取的使用者 ID
+
+  // 1. 基本驗證
+  if (!userId) {
+    return res.status(401).json({ success: false, message: '未授權，請先登入後再操作。' });
+  }
+  if (!groupIdString) {
+    return res.status(400).json({ success: false, message: '缺少必要參數：揪團 ID。' });
+  }
+
+  const groupId = parseInt(groupIdString, 10);
+  if (isNaN(groupId)) {
+    return res.status(400).json({ success: false, message: '揪團 ID 格式不正確。' });
+  }
+
+  try {
+    // 2. 檢查目標揪團是否存在且未被軟刪除
+    const groupToJoin = await prisma.group.findUnique({
+      where: { 
+        id: groupId,
+        deletedAt: null // 確保揪團未被軟刪除
+      },
+      select: { // 只需要 maxPeople 來判斷人數
+        maxPeople: true
+      }
+    });
+
+    if (!groupToJoin) {
+      return res.status(404).json({ success: false, message: '找不到指定的揪團，或該揪團已不存在。' });
+    }
+
+    // 3. 檢查使用者是否已經是該揪團的成員
+    const existingMembership = await prisma.groupMember.findUnique({
+      where: {
+        // 依賴您 Prisma schema 中 GroupMember 的 @@unique([groupId, userId])
+        // 預設名稱通常是 'groupId_userId'
+        groupId_userId: {
+          groupId: groupId,
+          userId: userId,
+        },
+      },
+    });
+
+    if (existingMembership) {
+      return res.status(409).json({ success: false, message: '您已經是這個揪團的成員了。' }); // 409 Conflict
+    }
+
+    // 4. 檢查揪團是否已滿
+    const currentMemberCount = await prisma.groupMember.count({
+        where: { groupId: groupId }
+    });
+    if (currentMemberCount >= groupToJoin.maxPeople) { // groupToJoin.maxPeople 從步驟2獲取
+        return res.status(403).json({ success: false, message: '抱歉，此揪團人數已滿。'});
+    }
+
+    // 5. 創建新的 group_member 記錄
+    const newMemberEntry = await prisma.groupMember.create({
+      data: {
+        userId: userId,
+        groupId: groupId,
+        joinedAt: new Date(), // 設定加入時間為當前時間
+        // paidAt 預設為 null (根據您的 schema)
+      },
+    });
+
+    console.log(`使用者 ${userId} 成功加入揪團 ${groupId}。 GroupMember ID: ${newMemberEntry.id}`);
+    res.status(201).json({ // 201 Created
+      success: true,
+      message: '成功加入揪團！',
+      data: { // 可以選擇性返回新創建的記錄資訊
+        groupId: newMemberEntry.groupId,
+        userId: newMemberEntry.userId,
+        joinedAt: newMemberEntry.joinedAt,
+      },
+    });
+
+  } catch (error) {
+    console.error(`使用者 ${userId} 加入揪團 ${groupId} 時發生錯誤:`, error);
+    if (error.code === 'P2002') { // Prisma unique constraint violation (雖然前面已檢查，多一層保障)
+        return res.status(409).json({ success: false, message: '您似乎已經加入了此揪團 (資料庫記錄衝突)。' });
+    }
+    res.status(500).json({ success: false, message: '加入揪團時伺服器發生錯誤，請稍後再試。' });
+  }
+});
 // POST /api/group/:groupId/comments (新增留言)
 router.post('/:groupId/comments', authenticate, async (req, res, next) => {
   try {
