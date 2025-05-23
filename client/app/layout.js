@@ -26,7 +26,7 @@ export default function RootLayout({ children }) {
         >
           <Providers>
             <Header></Header>
-            {children}
+            <div className="min-h-screen">{children}</div>
             <Footer></Footer>
           </Providers>
         </ThemeProvider>
