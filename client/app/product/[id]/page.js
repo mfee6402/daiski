@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import FavoriteButton from '@/components/favorite-button';
 import Link from 'next/link';
 import Image from 'next/image';
+import ProductAddCartButton from '../_components/product-add-cart-button';
 import {
   ChevronUp,
   ChevronDown,
@@ -338,9 +339,14 @@ export default function ProductDetail() {
 
             {/* 動作按鈕 */}
             <div className="grid grid-cols-3 gap-4">
-              <Button className="h-12 bg-blue-800 text-white">
+              {/* <Button className="h-12 bg-blue-800 text-white">
                 加入購物車
-              </Button>
+              </Button> */}
+
+              <ProductAddCartButton
+                skuId={currentSku.skuId}
+                quantity={quantity}
+              />
               {/* 使用你的 FavoriteButton 元件 */}
               <FavoriteButton
                 // isFav: 判斷當前商品 ID 是否存在於收藏列表中

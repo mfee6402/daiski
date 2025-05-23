@@ -12,6 +12,7 @@ import {
   CardDescription,
   CardContent,
 } from '@/components/ui/card'; // 引入 Card 相關元件
+import { useAuth } from '@/hooks/use-auth';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3005';
 
@@ -19,9 +20,21 @@ export default function EditGroupPage() {
   const router = useRouter();
   const params = useParams();
   const groupId = params['groups-id']; // 從 URL 獲取揪團 ID
-
+  const {
+    user: authUser,
+    isAuth,
+    isLoading: authIsLoading,
+    didAuthMount,
+  } = useAuth(); // <--- 2. 獲取驗證狀態
+  useEffect(() => {
+    console.log('[EditPage] useAuth - didAuthMount:', didAuthMount);
+    console.log('[EditPage] useAuth - authIsLoading:', authIsLoading);
+    console.log('[EditPage] useAuth - isAuth:', isAuth);
+    console.log('[EditPage] useAuth - authUser:', authUser);
+  }, [didAuthMount, authIsLoading, isAuth, authUser]);
   const [initialData, setInitialData] = useState(null); // 存放從 API 獲取的揪團初始資料
   const [isLoading, setIsLoading] = useState(true); // 頁面或表單提交的載入狀態
+  const [isSubmitting, setIsSubmitting] = useState(false); // 表單提交的載入狀態
   const [formError, setFormError] = useState(''); // 表單錯誤訊息
 
   // 表單選項的狀態
@@ -59,6 +72,17 @@ export default function EditGroupPage() {
       setIsLoading(false);
       return;
     }
+    // 確保 useAuth 的 didAuthMount 完成後再執行，避免在 isAuth 狀態未確定前就操作
+    if (!didAuthMount) return;
+
+    // 如果未登入，則不嘗試獲取揪團資料進行編輯
+    if (!isAuth && didAuthMount) {
+      setFormError('請先登入才能編輯揪團。');
+      setIsLoading(false);
+      // 可以考慮導向到登入頁面
+      // router.push('/login'); // 假設登入頁路徑
+      return;
+    }
     setIsLoading(true);
     async function fetchGroupDetails() {
       try {
@@ -90,7 +114,7 @@ export default function EditGroupPage() {
             : '',
           locationId: data.locationId ? String(data.locationId) : '',
           customLocation: data.customLocation || '',
-          difficulty: data.difficulty || '',
+          difficulty: data.ActivityType || '',
           minPeople: data.minPeople || 2,
           maxPeople: data.maxPeople || 10,
           price: data.price || 0,
@@ -110,19 +134,31 @@ export default function EditGroupPage() {
                   : `${API_BASE}${data.cover_image}`
                 : '',
         };
-        setInitialData(formattedData);
-        setCurrentTypeForLocation(formattedData.type); // 設定當前類型以觸發地點載入
-        setFormError(''); // 清除之前的錯誤
+        // **權限預先檢查 (可選，但建議)**
+        // 雖然最終權限由後端決定，但前端可以做初步判斷以改善使用者體驗
+        if (
+          isAuth &&
+          authUser &&
+          data.organizerId !== undefined &&
+          data.organizerId !== authUser.id
+        ) {
+          setFormError('您沒有權限編輯此揪團 (前端檢查)。');
+          setInitialData(null); // 清空資料，不讓表單顯示
+        } else {
+          setInitialData(formattedData);
+          setCurrentTypeForLocation(formattedData.type);
+          setFormError('');
+        }
       } catch (err) {
         console.error('編輯頁面 - 獲取揪團詳情失敗:', err);
         setFormError(`獲取揪團資料失敗：${err.message}`);
-        setInitialData(null); // 確保出錯時 initialData 為空
+        setInitialData(null);
       } finally {
         setIsLoading(false);
       }
     }
     fetchGroupDetails();
-  }, [groupId, API_BASE]);
+  }, [groupId, API_BASE, isAuth, authUser, didAuthMount]); // 加入 isAuth, authUser, didAuthMount 作為依賴
 
   // 3. 載入滑雪場地點選項 (當 currentTypeForLocation 為 '滑雪' 時)
   useEffect(() => {
@@ -219,48 +255,53 @@ export default function EditGroupPage() {
     }
     // 注意：organizerId 通常不由前端在編輯時提交，後端應通過身份驗證來確認操作者權限
 
+    let responseStatus = null;
     try {
       const res = await fetch(`${API_BASE}/api/group/${groupId}`, {
         method: 'PUT',
         body: formDataToSend,
-        // 如果您的後端 PUT 路由需要 JWT token 進行身份驗證，您需要在這裡加入 headers
-        // headers: {
-        //   'Authorization': `Bearer ${your_auth_token}`, // 從您的身份驗證系統獲取 token
-        // },
+        credentials: 'include',
       });
+      responseStatus = res.status;
 
       if (!res.ok) {
-        const errorData = await res
-          .json()
-          .catch(() => ({ error: '更新失敗，且無法解析伺服器回應' }));
-        throw new Error(errorData.error || `伺服器錯誤: ${res.status}`);
+        let errorData;
+        try {
+          errorData = await res.json();
+        } catch (parseError) {
+          console.error('無法解析伺服器錯誤回應:', parseError);
+          throw new Error(
+            `伺服器錯誤 (狀態 ${responseStatus})，且無法解析回應內容。`
+          );
+        }
+        throw new Error(
+          errorData?.error || `伺服器錯誤 (狀態 ${responseStatus})。`
+        );
       }
       alert('揪團更新成功！');
-      router.push(`/groups/${groupId}`); // 成功後導向回揪團詳細頁面
-      router.refresh(); // 嘗試刷新頁面以獲取最新數據 (Next.js 13+ App Router)
+      router.push(`/groups/${groupId}`);
+      router.refresh();
     } catch (err) {
       console.error('更新揪團失敗:', err);
       setFormError(`更新失敗：${err.message}`);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false); // 完成提交後，設定為非提交中
     }
   };
 
-  // 當 GroupForm 內部資料變化時的回呼，主要用於更新 currentTypeForLocation
+  // 當 GroupForm 內部資料變化時的回呼
   const handleFormChangeForEdit = useCallback(
     (formDataFromComponent) => {
       if (formDataFromComponent.type !== currentTypeForLocation) {
         setCurrentTypeForLocation(formDataFromComponent.type);
       }
-      // 如果您在編輯頁面也有即時預覽，可以在這裡更新預覽的狀態
-      // setPreviewFormData(formDataFromComponent);
-      // setPreviewCover(coverPreviewFromComponent);
     },
     [currentTypeForLocation]
   );
 
-  // 處理初始資料載入中的情況
-  if (isLoading && !initialData) {
+  // --- 渲染邏輯 ---
+  if (authIsLoading || (isLoading && !initialData && !formError)) {
+    // 初始載入 auth 或頁面資料時
     return (
       <div className="min-h-screen flex items-center justify-center p-8 text-center text-xl bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300">
         <svg
@@ -283,13 +324,39 @@ export default function EditGroupPage() {
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
           ></path>
         </svg>
-        載入揪團資料中...
+        載入中...
       </div>
     );
   }
 
-  // 處理初始資料載入失敗或找不到揪團的情況
-  if (!initialData) {
+  // 如果 useAuth 完成掛載但未登入，或者初始資料載入失敗
+  if (didAuthMount && !isAuth) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-slate-50 dark:bg-slate-900">
+        <Card className="w-full max-w-md shadow-lg bg-white dark:bg-slate-800">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+              請先登入
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-slate-700 dark:text-slate-300 mb-6">
+              您需要登入才能編輯揪團。
+            </p>
+            <Button
+              onClick={() => router.push('/login')}
+              className="bg-sky-600 hover:bg-sky-700 text-white"
+            >
+              前往登入
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!initialData && !isLoading) {
+    // 確保不是仍在載入中
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-slate-50 dark:bg-slate-900">
         <Card className="w-full max-w-md shadow-lg bg-white dark:bg-slate-800">
@@ -314,52 +381,51 @@ export default function EditGroupPage() {
     );
   }
 
-  // 當 initialData 載入完成後，渲染 GroupForm
   return (
     <main className="min-h-screen bg-slate-100 dark:bg-slate-900 py-8 px-4">
       <div className="max-w-screen-lg mx-auto">
-        {/* 編輯頁面通常不需要步驟條，直接顯示表單 */}
-        {/* 錯誤訊息顯示區塊 */}
-        {formError &&
-          !isLoading && ( // 只在非載入中時顯示表單級別的錯誤
-            <div
-              role="alert"
-              className="mb-6 p-4 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-500/70 text-red-700 dark:text-red-200 rounded-md shadow-sm"
-            >
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <span role="img" aria-label="錯誤圖示" className="text-xl">
-                    ⚠️
-                  </span>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium">操作時發生錯誤</h3>
-                  <div className="mt-1 text-sm">
-                    <p>{formError}</p>
-                  </div>
+        {formError && !isSubmitting && (
+          <div
+            role="alert"
+            className="mb-6 p-4 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-500/70 text-red-700 dark:text-red-200 rounded-md shadow-sm"
+          >
+            {/* ... (錯誤訊息顯示) ... */}
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <span role="img" aria-label="錯誤圖示" className="text-xl">
+                  ⚠️
+                </span>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium">操作時發生錯誤</h3>
+                <div className="mt-1 text-sm">
+                  <p>{formError}</p>
                 </div>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-        <GroupForm
-          initialValues={initialData} // 將從 API 獲取的資料作為初始值傳入
-          onSubmit={handleEditSubmit} // 提交表單時呼叫的函式
-          isLoading={isLoading} // 控制提交按鈕的載入狀態
-          submitButtonText="儲存變更" // 設定提交按鈕的文字
-          typeOptions={typeOptions} // 活動類型選項
-          locationOptions={locationOptions} // 滑雪場地點選項
-          // skiDifficultyOptions 可以使用 GroupForm 內部的預設值，或從這裡傳入
-          formError={formError} // 將錯誤訊息傳給 GroupForm 內部可能也需要顯示
-          setFormError={setFormError} // 允許 GroupForm 設定或清除錯誤
-          onFormDataChange={handleFormChangeForEdit} // 當表單資料變化時的回呼
-        />
+        {/* 只有在 initialData 存在時才渲染表單 */}
+        {initialData && (
+          <GroupForm
+            initialValues={initialData}
+            onSubmit={handleEditSubmit}
+            isLoading={isSubmitting} // 表單提交的載入狀態
+            submitButtonText="儲存變更"
+            typeOptions={typeOptions}
+            locationOptions={locationOptions}
+            formError={formError}
+            setFormError={setFormError}
+            onFormDataChange={handleFormChangeForEdit}
+          />
+        )}
         <div className="mt-8 text-center">
           <Button
             variant="ghost"
-            onClick={() => router.push(`/groups/${groupId}`)} // 返回到詳細頁面
+            onClick={() => router.push(`/groups/${groupId}`)}
             className="text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 px-6 py-2"
-            disabled={isLoading}
+            disabled={isSubmitting}
           >
             取消編輯
           </Button>
