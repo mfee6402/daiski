@@ -159,7 +159,7 @@ export default function GroupDetailPage() {
   }, []);
 
   const handleJoinGroup = () => {
-    onAdd('group', group.id);
+    onAdd('CartGroup', group.id);
 
     alert(
       `功能待開發：加入揪團 ${group?.title || groupId}，group_id為${group.id}`
