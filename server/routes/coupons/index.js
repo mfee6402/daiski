@@ -13,17 +13,9 @@ const router = express.Router();
 // });
 
 // 查詢
-router.get('/', authenticate, async function (req, res) {
-  console.log(new Date());
+router.get('/', async function (req, res) {
   try {
-    const userId = req.user.id;
     const coupon = await prisma.coupon.findMany({
-      where: {
-        UserCoupon: { none: { userId } },
-        endAt: {
-          gt: new Date(),
-        },
-      },
       select: {
         // 想顯示的 scalar 欄位
         id: true,
@@ -53,10 +45,8 @@ router.get('/', authenticate, async function (req, res) {
       target: couponTarget.target,
     }));
     res.status(200).json({ status: 'success', coupons });
-  } catch (err) {
-    // res.status(200).json({ status: 'fail', data: error });
-    console.error(err); // 直接印 stack 會看到哪個欄位驗證沒過
-    res.status(500).json({ err: err.message });
+  } catch (error) {
+    res.status(200).json({ status: 'fail', data: '查詢資料庫失敗' });
   }
 });
 
@@ -81,17 +71,48 @@ router.get('/usercoupon', authenticate, async function (req, res) {
   try {
     const userId = req.user.id;
 
-    const coupons = await prisma.userCoupon.findMany({
+    const usercoupons = await prisma.userCoupon.findMany({
       where: {
-        id: userId,
+        userId: userId,
       },
       include: {
-        coupon: true,
+        coupon: {
+          select: {
+            // 想顯示的 scalar 欄位
+            id: true,
+            name: true,
+            startAt: true,
+            endAt: true,
+            usageLimit: true,
+            minPurchase: true,
+            couponType: {
+              select: {
+                type: true,
+                amount: true,
+              },
+            },
+            couponTarget: {
+              select: {
+                target: true,
+              },
+            },
+          },
+        },
       },
     });
-
-    coupons.map((usecoupon) => usecoupon.coupon);
-    res.status(200).json({ status: 'success', coupons });
+    // usercoupons.map((usecoupon) => usecoupon.coupon);
+    const usercoupon = usercoupons.map(({ coupon }) => ({
+      id: coupon.id,
+      name: coupon.name,
+      startAt: coupon.startAt,
+      endAt: coupon.endAt,
+      usageLimit: coupon.usageLimit,
+      minPurchase: coupon.minPurchase,
+      type: coupon.couponType.type,
+      amount: coupon.couponType.amount,
+      target: coupon.couponTarget.target,
+    }));
+    res.status(200).json({ status: 'success', usercoupon });
   } catch (error) {
     res.status(400).json({ error });
   }
