@@ -91,7 +91,7 @@ router.post('/', async function (req, res) {
 
     // console.log('PayPal 訂單回應:', data);
     const orderId = data.id;
-
+    console.log('送出訂單' + data);
     return res.status(200).json({ orderId });
   } catch (error) {
     console.error('創建訂單錯誤:', error);
@@ -104,7 +104,6 @@ router.get('/:paymentId', async function (req, res) {
   try {
     const accessToken = await getAccessToken();
     const { paymentId } = req.params;
-    console.log(paymentId);
     const url = `${process.env.PAYPAL_BASEURL}/v2/checkout/orders/${paymentId}/capture`;
     const response = await fetch(url, {
       method: 'POST',

@@ -24,7 +24,8 @@ export default function UserPage() {
   const { mutate } = useAuthGet();
   const { login } = useAuthLogin();
   const { logout } = useAuthLogout();
-
+  //取用router，為了跳轉頁面
+  const router = useRouter();
   // 取得登入狀態
   const { isAuth, isLoading } = useAuth();
 

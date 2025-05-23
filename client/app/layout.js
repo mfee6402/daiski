@@ -6,9 +6,7 @@ import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { ThemeProvider } from '@/components/theme-provider';
 //shadCN的sonner
-import { Toaster } from "sonner";
-
-
+import { Toaster } from 'sonner';
 
 export const metadata = {
   title: 'DAISKI',
