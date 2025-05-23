@@ -7,20 +7,58 @@ import authenticate from '../../middlewares/authenticate.js';
 const router = express.Router();
 
 // 新增
-router.post('/', async function (req, res) {
-  const cart = await prisma.cart.create({
-    data: {
-      userId: 1,
-    },
-  });
+router.post('/', authenticate, async function (req, res, next) {
+  try {
+    //   const userId = +req.user.id;
+    //   const category = req.body.category;
+    //   const itemId = req.body.itemId;
+    //   console.log({ userId, category, itemId });
+    //   const cartCreateMap = {
+    //     CartGroup: prisma.cartGroup,
+    //     CartProduct: prisma.cartProduct,
+    //     CartCourse: prisma.cartCourse,
+    //   };
+    //   // 檢查分類
+    //   const cartModel = cartCreateMap[category];
 
-  res.status(200).json({ status: 'success', data: { cart } });
+    //   if (!cartModel) {
+    //     return res.status(200).json({ status: 'fail', message: '分類不存在' });
+    //   }
+
+    //   // 獲得使用者對應的購物車
+    //   const userCart = await prisma.cart.findFirst({
+    //     where: { userId },
+    //   });
+
+    //   // FIXME檢查是否參加過，除了判斷購物車有沒有(已做)，還要判斷訂單中有沒有
+    //   const checkJoin = await prisma.cartGroup.findFirst({
+    //     where: { cartId: userCart.id, groupMemberId: itemId },
+    //   });
+    //   if (checkJoin) {
+    //     console.log('已參加');
+    //     return res.status(200).json({ status: 'fail', message: '已參加' });
+    //   }
+
+    //   // FIXME 要處理如果沒購物車的話，要先新增購物車
+
+    //   // 新增
+    //   await cartModel.create({
+    //     data: {
+    //       cartId: userCart.id,
+    //       groupMemberId: itemId,
+    //     },
+    //   });
+
+    res.status(200).json({ status: 'success', data: 'OK' });
+  } catch (e) {
+    next(e);
+  }
 });
 
 // 查詢
-router.get('/', authenticate, async function (req, res, next) {
+router.get('/', async function (req, res, next) {
   try {
-    const userId = +req.user.id;
+    // const userId = +req.user.id;
 
     const data = await prisma.cart.findUnique({
       select: {
@@ -84,7 +122,7 @@ router.get('/', authenticate, async function (req, res, next) {
       // FIXME等待會員資料
       // 查詢第1台購物車
       where: {
-        userId: userId,
+        userId: 1,
       },
     });
 

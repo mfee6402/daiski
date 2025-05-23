@@ -1,8 +1,9 @@
 'use client';
-//==== 其他頁面取用Token ====
+//==== 這是系統二的一般功能如何通過驗證 ====
 import React, { useState, useEffect, use } from 'react';
 
 export default function Test2Page(props) {
+  const [userProfile, setUserProfile] = useState({});
   useEffect(function () {
     const token = localStorage.getItem('tokenBox');
     console.log('token', token);
@@ -14,14 +15,17 @@ export default function Test2Page(props) {
         },
       });
       const data = await response.json();
+      setUserProfile(data.data);
       console.log('data', data);
     }
     getUser();
   }, []);
+  console.log('userProfile',userProfile);
   //====End Token取用====
   return (
     <>
-      <div>Test2 Page</div>
+      <div>{userProfile['account']}</div>
     </>
   );
+  //透過Token取用資料庫資料
 }

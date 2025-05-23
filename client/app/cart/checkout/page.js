@@ -55,7 +55,7 @@ export default function CheckoutPage(props) {
 
             <h6 className=" text-h6-tw">信用卡</h6>
           </label>
-          {/* LINE PAY */}
+          {/* Paypal */}
           <label className="inline-flex items-center space-x-2 relative">
             <input
               type="radio"
@@ -64,7 +64,10 @@ export default function CheckoutPage(props) {
             />
             <span className="pointer-events-none w-3  h-3 rounded-full bg-primary-600 absolute left-1.5 my-auto opacity-0 peer-checked:opacity-100" />
 
-            <h6 className=" text-h6-tw">LINE PAY</h6>
+            <h6 className=" text-h6-tw">Paypal</h6>
+            <Link href="http://localhost:3000/cart/checkout/paypal">
+              PayPal
+            </Link>
           </label>
           {/* 綠界 */}
           <label className="inline-flex items-center space-x-2 relative">

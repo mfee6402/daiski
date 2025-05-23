@@ -14,29 +14,106 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-export default function SignUpPage(props) {
-  const [birthdate, setbirthDate] = useState('');
+// import { isDev } from '@/config';
+import { toast, ToastContainer } from 'react-toastify';
+import { useParams } from 'next/navigation';
+// import { json } from 'stream/consumers';
 
+export default function SignUpPage({ params }) {
+  const { id } = useParams();
+  const [submitting, setSubmitting] = useState(false);
+  const [course, setCourse] = useState();
+  const [form, setForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    birthday: '',
+    terms: false,
+  });
+
+  // 載入課程資料
+  useEffect(() => {
+    async function fetchCourse() {
+      try {
+        const res = await fetch(
+          `http://localhost:3005/api/courses/${id}/sign-up`
+        );
+        if (!res.ok) throw new Error('不ok');
+        const data = await res.json();
+        setCourse(data);
+      } catch (error) {
+        console.error('載入課程資料失敗:', error);
+      }
+    }
+    fetchCourse();
+  }, [id]);
+
+  const handleChange = (e) => {
+    setForm((prev) => ({
+      ...prev,
+      [e.target.id]: e.target.value,
+    }));
+  };
+
+  // 送出報名
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.terms) {
+      return toast.warn('請先同意報名須知');
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch(
+        `http://localhost:3005/api/courses/${id}/sign-up`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: form.name,
+            phone: form.phone,
+            email: form.email,
+            birthday: form.birthday,
+            // user_id: 後端可從 session 拿，如果開發階段就先塞一個測試 id
+            user_id: 1,
+          }),
+        }
+      );
+      const json = await res.json();
+      if (!res.ok || json.status !== 'success') {
+        throw new Error(json.message || '報名失敗');
+      }
+      toast.success('報名成功！');
+      // 清空表單
+      setForm({ name: '', phone: '', email: '', birthday: '', terms: false });
+    } catch (err) {
+      console.log(err);
+      toast.error(`報名失敗：${err.message}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  if (!course) {
+    return <div className="text-center p-6">載入中...</div>;
+  }
+  // 取第一筆 variant 作為報名對象
+  const variant = course.variants[0];
   return (
     <>
       <main className="mt-6 mb-6">
-        <form className="max-w-3xl mx-auto">
+        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
           <Card className="p-8 space-y-6">
             <CardHeader>
-              <CardTitle className="text-2xl">
-                S3 第三彈 野澤溫泉&東京五日行
-              </CardTitle>
+              <CardTitle className="text-2xl">{course.name} </CardTitle>
               {/* 課程日期 */}
               <CardDescription className="mt-4">
-                日期: 2025/01/12 ~ 2025/01/16
+                日期: {course.period}
               </CardDescription>
-              {/* 時長 */}
-              <CardDescription className="mt-4">時數: 20小時</CardDescription>
               {/* 上課地點 */}
-              <CardDescription className="mt-4">地點: 野澤溫泉</CardDescription>
+              <CardDescription className="mt-4">地點:</CardDescription>
               {/* 售價 */}
               <CardDescription className="mt-4">
-                費用: <span className=" text-red">NT$65,900</span>
+                費用:{' '}
+                <span className=" text-red">NT${variant.price || ''}</span>
               </CardDescription>
             </CardHeader>
             <hr />
@@ -45,17 +122,26 @@ export default function SignUpPage(props) {
             </CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 px-6">
               <div className="grid gap-2">
-                <Label htmlFor="email">姓名</Label>
+                <Label htmlFor="name">姓名</Label>
                 <Input
                   type="text"
                   id="name"
                   placeholder="請輸入真實姓名"
+                  value={form.name}
+                  onChange={handleChange}
                   required
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="email">電話</Label>
-                <Input type="text" id="phone" placeholder="" required />
+                <Label htmlFor="phone">電話</Label>
+                <Input
+                  type="text"
+                  id="phone"
+                  placeholder=""
+                  value={form.phone}
+                  onChange={handleChange}
+                  required
+                />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="email">電子郵件</Label>
@@ -63,52 +149,43 @@ export default function SignUpPage(props) {
                   type="email"
                   id="email"
                   placeholder="example@mail.com"
+                  value={form.email}
+                  onChange={handleChange}
                   required
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="email">生日</Label>
+                <Label htmlFor="birthday">生日</Label>
                 <Input
-                  id="bd"
+                  id="birthday"
                   type="date"
-                  value={birthdate}
-                  onChange={(e) => setbirthDate(e.target.value)}
-                />{' '}
+                  value={form.birthday}
+                  onChange={handleChange}
+                />
               </div>
             </div>
             <hr />
             <CardContent>
+              <p>課程簡介</p>
+            </CardContent>
+            <div className=" sm:grid-cols-2 gap-6 px-6 space-y-3">
+              {course.description &&
+                course.description.split('\n').map((line, idx) => (
+                  <div key={idx}>
+                    <p className="text-sm text-gray-600">{line}</p>
+                  </div>
+                ))}
+            </div>
+            <CardContent>
               <p>課程內容</p>
             </CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 px-6 space-y-3">
-              <div>
-                <p className="font-medium">第一天：集合 & 技術檢測</p>
-                <p className="text-sm text-gray-600">
-                  抵達滑雪場、裝備檢查、技巧分組
-                </p>
-              </div>
-              <div>
-                <p className="font-medium">第二天：姿勢優化與轉彎控制</p>
-                <p className="text-sm text-gray-600">
-                  學習重心轉換與平行轉彎技巧
-                </p>
-              </div>
-              <div>
-                <p className="font-medium">第三天：雪況應對實作</p>
-                <p className="text-sm text-gray-600">
-                  在不同雪況下練習滑行與控制
-                </p>
-              </div>
-              <div>
-                <p className="font-medium">第四天：模擬競賽與挑戰</p>
-                <p className="text-sm text-gray-600">接力滑行、障礙路線訓練</p>
-              </div>
-              <div>
-                <p className="font-medium">第五天：成果驗收與頒獎</p>
-                <p className="text-sm text-gray-600">
-                  技能檢核、證書頒發與自由時間
-                </p>
-              </div>
+            <div className=" sm:grid-cols-2 gap-6 px-6 space-y-3">
+              {course.content &&
+                course.content.split('\n').map((line, idx) => (
+                  <div key={idx}>
+                    <p className="text-sm text-gray-600">{line}</p>
+                  </div>
+                ))}
             </div>
             <hr />
             <CardContent className="flex justify-center px-6">
@@ -132,22 +209,37 @@ export default function SignUpPage(props) {
                 主辦單位將提供延期或全額退費選項，無須負擔手續費。
               </ScrollArea>
             </CardFooter>
-            <div className="flex justify-center px-6">
-              <Checkbox id="terms" />
-              <label
-                htmlFor="terms"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                我已閱讀並同意上述《報名須知與退費政策》內容。
-              </label>
+            <div className="flex justify-center px-6 space-x-2">
+              <Checkbox
+                id="terms"
+                checked={form.terms}
+                onCheckedChange={(checked) =>
+                  setForm((prev) => ({ ...prev, terms: checked }))
+                }
+              />
+              <Label htmlFor="terms" className="text-sm">
+                我已閱讀並同意《報名須知與退費政策》
+              </Label>
             </div>
+
             <hr />
             <div className="flex justify-center px-6 gap-4">
-              <Button variant="outline">取消</Button>
-              <Button>加入購物車</Button>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() =>
+                  setForm({ name: '', phone: '', email: '', birthday: '' })
+                }
+              >
+                取消
+              </Button>
+              <Button type="submit" disabled={submitting || !form.terms}>
+                {submitting ? '填寫中' : '加入購物車'}
+              </Button>
             </div>
           </Card>
         </form>
+        <ToastContainer className="" />
       </main>
     </>
   );
