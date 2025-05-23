@@ -91,8 +91,7 @@ export default function UserPage() {
       </div>
     );
   }
-  //取用router，為了跳轉頁面
-  const router = useRouter();
+
 
   return (
     <>
