@@ -33,7 +33,7 @@ export default function CartItemList({
       </div>
 
       <div className="mt-10 flex flex-col gap-4">
-        {data?.cart?.[category].map((item, i) => {
+        {data?.[category].map((item, i) => {
           return (
             <div key={item.id} className="flex justify-between">
               {/* 圖與名稱 */}

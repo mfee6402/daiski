@@ -5,6 +5,8 @@ import { PiPersonSimpleSki } from 'react-icons/pi';
 import { MapPinned } from 'lucide-react';
 import { InputWithButton } from './_component/input';
 import { DatePickerWithRange } from './_component/datepicker';
+import Link from 'next/link';
+
 import {
   Select,
   SelectContent,
@@ -99,24 +101,32 @@ export default function CoursesPage(props) {
             key={c.id}
             className="max-w-xs max-auto rounded-xl shadow-md overflow-hidden border"
           >
-            <Image
-              src={`http://localhost:3005/${c.photo}`}
-              alt={c.name}
-              width={400}
-              height={250}
-              className="w-full h-48 object-cover"
-            />
+            <Link href={`/courses/${c.id}`}>
+              <Image
+                src={`http://localhost:3005/${c.photo}`}
+                alt={c.name}
+                width={400}
+                height={250}
+                className="w-full h-48 object-cover"
+              />
+            </Link>
+
             <div className="p-4">
-              <h3 className="">{c.name}</h3>
+              <Link href={`/courses/${c.id}`}>
+                <h3 className="">{c.name}</h3>
+              </Link>
               <p className="text-sm text-gray-500 mt-1">{c.period}</p>
               <p className="text-sm  mt-2 mb-2">
                 售價
                 <span className="text-red-500"> $NT {c.price} </span>起
               </p>
               <hr />
-              <button className="mt-4 w-full bg-gray-800 text-white text-sm py-2 rounded-full hover:bg-gray-700 trsndition">
-                立即報名
-              </button>
+              {/* 點按鈕也能進入詳細頁 */}
+              <Link href={`/courses/${c.id}`}>
+                <button className="mt-4 w-full bg-gray-800 text-white text-sm py-2 rounded-full hover:bg-gray-700 trsndition">
+                  查看課程
+                </button>
+              </Link>
             </div>
           </div>
         ))}
