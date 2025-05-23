@@ -3,13 +3,13 @@ import { produce } from 'immer';
 import { useEffect } from 'react';
 
 export default function QuantityButton({
-  productId = 0,
+  itemId = 0,
+  categoryId,
   data = '',
   setData = () => {},
   type = '',
 }) {
-  const url = `http://localhost:3005/api/cart/${productId}`;
-
+  const url = `http://localhost:3005/api/cart/${categoryId}`;
   // 將更新傳回後端
   async function fetchData(nextCart) {
     try {
@@ -33,15 +33,15 @@ export default function QuantityButton({
         className="w-[50]"
         onClick={() => {
           const nextCart = produce(data, (draft) => {
-            draft.cart.CartProduct.map((product) => {
-              if (productId === product.id) {
+            draft.cart.CartProduct.map((item) => {
+              if (itemId === item.id) {
                 if (type === 'minus') {
                   // FIXME 增加刪除功能
-                  product.quantity === 1
+                  item.quantity === 1
                     ? alert('確認刪除?(待做)')
-                    : product.quantity--;
+                    : item.quantity--;
                 } else if (type === 'plus') {
-                  product.quantity++;
+                  item.quantity++;
                 }
               }
             });
