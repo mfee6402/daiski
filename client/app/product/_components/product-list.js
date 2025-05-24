@@ -274,7 +274,7 @@ export default function ProductList({ products, favIds, onToggleFavorite }) {
                       alt={p.name}
                       width={10}
                       height={10}
-                      className="w-full h-full object-contain transition duration-300 hover:scale-110"
+                      className="w-full h-full object-contain transition duration-300 hover:scale-120"
                     />
                   </div>
                 </CardHeader>
