@@ -6,6 +6,7 @@ import { CloudCog } from 'lucide-react';
 export default function QuantityButton({ itemId = 0, type = '' }) {
   const url = `http://localhost:3005/api/cart/${itemId}`;
   const { cart, setCart } = useCart();
+  // FIXME 使用useCart鉤子，避免程式碼重複
   // 將更新傳回後端
   async function fetchData(updateQuantity) {
     try {
@@ -33,23 +34,30 @@ export default function QuantityButton({ itemId = 0, type = '' }) {
               if (itemId === item.id) {
                 if (type === 'minus') {
                   // FIXME 增加刪除功能
-                  item.quantity === 1
+                  return item.quantity === 1
                     ? alert('確認刪除?(待做)')
                     : item.quantity--;
                 } else if (type === 'plus') {
-                  item.quantity++;
+                  return item.quantity++;
                 }
               }
             });
           });
-
           setCart(nextCart);
-
-          nextCart.CartProduct.map((item) => {
-            if (itemId === item.id) {
-              fetchData(item.quantity);
-            }
-          });
+          const updatedItem = nextCart.CartProduct.find(
+            (item) => item.id === itemId
+          );
+          if (updatedItem) {
+            fetchData(updatedItem.quantity);
+            // onAdd('CartProduct', {
+            //   id: itemId,
+            //   quantity: updatedItem.quantity,
+            //   price: updatedItem.price,
+            //   name: updatedItem.name,
+            //   imageUrl: updatedItem.imageUrl,
+            //   size: updatedItem.size,
+            // });
+          }
         }}
       >
         {/* FIXME -號要加大*/}
