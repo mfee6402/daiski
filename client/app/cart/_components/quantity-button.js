@@ -1,25 +1,21 @@
 'use client';
 import { produce } from 'immer';
 import { useEffect } from 'react';
-
-export default function QuantityButton({
-  itemId = 0,
-  categoryId,
-  data = '',
-  setData = () => {},
-  type = '',
-}) {
-  const url = `http://localhost:3005/api/cart/${categoryId}`;
+import { useCart } from '@/hooks/use-cart';
+import { CloudCog } from 'lucide-react';
+export default function QuantityButton({ itemId = 0, type = '' }) {
+  const url = `http://localhost:3005/api/cart/${itemId}`;
+  const { cart, setCart } = useCart();
   // 將更新傳回後端
-  async function fetchData(nextCart) {
+  async function fetchData(updateQuantity) {
     try {
-      const res = await fetch(url, {
+      await fetch(url, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          cart: nextCart.cart,
+          updateQuantity: updateQuantity,
         }),
       });
     } catch (err) {
@@ -32,8 +28,8 @@ export default function QuantityButton({
       <button
         className="w-[50]"
         onClick={() => {
-          const nextCart = produce(data, (draft) => {
-            draft.cart.CartProduct.map((item) => {
+          const nextCart = produce(cart, (draft) => {
+            draft.CartProduct.map((item) => {
               if (itemId === item.id) {
                 if (type === 'minus') {
                   // FIXME 增加刪除功能
@@ -47,8 +43,13 @@ export default function QuantityButton({
             });
           });
 
-          setData(nextCart);
-          fetchData(nextCart);
+          setCart(nextCart);
+
+          nextCart.CartProduct.map((item) => {
+            if (itemId === item.id) {
+              fetchData(item.quantity);
+            }
+          });
         }}
       >
         {/* FIXME -號要加大*/}

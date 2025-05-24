@@ -610,6 +610,7 @@ import { Sliders } from 'lucide-react';
 import ProductList from './_components/product-list';
 import ProductPagination from './_components/product-pagination';
 import ProductSidebar from './_components/product-sidebar';
+import ProductSort from './_components/product-sort';
 
 // 引入自定義 Hook，用於管理用戶認證狀態
 import { useAuth } from '@/hooks/use-auth';
@@ -797,6 +798,16 @@ export default function ProductPage() {
       .catch(console.error);
   }, [pageInfo.category_id]);
 
+  // 新增排序狀態，從 URL 讀取初始值，若無則使用預設值 (例如：依上架時間由新到舊)
+  const [sortOption, setSortOption] = useState(
+    () => searchParams.get('sort') || 'createdAt_desc'
+  );
+
+  // Effect Hook：當 URL 中的 'sort' 參數改變時，同步更新 sortOption state
+  useEffect(() => {
+    setSortOption(searchParams.get('sort') || 'createdAt_desc');
+  }, [searchParams]);
+
   // 5. **用 SWR 獲取商品列表**
   //    `productsKey` 函式根據當前 URL 參數動態生成 SWR 的 Key。
   //    `useSWR` 根據這個 Key 和 `Workspaceer` 函式獲取商品列表數據。
@@ -930,6 +941,20 @@ export default function ProductPage() {
     setSelectedBrands([]); // 立即清空 UI
   };
 
+  // 處理排序變更的函式
+  const handleSortChange = (newSortValue) => {
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    if (newSortValue) {
+      params.set('sort', newSortValue);
+    } else {
+      // 如果允許清除排序或回到 API 預設排序，可以刪除 'sort' 參數
+      params.delete('sort');
+    }
+    params.set('page', '1'); // 變更排序時，重置到第一頁
+    router.push(`?${params.toString()}`, undefined, { shallow: true });
+    // sortOption state 將通過 useEffect 因 searchParams 改變而更新
+  };
+
   // --- 分類展開邏輯 ---
   // 1. **輔助函式：計算預設開啟的分類**
   //    這個函式會根據完整的分類列表和當前選中的分類 ID，
@@ -1060,8 +1085,12 @@ export default function ProductPage() {
       <Container className="z-10 pt-4 md:pt-10 pb-20">
         {/* 顯示用戶歡迎訊息和 Email (如果用戶已登入) */}
         <div>
-          <h1>你好，{user?.name}！</h1>
-          <p>你的 Email 是：{user.email}</p>
+          {/* <h1>你好，{user?.name}！</h1>
+          <p>你的 Email 是：{user.email}</p> */}
+          <ProductSort
+            currentSort={sortOption}
+            onSortChange={handleSortChange}
+          />
         </div>
 
         <main className="flex flex-col md:flex-row min-h-1/2 gap-4 md:gap-20 justify-between">
