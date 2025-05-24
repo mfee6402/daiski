@@ -13,9 +13,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { useCart } from '@/hooks/use-cart';
 
 export default function CartPage({ setProcess }) {
-  const { cart } = useCart();
+  const { cart, setCart } = useCart();
 
-  const [data, setData] = useState(cart);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user, isAuth, isLoading } = useAuth();
@@ -68,18 +67,11 @@ export default function CartPage({ setProcess }) {
           <div className="w-full">
             <CartItemList
               key="CartProduct"
-              data={data}
-              setData={setData}
               category="CartProduct"
             ></CartItemList>
-            <CartItemList
-              key="CartGroup"
-              data={data}
-              setData={setData}
-              category="CartGroup"
-            ></CartItemList>
+            <CartItemList key="CartGroup" category="CartGroup"></CartItemList>
           </div>
-          <Checkout data={data}></Checkout>
+          <Checkout></Checkout>
         </div>
       </>
     );
