@@ -143,7 +143,7 @@ export default function RegisterPage() {
               <label>
                 密碼:
                 <input
-                  type="text"
+                  type="password"
                   name="password"
                   value={userInput.password}
                   onChange={handleFieldChange}
@@ -151,7 +151,7 @@ export default function RegisterPage() {
                 />
               </label>
               <label>
-                確認密碼:{' '}
+                確認密碼:
                 <input
                   type="password"
                   name="confirmPassword"
@@ -173,6 +173,7 @@ export default function RegisterPage() {
               <label>
                 手機:
                 <input
+                  type="text"
                   name="phone"
                   value={userInput.phone}
                   onChange={handleFieldChange}
@@ -220,6 +221,9 @@ export default function RegisterPage() {
             account: 'ron',
             password: '99999',
             confirmPassword: '99999',
+            phone: '0912345678',
+            birthday: '1999-01-01',
+            is_coach: 'true',
           });
         }}
       >
