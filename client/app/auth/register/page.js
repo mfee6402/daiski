@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
 import { Toaster } from 'sonner';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 // newUser資料範例(物件) 註: name改為在profile資料表中
 // {
@@ -18,6 +19,7 @@ import Image from 'next/image';
 // }
 
 export default function RegisterPage() {
+  const router = useRouter();
   const { register } = useUserRegister();
   const [userInput, setUserInput] = useState({
     name: '',
@@ -86,7 +88,11 @@ export default function RegisterPage() {
       }
       // console.log(resData)
       if (res.ok && data.status === 'success') {
-        toast.success('註冊成功！');
+        // toast.success('註冊成功！');
+        //要補上跳轉到登入頁面
+        toast.success('註冊成功', {
+          onClose: () => router.push('/auth/login'),
+        });
       } else {
         toast.error(`註冊失敗：${data.message || res.statusText}`);
       }
@@ -241,7 +247,7 @@ export default function RegisterPage() {
         <a href="/user">會員登入認証&授權測試(JWT)</a>
       </p> */}
       {/* 土司訊息視窗用 */}
-      <ToastContainer />
+      <ToastContainer position="bottom-right" autoClose={1000} closeOnClick />
     </>
   );
 }
