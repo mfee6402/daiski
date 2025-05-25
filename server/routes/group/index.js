@@ -1,6 +1,6 @@
 // server/routes/group/index.js
 import express from 'express';
-import { PrismaClient, ActivityType } from '@prisma/client'; // 確保 ActivityType 被正確引入
+import { PrismaClient, ActivityType, SkiDifficulty } from '@prisma/client'; // 確保 ActivityType 被正確引入
 import multer from 'multer';
 import path from 'path';
 import authenticate from '../../middlewares/authenticate.js'; // <--- 引入您的 authenticate 中介軟體，請確保路徑正確
@@ -40,7 +40,8 @@ router.post(
         start_date,
         end_date,
         location: locationInput, // 前端傳來的地點，可能是 location_id (滑雪) 或 地點名稱 (聚餐)
-        customLocation: customLocationInput, // 前端可能也會傳這個，或者合併到 locationInput 處理
+        customLocation: customLocationInput,
+        difficulty: rawDifficulty, // 前端可能也會傳這個，或者合併到 locationInput 處理
         min_people,
         max_people,
         price,
@@ -96,16 +97,54 @@ router.post(
       };
 
       if (typeKey === ActivityType.SKI) {
-        if (!locationInput)
-          return res.status(400).json({ error: '滑雪活動必須選擇地點 ID' });
-        data.locationId = Number(locationInput); // 直接設定 locationId
+        if (!locationInput) {
+          // 滑雪活動必須選擇 locationId
+          return res.status(400).json({ error: '滑雪活動必須選擇滑雪場 ID' });
+        }
+        data.locationId = Number(locationInput);
+        data.customLocation = null; // 滑雪活動不應有 customLocation
+
+        // 處理滑雪難易度 (difficulty)
+        if (rawDifficulty && rawDifficulty.trim() !== '') {
+          const difficultyLabelToKey = {
+            初級: SkiDifficulty.BEGINNER,
+            中級: SkiDifficulty.INTER,
+            進階: SkiDifficulty.ADVANCE,
+          };
+          const difficultyKeyUpperCase = rawDifficulty.toUpperCase();
+
+          if (difficultyLabelToKey[rawDifficulty]) {
+            // 前端傳中文
+            data.difficulty = difficultyLabelToKey[rawDifficulty];
+          } else if (
+            Object.values(SkiDifficulty).includes(difficultyKeyUpperCase)
+          ) {
+            // 前端傳英文 Enum Key
+            data.difficulty = difficultyKeyUpperCase;
+          } else {
+            console.warn(
+              `收到無效的滑雪難易度值: ${rawDifficulty}，將不設定難易度 (或設為 null，取決於 schema)。`
+            );
+            // 如果 schema 中 difficulty 是可選的，不設定此欄位或設為 null 都可以
+            // 如果是必需的，這裡應該報錯
+            data.difficulty = null; // 假設 schema 允許 null
+          }
+        } else {
+          // 如果前端沒有傳 difficulty，或者滑雪活動允許沒有難易度
+          // 根據您的 Prisma schema，difficulty 是 SkiDifficulty? (可選的)
+          data.difficulty = null;
+        }
       } else {
-        // 例如 MEAL 或其他類型使用 customLocation
-        if (!customLocationInput && !locationInput)
+        // 非滑雪活動
+        if (!customLocationInput && !locationInput) {
+          // 非滑雪活動至少要有地點描述
           return res
             .status(400)
             .json({ error: '活動必須提供地點或自訂地點名稱' });
+        }
         data.customLocation = customLocationInput || locationInput;
+        data.locationId = null; // 非滑雪活動不應有 locationId (除非您的設計允許)
+        data.difficulty = null; // 非滑雪活動的 difficulty 應為 null
       }
 
       const newGroup = await prisma.group.create({ data });
@@ -350,31 +389,43 @@ router.post('/:groupId/join', authenticate, async (req, res) => {
 
   // 1. 基本驗證
   if (!userId) {
-    return res.status(401).json({ success: false, message: '未授權，請先登入後再操作。' });
+    return res
+      .status(401)
+      .json({ success: false, message: '未授權，請先登入後再操作。' });
   }
   if (!groupIdString) {
-    return res.status(400).json({ success: false, message: '缺少必要參數：揪團 ID。' });
+    return res
+      .status(400)
+      .json({ success: false, message: '缺少必要參數：揪團 ID。' });
   }
 
   const groupId = parseInt(groupIdString, 10);
   if (isNaN(groupId)) {
-    return res.status(400).json({ success: false, message: '揪團 ID 格式不正確。' });
+    return res
+      .status(400)
+      .json({ success: false, message: '揪團 ID 格式不正確。' });
   }
 
   try {
     // 2. 檢查目標揪團是否存在且未被軟刪除
     const groupToJoin = await prisma.group.findUnique({
-      where: { 
+      where: {
         id: groupId,
-        deletedAt: null // 確保揪團未被軟刪除
+        deletedAt: null, // 確保揪團未被軟刪除
       },
-      select: { // 只需要 maxPeople 來判斷人數
-        maxPeople: true
-      }
+      select: {
+        // 只需要 maxPeople 來判斷人數
+        maxPeople: true,
+      },
     });
 
     if (!groupToJoin) {
-      return res.status(404).json({ success: false, message: '找不到指定的揪團，或該揪團已不存在。' });
+      return res
+        .status(404)
+        .json({
+          success: false,
+          message: '找不到指定的揪團，或該揪團已不存在。',
+        });
     }
 
     // 3. 檢查使用者是否已經是該揪團的成員
@@ -390,15 +441,20 @@ router.post('/:groupId/join', authenticate, async (req, res) => {
     });
 
     if (existingMembership) {
-      return res.status(409).json({ success: false, message: '您已經是這個揪團的成員了。' }); // 409 Conflict
+      return res
+        .status(409)
+        .json({ success: false, message: '您已經是這個揪團的成員了。' }); // 409 Conflict
     }
 
     // 4. 檢查揪團是否已滿
     const currentMemberCount = await prisma.groupMember.count({
-        where: { groupId: groupId }
+      where: { groupId: groupId },
     });
-    if (currentMemberCount >= groupToJoin.maxPeople) { // groupToJoin.maxPeople 從步驟2獲取
-        return res.status(403).json({ success: false, message: '抱歉，此揪團人數已滿。'});
+    if (currentMemberCount >= groupToJoin.maxPeople) {
+      // groupToJoin.maxPeople 從步驟2獲取
+      return res
+        .status(403)
+        .json({ success: false, message: '抱歉，此揪團人數已滿。' });
     }
 
     // 5. 創建新的 group_member 記錄
@@ -411,23 +467,37 @@ router.post('/:groupId/join', authenticate, async (req, res) => {
       },
     });
 
-    console.log(`使用者 ${userId} 成功加入揪團 ${groupId}。 GroupMember ID: ${newMemberEntry.id}`);
-    res.status(201).json({ // 201 Created
+    console.log(
+      `使用者 ${userId} 成功加入揪團 ${groupId}。 GroupMember ID: ${newMemberEntry.id}`
+    );
+    res.status(201).json({
+      // 201 Created
       success: true,
       message: '成功加入揪團！',
-      data: { // 可以選擇性返回新創建的記錄資訊
+      data: {
+        // 可以選擇性返回新創建的記錄資訊
         groupId: newMemberEntry.groupId,
         userId: newMemberEntry.userId,
         joinedAt: newMemberEntry.joinedAt,
       },
     });
-
   } catch (error) {
     console.error(`使用者 ${userId} 加入揪團 ${groupId} 時發生錯誤:`, error);
-    if (error.code === 'P2002') { // Prisma unique constraint violation (雖然前面已檢查，多一層保障)
-        return res.status(409).json({ success: false, message: '您似乎已經加入了此揪團 (資料庫記錄衝突)。' });
+    if (error.code === 'P2002') {
+      // Prisma unique constraint violation (雖然前面已檢查，多一層保障)
+      return res
+        .status(409)
+        .json({
+          success: false,
+          message: '您似乎已經加入了此揪團 (資料庫記錄衝突)。',
+        });
     }
-    res.status(500).json({ success: false, message: '加入揪團時伺服器發生錯誤，請稍後再試。' });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: '加入揪團時伺服器發生錯誤，請稍後再試。',
+      });
   }
 });
 // POST /api/group/:groupId/comments (新增留言)
@@ -655,12 +725,10 @@ router.delete('/:groupId', async (req, res, next) => {
     if (err.code === 'P2025')
       return res.status(404).json({ error: '找不到要刪除的揪團。' });
     if (err.code === 'P2003') {
-      return res
-        .status(409)
-        .json({
-          error:
-            '無法刪除揪團，可能因為它仍被其他資料引用。請確認資料庫關聯設定。',
-        });
+      return res.status(409).json({
+        error:
+          '無法刪除揪團，可能因為它仍被其他資料引用。請確認資料庫關聯設定。',
+      });
     }
     return res.status(500).json({ error: '伺服器內部錯誤，刪除揪團失敗。' });
   }
