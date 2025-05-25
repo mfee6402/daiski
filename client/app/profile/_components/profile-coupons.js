@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import CouponCard from '@/app/coupons/_components/coupon-card';
 import CouponSelected from '@/app/coupons/_components/coupon-selected';
+import CouponSelectedStates from '@/app/coupons/_components/coupon-selected-states';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/use-auth';
@@ -10,7 +11,6 @@ import Image from 'next/image';
 
 import useSWR from 'swr';
 // import useSWRMutation from 'swr/dist/mutation';
-import useSWRMutation from 'swr/mutation';
 import { mutate } from 'swr';
 
 export default function ProfileCoupons(props) {
@@ -31,49 +31,12 @@ export default function ProfileCoupons(props) {
         return res.json();
       })
   );
-  const usercoupon = data?.usercoupon;
+  const usercoupon = data?.usercoupon || [];
 
   console.log(usercoupon);
 
-  // 使用useSWRMutation來管理讀取post
-  // const { trigger } = useSWRMutation(
-  //   'http://localhost:3005/api/coupons/claimcoupon',
-  //   (url, { arg }) => {
-  //     return fetch(url, {
-  //       method: 'POST',
-  //       headers: { 'Content-Type': 'application/json' },
-  //       credentials: 'include', // 若靠 cookie 登入，一定要加
-  //       body: JSON.stringify(arg), // arg 會是 trigger 傳進來的參數 { userId, couponId }
-  //     }).then((r) => {
-  //       if (!r.ok) throw new Error('領取失敗');
-  //       return r.json(); // 後端回資料
-  //     });
-  //   }
-  // );
-
   // 讀取會員ＩＤ
   const { user, isAuth } = useAuth();
-
-  // 執行一次領券
-  // const handleClaim = async (coupon) => {
-  //   try {
-  //     if (!isAuth) return alert('請先登錄');
-  //     await trigger({ couponId: coupon.id }); // 這行才真的 fetch
-  //     mutateCoupons();
-
-  //     toast.success('已領取優惠券！');
-  //   } catch (e) {
-  //     alert(e.message);
-  //   }
-  //   mutateCoupons((prev) => {
-  //     return {
-  //       ...prev,
-  //       coupons: prev.coupons.map((c) =>
-  //         c.id === coupon.id ? { ...c, _used: true } : c
-  //       ),
-  //     };
-  //   }, false);
-  // };
 
   // 管理每張卡的 已領取 狀態
   // const [used, setUsed] = useState([]);
@@ -88,14 +51,12 @@ export default function ProfileCoupons(props) {
   // 狀態的判斷
   function getStatus(coupon) {
     const now = Date.now();
-    const start = new Date(coupon.startAt).getTime();
+    // const start = new Date(coupon.startAt).getTime();
     const end = new Date(coupon.endAt).getTime();
 
-    if (coupon._used) return '使用';
-
-    if (now < start) return '尚未開始';
+    // if (coupon._used) return '使用';
     if (now > end) return '已過期';
-    // return '使用';
+    return '使用';
   }
 
   // 為了避免點了篩選又重新檢查一次狀態
@@ -105,23 +66,65 @@ export default function ProfileCoupons(props) {
   }));
 
   const [selectedTarget, setSelectedTarget] = useState('全部');
+  const [selectedStates, setSelectedStates] = useState();
+
+  // 先將百分比轉換
+  function getValue(c) {
+    if (c.type === '現金折扣') {
+      return c.amount;
+    }
+    if (c.type === '百分比折扣') {
+      return (c.amount / 100) * c.minPurchase;
+    }
+  }
+
+  // 算出每張券的最低保證折抵值;
+  const values = usercoupon.map(getValue);
+  const maxValue = Math.max(...values);
+  console.log(maxValue);
 
   // 用 filter 寫出對狀態和分類的篩選
-  const filteredData = couponsWithStatus?.filter((c) => {
-    // if (c.status === '使用') return true;
-    if (selectedTarget === '全部') {
-      return c.status === selectedTarget;
-    }
-    if (selectedTarget === '尚未開始') {
-      return c.status === selectedTarget;
-    }
-    if (['全站', '商品', '課程'].includes(selectedTarget)) {
-      return c.target === selectedTarget;
-    }
-    return true;
-  });
+  const filteredData = couponsWithStatus
+    ?.filter((c) => {
+      if (['全站', '商品', '課程'].includes(selectedTarget)) {
+        return c.target === selectedTarget;
+      }
+      return true;
+    })
+    ?.filter((c) => {
+      switch (selectedStates) {
+        // case '最高折扣':
+        // 只挑「使用」且是最高折抵值的卡
+        // return c.status === '使用' && getValue(c) === maxValue;
 
-  const targets = ['全部', '尚未開始', '全站', '商品', '課程'];
+        case '即將到期': {
+          const now = Date.now();
+          return (
+            c.status === '使用' &&
+            new Date(c.endAt).getTime() - now < 4 * 24 * 60 * 60 * 1000
+          );
+        }
+
+        case '已過期':
+          return c.status === '已過期';
+
+        case '已使用':
+          return c.status === '已使用';
+
+        default:
+          // '無' 或 undefined：不做任何狀態過濾，保留所有
+          return c.status === '使用';
+      }
+    })
+    .sort((a, b) => getValue(b) - getValue(a));
+
+  const targets = ['全部', '全站', '商品', '課程'];
+  const states = ['最高折扣', '即將到期', '已使用', '已過期'];
+
+  // 讓第二行的篩選可以按第二次取消
+  const toggleState = (state) => {
+    setSelectedStates((prev) => (prev === state ? undefined : state));
+  };
 
   // loading / error 處理
   if (isLoading) return <p className="text-center py-4">載入中…</p>;
@@ -132,13 +135,13 @@ export default function ProfileCoupons(props) {
 
   return (
     <>
-      <section className="flex flex-col gap-6">
+      <section className="flex flex-col gap-6 px-5">
         {/* 開頭 */}
         <a
-          href="http://localhost:3000/profile"
-          className="font-tw leading-p-tw cursor-pointer hover:underline decoration-red decoration-2 underline-offset-4 "
+          href="http://localhost:3000/coupons"
+          className="font-tw leading-p-tw cursor-pointer hover:underline decoration-red decoration-2 underline-offset-4 text-right"
         >
-          查看我的優惠劵
+          領取更多優惠卷
         </a>
 
         {/* 分類 */}
@@ -151,12 +154,30 @@ export default function ProfileCoupons(props) {
                 // filteredData={filteredData}
                 selectedTarget={selectedTarget}
                 setSelectedTarget={setSelectedTarget}
+                // state={state}
+                selectedStates={selectedStates}
+                setSelectedStates={setSelectedStates}
               />
             );
           })}
         </div>
 
         <hr />
+
+        {/* 狀態分類 */}
+        <div className="flex flex-row gap-6">
+          {states.map((state) => {
+            return (
+              <CouponSelectedStates
+                key={state}
+                state={state}
+                selectedStates={selectedStates}
+                setSelectedStates={setSelectedStates}
+                onClick={() => toggleState(state)}
+              />
+            );
+          })}
+        </div>
       </section>
 
       {/* 優惠劵 */}
@@ -170,27 +191,24 @@ export default function ProfileCoupons(props) {
         <ul className="grid grid-cols-1 justify-items-center gap-x-25 gap-y-6 lg:grid-cols-2 my-10">
           {filteredData?.map((c) => {
             // 顯示狀態
-            const isUpcoming = c.status === '尚未開始';
             const isExpired = c.status === '已過期';
-            const isUsed = c.status === '已領取';
+            const isUsed = c.status === '已使用';
 
             // 顯示時間與標籤
-            const displayTime = formatDateTime(
-              new Date(isUpcoming ? c.startAt : c.endAt)
-            );
-            const timeLabel = isUpcoming ? '開始' : '結束';
+            const displayTime = formatDateTime(new Date(c.endAt));
+            const timeLabel = '結束';
 
             // 按鈕文字 & disabled
-            let buttonText = '領取';
-            if (isUsed) buttonText = '已領取';
-            else if (isUpcoming) buttonText = '尚未開始';
-            else if (isExpired) buttonText = '已過期';
-            const disabled = isExpired || isUsed || isUpcoming;
+            let buttonText = '使用';
+            {
+              /* if (isUsed) buttonText = '已領取'; */
+            }
+            if (isExpired) buttonText = '已過期';
+            const disabled = isExpired || isUsed;
 
             // 卡片與按鈕樣式
             let statusClass = '';
             if (isUsed) statusClass = 'bg-[#404040]/10';
-            else if (isUpcoming) statusClass = '';
             else if (isExpired) statusClass = 'bg-[#404040]/10';
 
             const buttonClass = disabled
