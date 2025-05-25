@@ -346,6 +346,12 @@ export default function ProductDetail() {
               <ProductAddCartButton
                 skuId={currentSku.skuId}
                 quantity={quantity}
+                price={price} // 從 ProductDetail 的 price 變數取得
+                name={name} // 從 ProductDetail 的 name 變數取得
+                imageUrl={
+                  images && images.length > 0 ? images[0] : '/deadicon.png'
+                } // 使用第一張圖片，或提供一個預設圖片路徑
+                size={currentSku.sizeName} // 從 currentSku 取得尺寸名稱
               />
               {/* 使用你的 FavoriteButton 元件 */}
               <FavoriteButton

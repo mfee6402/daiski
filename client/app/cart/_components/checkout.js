@@ -1,7 +1,9 @@
 'use client';
 import Link from 'next/link';
+import { useCart } from '@/hooks/use-cart';
 
-export default function Checkout({ data = {} }) {
+export default function Checkout() {
+  const { cart } = useCart();
   return (
     <>
       <div className=" w-[450] sm:w-[200] md:w-[250] lg:w-[350] xl:w-[450]  sticky top-30">
@@ -13,8 +15,8 @@ export default function Checkout({ data = {} }) {
             <p className="text-p-tw">商品原價總金額</p>
             <p className="text-p-tw">
               $
-              {data?.cart?.CartProduct.length != 0
-                ? data?.cart?.CartProduct.reduce((acc, product) => {
+              {cart.CartProduct?.length != 0
+                ? cart.CartProduct?.reduce((acc, product) => {
                     acc += product.quantity * product.price;
                     return acc;
                   }, 0).toLocaleString()
@@ -27,8 +29,8 @@ export default function Checkout({ data = {} }) {
             <p className="text-p-tw">
               {' '}
               $
-              {data?.cart?.CartCourse.length != 0
-                ? data?.cart?.CartCourse.reduce((acc, course) => {
+              {cart?.cart?.CartCourse.length != 0
+                ? cart?.cart?.CartCourse.reduce((acc, course) => {
                     acc += course.quantity * course.price;
                     return acc;
                   }, 0).toLocaleString()
@@ -39,8 +41,8 @@ export default function Checkout({ data = {} }) {
           <p className="text-p-tw">揪團總金額</p>
           <p className="text-p-tw">
             $
-            {data?.cart?.CartGroup.length != 0
-              ? data?.cart?.CartGroup.reduce((acc, group) => {
+            {cart.CartGroup?.length != 0
+              ? cart?.CartGroup?.reduce((acc, group) => {
                   acc += group.price;
                   return acc;
                 }, 0).toLocaleString()
