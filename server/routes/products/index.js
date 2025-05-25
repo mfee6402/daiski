@@ -15,6 +15,7 @@ router.get('/', async (req, res, next) => {
     min_price,
     max_price,
     search,
+    sort,
   } = req.query;
   const pageNum = Math.max(parseInt(page, 10), 1);
   const pageSize = Math.max(parseInt(limit, 10), 1);
@@ -102,11 +103,30 @@ router.get('/', async (req, res, next) => {
       take: pageSize,
     };
 
+    // 1. 根據 sort 決定 orderByArg
+    let orderByArg;
+    switch (sort) {
+      case 'price_asc':
+        orderByArg = { min_price: 'asc' };
+        break;
+      case 'price_desc':
+        orderByArg = { min_price: 'desc' };
+        break;
+      case 'publish_at_asc':
+        orderByArg = { publish_at: 'asc' };
+        break;
+      case 'publish_at_desc':
+        orderByArg = { publish_at: 'desc' };
+        break;
+    }
+
     // 5. include=card
     if (include === 'card') {
       const raw = await prisma.product.findMany({
         where,
         ...pagination,
+        // 如果有設定排序條件，就把它放進陣列裡
+        ...(orderByArg ? { orderBy: [orderByArg] } : {}),
         include: {
           product_image: {
             where: { sort_order: 0, deleted_at: null },
@@ -130,7 +150,8 @@ router.get('/', async (req, res, next) => {
         image: p.product_image[0]
           ? `http://localhost:3005${p.product_image[0].url}`
           : 'http://localhost:3005/placeholder.jpg',
-        price: p.product_sku[0]?.price ?? 0,
+        // price: p.product_sku[0]?.price ?? 0,
+        price: p.min_price ?? 0,
         category: p.product_category?.name ?? '無分類',
         category_id: p.product_category?.id ?? null,
         brand: p.product_brand?.name ?? '無品牌',
@@ -161,6 +182,8 @@ router.get('/', async (req, res, next) => {
         deleted_at: true,
       },
       ...pagination,
+      // 同樣加上排序
+      ...(orderByArg ? { orderBy: [orderByArg] } : {}),
     });
 
     res.json({
