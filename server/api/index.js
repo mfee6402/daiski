@@ -12,22 +12,31 @@ import { createClient } from 'redis';
 // 使用檔案的session store，預設是存在sessions資料夾
 import sessionFileStore from 'session-file-store';
 import { serverConfig } from '../config/server.config.js';
-
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 // 修正 ESM 中的 __dirname 與 windows os 中的 ESM dynamic import
-import { pathToFileURL } from 'url';
+import { pathToFileURL, fileURLToPath } from 'url';
 // import { fileURLToPath, pathToFileURL } from 'url'
 // const __filename = fileURLToPath(import.meta.url)
 // const __dirname = path.dirname(__filename)
 
 import 'dotenv/config.js';
 
+// --- Prisma Client 和 MessageType ---
+import { PrismaClient, MessageType } from '@prisma/client'; // 確保 MessageType 被匯入
+const prisma = new PrismaClient(); // 初始化 Prisma Client
+
 // 建立 Express 應用程式
 const app = express();
-
+// --- Socket.IO 修改 1: 使用 Express app 創建 HTTP 伺服器 ---
+const server = http.createServer(app);
 // cors設定，參數為必要，注意不要只寫`app.use(cors())`
 // 設定白名單，只允許特定網址存取
-const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000' || 'http://localhost:3005'
-const whiteList = frontendUrl.split(',')
+const frontendUrl =
+  process.env.FRONTEND_URL ||
+  'http://localhost:3000' ||
+  'http://localhost:3005';
+const whiteList = frontendUrl.split(',');
 // 設定CORS
 app.use(
   cors({
@@ -100,7 +109,223 @@ app.use(
     saveUninitialized: false,
   })
 );
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: whiteList,
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+});
+// --- Socket.IO 修改 2: 初始化 Socket.IO 伺服器並附加到 HTTP 伺服器 ---
+io.on('connection', (socket) => {
+  console.log('一個使用者已透過 Socket.IO 連線:', socket.id);
 
+  socket.on('joinGroupChat', async (groupIdString, userId) => {
+    const numericGroupId = parseInt(groupIdString, 10);
+    const numericUserId =
+      typeof userId === 'string' ? parseInt(userId, 10) : userId;
+
+    if (
+      isNaN(numericGroupId) ||
+      (userId !== undefined && isNaN(numericUserId))
+    ) {
+      // 只有在 userId 實際傳入時才檢查 NaN
+      console.error(
+        `[Socket Server] joinGroupChat: 無效的 groupId (${groupIdString}) 或 userId (${userId})`
+      );
+      socket.emit('joinRoomError', {
+        groupId: groupIdString,
+        message: '無效的群組或使用者ID',
+      });
+      return;
+    }
+    console.log(
+      `[Socket Server] 使用者 ${numericUserId || '未知'} (Socket ${
+        socket.id
+      }) 請求加入群組 ${numericGroupId} 的聊天室`
+    );
+
+    try {
+      await prisma.chatRoom.upsert({
+        where: { groupId: numericGroupId },
+        update: {},
+        create: { groupId: numericGroupId },
+      });
+      console.log(
+        `[Socket Server] 已確認/創建群組 ${numericGroupId} 的 ChatRoom`
+      );
+
+      socket.join(groupIdString);
+      console.log(
+        `[Socket Server] Socket ${socket.id} 已加入房間 ${groupIdString}`
+      );
+      socket.emit('joinedRoomSuccess', {
+        groupId: groupIdString,
+        message: `成功加入群組 ${groupIdString} 的聊天室`,
+      });
+    } catch (error) {
+      console.error(
+        `[Socket Server] 加入房間 ${groupIdString} 或確認/創建 ChatRoom 時發生錯誤:`,
+        error
+      );
+      socket.emit('joinRoomError', {
+        groupId: groupIdString,
+        message: '準備聊天室時發生錯誤',
+      });
+    }
+  });
+
+  socket.on('sendMessage', async (msg, targetGroupIdString) => {
+    console.log(`--- [Socket Server] Received 'sendMessage' event ---`);
+    console.log(
+      `[Socket Server] Target Group ID (raw from client): ${targetGroupIdString}`
+    );
+    console.log(
+      '[Socket Server] Message Data (raw from client):',
+      JSON.stringify(msg, null, 2)
+    );
+
+    const clientUserId = msg.user?.id;
+    const content = msg.type === 'text' ? msg.content : msg.imageUrl;
+    const messageTypeFromClient = msg.type?.toUpperCase();
+
+    if (!clientUserId || !content || !targetGroupIdString) {
+      console.error(
+        '[Socket Server] sendMessage ABORTED: Missing clientUserId, content, or targetGroupIdString.'
+      );
+      socket.emit('sendMessageError', {
+        groupId: targetGroupIdString,
+        message: '訊息格式不完整或目標群組未指定',
+      });
+      return;
+    }
+
+    const targetGroupId = parseInt(targetGroupIdString, 10);
+    if (isNaN(targetGroupId)) {
+      console.error(
+        '[Socket Server] sendMessage ABORTED: targetGroupId is NaN after parseInt:',
+        targetGroupIdString
+      );
+      socket.emit('sendMessageError', {
+        groupId: targetGroupIdString,
+        message: '目標群組 ID 格式不正確',
+      });
+      return;
+    }
+
+    const numericUserId =
+      typeof clientUserId === 'string'
+        ? parseInt(clientUserId, 10)
+        : clientUserId;
+    if (isNaN(numericUserId)) {
+      console.error(
+        '[Socket Server] sendMessage ABORTED: clientUserId is NaN after parseInt/check:',
+        clientUserId
+      );
+      socket.emit('sendMessageError', {
+        groupId: targetGroupIdString,
+        message: '使用者 ID 格式不正確',
+      });
+      return;
+    }
+
+    let prismaMessageType;
+    if (messageTypeFromClient === 'IMAGE') {
+      prismaMessageType = MessageType.IMAGE;
+    } else if (messageTypeFromClient === 'TEXT') {
+      prismaMessageType = MessageType.TEXT;
+    } else {
+      console.error(
+        '[Socket Server] sendMessage ABORTED: Invalid message type from client:',
+        messageTypeFromClient
+      );
+      socket.emit('sendMessageError', {
+        groupId: targetGroupIdString,
+        message: '無效的訊息類型',
+      });
+      return;
+    }
+
+    try {
+      const chatRoomExists = await prisma.chatRoom.findUnique({
+        where: { groupId: targetGroupId },
+      });
+      if (!chatRoomExists) {
+        console.error(
+          `[Socket Server] sendMessage ABORTED: ChatRoom for groupId ${targetGroupId} does not exist. Attempting to create.`
+        );
+        // 如果 ChatRoom 不存在，嘗試創建它 (或者您可以選擇報錯)
+        await prisma.chatRoom.create({ data: { groupId: targetGroupId } });
+        console.log(
+          `[Socket Server] ChatRoom for groupId ${targetGroupId} created.`
+        );
+        // socket.emit('sendMessageError', { groupId: targetGroupIdString, message: `聊天室 (群組 ${targetGroupId}) 尚未初始化` });
+        // return;
+      }
+
+      console.log(
+        `[Socket Server] Attempting to save message to DB for groupId: ${targetGroupId}, userId: ${numericUserId}`
+      );
+      const savedMessage = await prisma.chatMessage.create({
+        data: {
+          groupId: targetGroupId,
+          userId: numericUserId,
+          content: content,
+          messageType: prismaMessageType,
+        },
+        include: { user: { select: { id: true, name: true, avatar: true } } },
+      });
+      console.log(
+        `[Socket Server] Message successfully saved to DB. ID: ${savedMessage.id}, Group: ${savedMessage.groupId}`
+      );
+
+      await prisma.chatRoom.update({
+        where: { groupId: targetGroupId },
+        data: { lastMessageAt: savedMessage.sentAt },
+      });
+      console.log(
+        `[Socket Server] ChatRoom ${targetGroupId} lastMessageAt updated.`
+      );
+
+      const messageToBroadcast = {
+        id: savedMessage.id,
+        user: savedMessage.user,
+        type: savedMessage.messageType === MessageType.IMAGE ? 'image' : 'text',
+        content:
+          savedMessage.messageType === MessageType.TEXT
+            ? savedMessage.content
+            : undefined,
+        imageUrl:
+          savedMessage.messageType === MessageType.IMAGE
+            ? savedMessage.content
+            : undefined,
+        time: savedMessage.sentAt.getTime(),
+        groupId: savedMessage.groupId.toString(),
+      };
+
+      io.to(targetGroupId.toString()).emit('chatMessage', messageToBroadcast);
+      console.log(
+        `[Socket Server] Successfully broadcasted 'chatMessage' to room ${targetGroupId}:`,
+        JSON.stringify(messageToBroadcast, null, 2)
+      );
+    } catch (error) {
+      console.error(
+        `[Socket Server] !!! ERROR saving or broadcasting message for group ${targetGroupId}:`,
+        error
+      );
+      socket.emit('sendMessageError', {
+        groupId: targetGroupIdString,
+        message: '伺服器處理您的訊息時發生嚴重錯誤',
+        errorDetails: error.message,
+      });
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('使用者已離線:', socket.id);
+  });
+});
+// 您可以在此處添加更多特定於您應用程式的 Socket.IO 事件處理
 // 根路由預設測試畫面
 app.get('/', (req, res) => res.send('Express server is running.'));
 
@@ -166,8 +391,16 @@ app.use(function (err, req, res) {
   res.status(500).send({ error: err });
 });
 
-const port = process.env.PORT || 3000;
+// --- Socket.IO 修改 4: 修改伺服器啟動方式 ---
+const port = process.env.PORT || 3005; // 您的設定檔中 API 埠號似乎是 3005
 
-app.listen(port, () => console.log(`Server ready on port ${port}.`));
+server.listen(port, () => {
+  // 改為監聽 http server
+  console.log(
+    `API 伺服器 (包含 Socket.IO) 正在 http://localhost:${port} 上運行`
+  );
+});
+
+// app.listen(port, () => console.log(`Server ready on port ${port}.`));
 
 export default app;

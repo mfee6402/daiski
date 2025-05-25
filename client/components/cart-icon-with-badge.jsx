@@ -6,8 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/use-cart';
 
 export function CartIconWithBadge({ href = '/cart' }) {
-  const { items } = useCart();
-  const count = items.length;
+  const { totalQty } = useCart();
+  // FIXME 等待實際數值
+  // const count = items.length;
+
+  const count = totalQty.reduce((acc, v) => {
+    return (acc += v.quantity);
+  }, 0);
 
   return (
     <Link href={href} className=" rounded-full hover:bg-gray-100 transition">

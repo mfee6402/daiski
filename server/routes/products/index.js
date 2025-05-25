@@ -15,13 +15,14 @@ router.get('/', async (req, res, next) => {
     min_price,
     max_price,
     search,
+    sort,
   } = req.query;
   const pageNum = Math.max(parseInt(page, 10), 1);
   const pageSize = Math.max(parseInt(limit, 10), 1);
 
   try {
     // 1. 組基礎 where
-    const where = { delete_at: null };
+    const where = { deleted_at: null };
 
     // 2. 如果有 search，就加上 name 模糊搜尋
     if (typeof search === 'string' && search.trim().length >= 2) {
@@ -102,11 +103,30 @@ router.get('/', async (req, res, next) => {
       take: pageSize,
     };
 
+    // 1. 根據 sort 決定 orderByArg
+    let orderByArg;
+    switch (sort) {
+      case 'price_asc':
+        orderByArg = { min_price: 'asc' };
+        break;
+      case 'price_desc':
+        orderByArg = { min_price: 'desc' };
+        break;
+      case 'publish_at_asc':
+        orderByArg = { publish_at: 'asc' };
+        break;
+      case 'publish_at_desc':
+        orderByArg = { publish_at: 'desc' };
+        break;
+    }
+
     // 5. include=card
     if (include === 'card') {
       const raw = await prisma.product.findMany({
         where,
         ...pagination,
+        // 如果有設定排序條件，就把它放進陣列裡
+        ...(orderByArg ? { orderBy: [orderByArg] } : {}),
         include: {
           product_image: {
             where: { sort_order: 0, deleted_at: null },
@@ -130,7 +150,8 @@ router.get('/', async (req, res, next) => {
         image: p.product_image[0]
           ? `http://localhost:3005${p.product_image[0].url}`
           : 'http://localhost:3005/placeholder.jpg',
-        price: p.product_sku[0]?.price ?? 0,
+        // price: p.product_sku[0]?.price ?? 0,
+        price: p.min_price ?? 0,
         category: p.product_category?.name ?? '無分類',
         category_id: p.product_category?.id ?? null,
         brand: p.product_brand?.name ?? '無品牌',
@@ -158,9 +179,11 @@ router.get('/', async (req, res, next) => {
         created_at: true,
         publish_at: true,
         unpublish_at: true,
-        delete_at: true,
+        deleted_at: true,
       },
       ...pagination,
+      // 同樣加上排序
+      ...(orderByArg ? { orderBy: [orderByArg] } : {}),
     });
 
     res.json({
@@ -194,7 +217,7 @@ router.get('/search-suggestions', async (req, res, next) => {
 
     const suggestions = await prisma.product.findMany({
       where: {
-        delete_at: null,
+        deleted_at: null,
         name: {
           contains: keyword,
         },
@@ -321,7 +344,7 @@ router.get('/sizes', async (req, res, next) => {
           deleted_at: null,
           size_id: { not: null },
           product: {
-            delete_at: null,
+            deleted_at: null,
             category_id: { in: categoryIds },
           },
         },
@@ -370,7 +393,7 @@ router.get('/brands', async (req, res, next) => {
       // b. 從 product 找出這些分類下所有未刪除且有 brand_id 的商品
       const productRows = await prisma.product.findMany({
         where: {
-          delete_at: null,
+          deleted_at: null,
           brand_id: { not: null },
           category_id: { in: categoryIds },
         },
@@ -408,11 +431,13 @@ router.get('/brands', async (req, res, next) => {
 });
 
 // --------------------------------------------------
-// GET /api/products/:id — 取得單一商品詳細資料
+// GET /api/products/:id — 取得單一商品詳細資料 + 相關商品
 // --------------------------------------------------
 router.get('/:id', async (req, res, next) => {
   const { id } = req.params;
+
   try {
+    // 1. 先拿主商品 + 該分類的 parent_id
     const product = await prisma.product.findUnique({
       where: { id: Number(id) },
       include: {
@@ -423,7 +448,7 @@ router.get('/:id', async (req, res, next) => {
         },
         product_sku: {
           where: { deleted_at: null },
-          orderBy: { price: 'asc' },
+          orderBy: [{ product_size: { sort_order: 'asc' } }, { price: 'asc' }],
           select: {
             id: true,
             size_id: true,
@@ -433,7 +458,8 @@ router.get('/:id', async (req, res, next) => {
           },
         },
         product_brand: { select: { id: true, name: true } },
-        product_category: { select: { id: true, name: true } },
+        // 多取 parent_id
+        product_category: { select: { id: true, name: true, parent_id: true } },
       },
     });
 
@@ -441,7 +467,72 @@ router.get('/:id', async (req, res, next) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    // Transform response
+    const catId = product.product_category?.id;
+    const parentId = product.product_category?.parent_id;
+
+    // helper: 統一把 Prisma 回來的 p 轉成前端要的格式
+    const normalize = (p) => ({
+      id: p.id,
+      name: p.name,
+      image: p.product_image[0]
+        ? `http://localhost:3005${p.product_image[0].url}`
+        : '/placeholder.jpg',
+      price: p.product_sku[0]?.price ?? 0,
+    });
+
+    // 2. 撈同子分類（最多 4 筆，排除自己）
+    let related = await prisma.product.findMany({
+      where: {
+        deleted_at: null,
+        category_id: catId,
+        id: { not: product.id },
+      },
+      take: 4,
+      include: {
+        product_image: {
+          where: { deleted_at: null, sort_order: 0 },
+          take: 1,
+          select: { url: true },
+        },
+        product_sku: {
+          where: { deleted_at: null },
+          orderBy: { price: 'asc' },
+          take: 1,
+          select: { price: true },
+        },
+      },
+    });
+
+    // 3. 不足 4 筆且有父分類，就補同父分類
+    if (related.length < 4 && parentId) {
+      const excludeIds = [product.id, ...related.map((p) => p.id)];
+      const siblings = await prisma.product.findMany({
+        where: {
+          deleted_at: null,
+          // 取該 parentId 底下的所有子分類商品
+          product_category: { parent_id: parentId },
+          id: { notIn: excludeIds },
+        },
+        take: 4 - related.length,
+        include: {
+          product_image: {
+            where: { deleted_at: null, sort_order: 0 },
+            take: 1,
+            select: { url: true },
+          },
+          product_sku: {
+            where: { deleted_at: null },
+            orderBy: { price: 'asc' },
+            take: 1,
+            select: { price: true },
+          },
+        },
+      });
+
+      related = related.concat(siblings);
+    }
+
+    // 4. 組 response
     const response = {
       id: product.id,
       name: product.name,
@@ -450,7 +541,10 @@ router.get('/:id', async (req, res, next) => {
       publishAt: product.publish_at,
       createdAt: product.created_at,
       brand: product.product_brand,
-      category: product.product_category,
+      category: {
+        id: product.product_category.id,
+        name: product.product_category.name,
+      },
       images: product.product_image.map(
         (img) => `http://localhost:3005${img.url}`
       ),
@@ -461,6 +555,7 @@ router.get('/:id', async (req, res, next) => {
         price: sku.price,
         stock: sku.stock,
       })),
+      related: related.map(normalize),
     };
 
     res.json(response);

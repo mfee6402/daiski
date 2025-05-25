@@ -1,11 +1,11 @@
-'use client'
+'use client';
 
-import { useShip711StoreOpener } from './_hooks/use-ship-711-store'
+import { useShip711StoreOpener } from './_hooks/use-ship-711-store';
 import {
   nextUrl,
   // eslint-disable-next-line no-unused-vars
   apiURL,
-} from '@/config'
+} from '@/config';
 
 export default function ShipPage() {
   // useShip711StoreOpener的第一個傳入參數是"伺服器7-11運送商店用Callback路由網址"
@@ -14,7 +14,7 @@ export default function ShipPage() {
     `${nextUrl}/ship/api`, // 直接用Next提供的api路由
     //`${apiUrl}/shipment/711`, // 也可以用express伺服器的api路由
     { autoCloseMins: 3 } // x分鐘沒完成選擇會自動關閉，預設5分鐘。
-  )
+  );
 
   return (
     <>
@@ -23,7 +23,7 @@ export default function ShipPage() {
       <p>
         <button
           onClick={() => {
-            openWindow()
+            openWindow();
           }}
         >
           選擇門市
@@ -38,7 +38,7 @@ export default function ShipPage() {
       <p>
         <button
           onClick={() => {
-            closeWindow()
+            closeWindow();
           }}
         >
           關閉跳出的7-11選擇視窗(測試用: 一般會自動關閉，除非意外並不需要)
@@ -50,5 +50,5 @@ export default function ShipPage() {
       </p>
       <p>{JSON.stringify(store711)}</p>
     </>
-  )
+  );
 }

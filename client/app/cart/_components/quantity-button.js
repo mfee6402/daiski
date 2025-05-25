@@ -1,23 +1,21 @@
 'use client';
 import { produce } from 'immer';
 import { useEffect } from 'react';
-
-export default function QuantityButton({
-  productId = 0,
-  data = '',
-  setData = () => {},
-  type = '',
-}) {
-  const url = `http://localhost:3005/api/cart/${productId}`;
-  async function fetchData(nextCart) {
+import { useCart } from '@/hooks/use-cart';
+import { CloudCog } from 'lucide-react';
+export default function QuantityButton({ itemId = 0, type = '' }) {
+  const url = `http://localhost:3005/api/cart/${itemId}`;
+  const { cart, setCart } = useCart();
+  // 將更新傳回後端
+  async function fetchData(updateQuantity) {
     try {
-      const res = await fetch(url, {
+      await fetch(url, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          data: nextCart,
+          updateQuantity: updateQuantity,
         }),
       });
     } catch (err) {
@@ -30,15 +28,28 @@ export default function QuantityButton({
       <button
         className="w-[50]"
         onClick={() => {
-          const nextCart = produce(data, (draft) => {
-            draft.cart.CartProduct.map((product) => {
-              if (productId === product.productId) {
-                type === 'minus' ? product.quantity-- : product.quantity++;
+          const nextCart = produce(cart, (draft) => {
+            draft.CartProduct.map((item) => {
+              if (itemId === item.id) {
+                if (type === 'minus') {
+                  // FIXME 增加刪除功能
+                  item.quantity === 1
+                    ? alert('確認刪除?(待做)')
+                    : item.quantity--;
+                } else if (type === 'plus') {
+                  item.quantity++;
+                }
               }
             });
           });
-          setData(nextCart);
-          fetchData(nextCart);
+
+          setCart(nextCart);
+
+          nextCart.CartProduct.map((item) => {
+            if (itemId === item.id) {
+              fetchData(item.quantity);
+            }
+          });
         }}
       >
         {/* FIXME -號要加大*/}
