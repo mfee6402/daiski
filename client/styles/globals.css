@@ -222,3 +222,13 @@ body {
   --swiper-navigation-color: #404040; /* 左右箭頭 */
   --swiper-pagination-color: #404040; /* bullet 或 fraction */
 }
+
+/* 錯誤訊息樣式 */
+@layer components {
+  .newerror {
+    @apply text-xs  
+           text-red-500
+           h-4
+           block;
+  }
+}
