@@ -11,21 +11,14 @@ export default function ProductAddCartButton({
   imageUrl,
   size,
 }) {
-  // const { onAdd } = useCart();
+  const { onAdd } = useCart();
 
   return (
     <Button
       className="h-12 bg-primary-600 text-white w-full"
       onClick={() => {
-        console.log({
-          id: skuId,
-          quantity: quantity,
-          price: price,
-          name: name,
-          imageUrl: imageUrl,
-          size: size,
-        });
-        // onAdd('CartProduct', {
+        // alert(`新增到購物車:${skuId}`);
+        // console.log({
         //   id: skuId,
         //   quantity: quantity,
         //   price: price,
@@ -33,6 +26,14 @@ export default function ProductAddCartButton({
         //   imageUrl: imageUrl,
         //   size: size,
         // });
+        onAdd('CartProduct', {
+          id: skuId,
+          quantity: quantity,
+          price: price,
+          name: name,
+          imageUrl: imageUrl,
+          size: size,
+        });
       }}
     >
       加入購物車
