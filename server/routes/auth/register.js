@@ -1,6 +1,7 @@
 import { Router } from 'express';
 // import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcrypt';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -33,7 +34,7 @@ router.post('/', async (req, res) => {
     }
 
     // 4. 雜湊密碼
-    // const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 10);
 
     // 5. 建立使用者
     const user = await prisma.user.create({
@@ -42,7 +43,7 @@ router.post('/', async (req, res) => {
         name,
         email,
         account,
-        password,
+        password:passwordHash,
         phone,
         birthday: new Date(birthday),
         is_coach: +is_coach,
