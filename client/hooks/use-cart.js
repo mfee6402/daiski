@@ -167,7 +167,7 @@ export function CartProvider({ children }) {
 
   for (const list of totalQty) {
     const key = list.type;
-    if (cart[key]) {
+    if (cart?.[key]) {
       list.quantity = cart[key].reduce(
         (acc, v) => acc + (v.quantity ? v.quantity : 1),
         0
