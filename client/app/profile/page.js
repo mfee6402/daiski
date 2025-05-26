@@ -200,7 +200,7 @@ export default function MemberPage() {
           </TabsContent>
 
           <TabsContent value="favorites">
-            <Card>
+            <Card className="overflow-y-auto h-dvh p-4">
               <ProfileWishlist />
               {/* <CardHeader>
                 <CardTitle>我的收藏</CardTitle>
@@ -238,8 +238,8 @@ export default function MemberPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="groups">
-            <Card>
+          <TabsContent value="groups" className="w-full">
+            <Card className="w-full">
               <ProfileGroups />
               {/* <CardHeader>
                 <CardTitle>揪團</CardTitle>
