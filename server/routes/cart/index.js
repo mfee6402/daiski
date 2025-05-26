@@ -37,64 +37,44 @@ router.post('/', authenticate, async function (req, res, next) {
       where: { userId },
     });
 
-    // FIXME檢查是否參加過，除了判斷購物車有沒有(已做)，還要判斷訂單中有沒有
-    const existingCartItem = await cartModel.findFirst({
-      where: {
-        cartId: userCart.id,
-        [foreignKeyName]: itemId,
-      },
-    });
-    if (existingCartItem && category !== 'CartProduct') {
-      console.log('已有且不可增加');
-      return res
-        .status(200)
-        .json({ status: 'fail', message: '已有且不可增加' });
-    }
+    // FIXME檢查是否參加過判斷訂單中有沒有(改為其他人判斷是否參加過)
 
     // FIXME 要處理使用者如果沒購物車的話，要先新增購物車
 
     // 新增
-    if (category === 'CartProduct') {
-      const existingCartItem = await cartModel.findFirst({
+    try {
+      const existingItem = await cartModel.findFirst({
         where: {
-          cartId: userCart.id,
+          cartId: +userCart.id,
           [foreignKeyName]: itemId,
         },
       });
-
-      if (existingCartItem) {
-        // 商品已存在，數量 +1
-        await cartModel.update({
-          where: {
-            id: existingCartItem.id,
-          },
-          data: {
-            quantity: {
-              increment: 1,
+      if (!existingItem) {
+        if (category === 'CartProduct') {
+          await cartModel.create({
+            data: {
+              cartId: userCart.id,
+              [foreignKeyName]: itemId,
+              quantity: 1,
             },
-          },
-        });
-      } else {
-        // 商品不存在，新增一筆
-        await cartModel.create({
-          data: {
-            cartId: userCart.id,
-            [foreignKeyName]: itemId,
-            quantity: 1,
-          },
-        });
+          });
+        } else {
+          // 非商品沒有數量屬性
+          await cartModel.create({
+            data: {
+              cartId: userCart.id,
+              [foreignKeyName]: itemId,
+            },
+          });
+        }
+        res.status(200).json({ status: 'success', data: '新增成功' });
       }
-    } else {
-      await cartModel.create({
-        data: {
-          cartId: userCart.id,
-          [foreignKeyName]: itemId,
-          quantity: 1,
-        },
-      });
+      res
+        .status(200)
+        .json({ status: 'fail', data: '新增失敗，已存在，請改用PUT' });
+    } catch (error) {
+      res.status(200).json({ status: 'fail', data: '新增失敗' });
     }
-
-    res.status(200).json({ status: 'success', data: '新增成功' });
   } catch (e) {
     next(e);
   }
@@ -208,8 +188,9 @@ router.get('/', async function (req, res, next) {
 // 更新(只有商品有數量，課程跟揪團票券固定只有1，但為了日後擴充性，req傳遞購物車全部)
 router.put('/:itemId', async function (req, res) {
   const updateQuantity = req.body.updateQuantity;
+  console.log(updateQuantity);
   try {
-    const cart = await prisma.cartProduct.update({
+    await prisma.cartProduct.update({
       where: {
         id: +req.params.itemId,
       },
@@ -218,7 +199,7 @@ router.put('/:itemId', async function (req, res) {
       },
     });
 
-    res.status(200).json({ status: 'success', data: { cart } });
+    res.status(200).json({ status: 'success', data: '更新商品成功' });
   } catch (error) {
     res.status(200).json({ status: 'fail', message: '更新商品失敗' });
   }
