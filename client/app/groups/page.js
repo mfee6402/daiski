@@ -160,14 +160,14 @@ export default function GroupsPage() {
           <div className="flex justify-center gap-6">
             <Button
               onClick={() => router.push('/groups/create')}
-              className="px-8 py-3 bg-primary-500  text-white font-semibold shadow-lg transition transform hover:scale-105 rounded-md hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700 cursor-pointer"
+              className="px-8 py-3 bg-primary-500  text-white font-semibold shadow-lg transition transform hover:scale-105 rounded-md hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700 cursor-none"
             >
               立即開團
             </Button>
             <Button
               variant="outline"
               onClick={() => router.push('/groups')}
-              className="px-8 py-3 border-primary-500 text-primary-500 dark:border-primary-400 dark:text-primary-400 font-semibold transition transform hover:scale-105 rounded-md hover:bg-primary-500/10 dark:hover:bg-primary-400/10 cursor-pointer"
+              className="px-8 py-3 border-primary-500 text-primary-500 dark:border-primary-400 dark:text-primary-400 font-semibold transition transform hover:scale-105 rounded-md hover:bg-primary-500/10 dark:hover:bg-primary-400/10 cursor-none"
             >
               查看開團
             </Button>
@@ -179,10 +179,10 @@ export default function GroupsPage() {
         <form className="grid grid-cols-1 md:grid-cols-5 gap-6 bg-card dark:bg-slate-800 p-6 shadow-md rounded-lg">
           {' '}
           {/* Dark mode 背景 */}
-          <div>
+          <div className="cursor-none">
             <Label
               htmlFor="type-filter"
-              className="text-p-tw text-secondary-800 dark:text-slate-300"
+              className="text-p-tw text-secondary-800 dark:text-slate-300 cursor-none"
             >
               類型
             </Label>{' '}
@@ -193,7 +193,7 @@ export default function GroupsPage() {
                 <Button
                   id="type-filter"
                   variant="outline"
-                  className="w-full justify-between mt-1 text-p-tw dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700"
+                  className="w-full justify-between mt-1 text-p-tw cursor-none dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700"
                 >
                   {filters.type} <span aria-hidden="true">▾</span>
                 </Button>
@@ -221,7 +221,7 @@ export default function GroupsPage() {
           <div>
             <Label
               htmlFor="date-filter"
-              className="text-p-tw text-secondary-800 dark:text-slate-300"
+              className="text-p-tw text-secondary-800 dark:text-slate-300 cursor-none"
             >
               日期
             </Label>
@@ -232,13 +232,13 @@ export default function GroupsPage() {
               onChange={(e) =>
                 setFilters((f) => ({ ...f, date: e.target.value }))
               }
-              className="w-full mt-1 text-p-tw dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600"
+              className="w-full mt-1 text-p-tw !cursor-none dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600"
             />
           </div>
           <div>
             <Label
               htmlFor="location-filter"
-              className="text-p-tw text-secondary-800 dark:text-slate-300"
+              className="text-p-tw text-secondary-800 dark:text-slate-300 cursor-none"
             >
               地點
             </Label>
@@ -248,7 +248,7 @@ export default function GroupsPage() {
                 <Button
                   id="location-filter"
                   variant="outline"
-                  className="w-full justify-between mt-1 text-p-tw dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700"
+                  className="w-full justify-between mt-1 text-p-tw cursor-none dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700"
                 >
                   {filters.location} <span aria-hidden="true">▾</span>
                 </Button>
@@ -278,7 +278,7 @@ export default function GroupsPage() {
           <div className="md:col-span-2">
             <Label
               htmlFor="keyword-filter"
-              className="text-p-tw text-secondary-800 dark:text-slate-300"
+              className="text-p-tw text-secondary-800 dark:text-slate-300 cursor-none"
             >
               關鍵字搜尋
             </Label>
@@ -289,7 +289,7 @@ export default function GroupsPage() {
               onChange={(e) =>
                 setFilters((f) => ({ ...f, keyword: e.target.value }))
               }
-              className="w-full mt-1 text-p-tw dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600"
+              className="w-full mt-1 text-p-tw cursor-none dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600"
             />
           </div>
         </form>
@@ -311,7 +311,7 @@ export default function GroupsPage() {
               {/* 圖片容器修改：添加 rounded-t-lg 和 overflow-hidden */}
               <Link
                 href={`/groups/${group.id}`}
-                className="relative block w-full aspect-[4/3] cursor-pointer rounded-t-lg overflow-hidden"
+                className="relative block w-full aspect-[4/3] cursor-none rounded-t-lg overflow-hidden"
               >
                 {' '}
                 {/* 使用 aspect-ratio 替代固定高度 h-48 */}
@@ -374,7 +374,7 @@ export default function GroupsPage() {
                 </div>
                 <button
                   onClick={() => router.push(`/groups/${group.id}`)}
-                  className="font-bold mb-2 leading-tight truncate text-h6-tw text-primary-800 dark:text-white cursor-pointer hover:underline text-left w-full " // text-left 和 w-full 確保行為像區塊元素
+                  className="font-bold mb-2 leading-tight truncate text-h6-tw text-primary-800 dark:text-white cursor-none hover:underline text-left w-full " // text-left 和 w-full 確保行為像區塊元素
                   aria-label={group.title || '無標題揪團'} // 提供更清晰的語音描述
                 >
                   {group.title || '無標題揪團'}
@@ -413,14 +413,14 @@ export default function GroupsPage() {
                   {/* Dark mode 分隔線 */}
                   <Button
                     variant="link"
-                    className="px-0 text-p-tw text-primary-500 dark:text-primary-400 hover:text-primary-600 dark:hover:text-primary-300 cursor-pointer"
+                    className="px-0 text-p-tw text-primary-500 dark:text-primary-400 hover:text-primary-600 dark:hover:text-primary-300 cursor-none"
                     onClick={() => router.push(`/groups/${group.id}`)}
                   >
                     查看詳情
                   </Button>
                   <Button
                     size="sm"
-                    className="font-semibold bg-primary-500 text-white rounded-none text-base hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700 cursor-pointer"
+                    className="font-semibold bg-primary-500 text-white rounded-none text-base hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700 cursor-none"
                     onClick={() => handleJoin(group.id)}
                   >
                     我要參加

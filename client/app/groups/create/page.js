@@ -53,7 +53,7 @@ const HorizontalStepper = ({ steps, currentStepId, setCurrentStep }) => {
               onClick={() =>
                 stepIdx <= currentStepIndex && setCurrentStep(step.id)
               }
-              className={`flex flex-col items-center text-center group w-full ${stepIdx <= currentStepIndex ? 'cursor-pointer' : 'cursor-default'}`}
+              className={`flex flex-col items-center text-center group w-full ${stepIdx <= currentStepIndex ? 'cursor-none' : 'cursor-default'}`}
               disabled={stepIdx > currentStepIndex}
             >
               <span

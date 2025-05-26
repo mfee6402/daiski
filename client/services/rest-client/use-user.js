@@ -315,7 +315,8 @@ export function useUserRegister() {
    * 必含：name, email, account, password, phone, birthday, is_coach
    */
   const register = (payload) =>
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/auth/register`, {
+    // fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/auth/register`, {
+    fetch(`http://localhost:3005/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),

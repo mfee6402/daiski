@@ -37,7 +37,8 @@ export default function GroupDetailPage() {
   const [joinError, setJoinError] = useState(''); // 加入失敗的錯誤訊息
   const [joinSuccess, setJoinSuccess] = useState(''); // 加入成功的訊息
   const [isAlreadyMember, setIsAlreadyMember] = useState(false); // 當前使用者是否已是成員
-  const [currentMemberCount, setCurrentMemberCount] = useState(0); // 目前參加人數，用於判斷是否已滿
+  const [currentMemberCount, setCurrentMemberCount] = useState(0); // 目前參加人數，用於判斷是否已滿+
+  const [hasPaidForThisGroup, setHasPaidForThisGroup] = useState(false);
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -89,15 +90,18 @@ export default function GroupDetailPage() {
           );
           if (member) {
             setIsAlreadyMember(true);
+            setHasPaidForThisGroup(!!member.paidAt);
           } else {
             setIsAlreadyMember(false);
+            setHasPaidForThisGroup(false);
           }
         } catch (memberStatusError) {
           console.error('檢查成員狀態時發生錯誤:', memberStatusError);
           setIsAlreadyMember(false); // 出錯時假設未加入
         }
       } else {
-        setIsAlreadyMember(false); // 未登入則肯定未加入
+        setIsAlreadyMember(false);
+        setHasPaidForThisGroup(false); // 未登入則肯定未加入
       }
       setError('');
     } catch (err) {
@@ -263,6 +267,10 @@ export default function GroupDetailPage() {
       alert('請先參加此揪團才能進入聊天室。');
       return;
     }
+    if (!hasPaidForThisGroup) {
+      alert('您尚未完成付款，無法進入此揪團的聊天室。');
+      return;
+    }
   };
   // alert(`功能待開發：加入 ${group?.title || groupId} 的聊天室`);
   const handleEditGroup = () => router.push(`/groups/${groupId}/edit`);
@@ -343,6 +351,7 @@ export default function GroupDetailPage() {
           progressWidth={progressWidth}
           onJoinGroup={handleJoinGroup}
           onJoinChat={handleJoinChat}
+          hasPaid={hasPaidForThisGroup}
           isOrganizer={isOrganizer}
           onEditGroup={handleEditGroup}
           onDeleteGroup={handleDeleteGroup}
@@ -370,6 +379,7 @@ export default function GroupDetailPage() {
         groupId={groupId}
         onJoinGroup={handleJoinGroup}
         onJoinChat={handleJoinChat}
+        hasPaid={hasPaidForThisGroup}
         isOrganizer={isOrganizer}
         onEdit={handleEditGroup}
         onDelete={handleDeleteGroup}
