@@ -39,7 +39,8 @@ import { Textarea } from '@/components/ui/textarea';
 
 // 優惠卷引入
 import ProfileCoupons from './_components/profile-coupons';
-
+//揪團頁引入
+import ProfileGroups from './_components/profile-groups';
 import Container from '@/components/container';
 //Bio區塊的驗證 schema  限制字數上限
 const FormSchema = z.object({
@@ -235,13 +236,14 @@ export default function MemberPage() {
 
           <TabsContent value="groups">
             <Card>
-              <CardHeader>
+              <ProfileGroups />
+              {/* <CardHeader>
                 <CardTitle>揪團</CardTitle>
                 <CardDescription>查看與管理您的揪團活動。</CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-500">尚未參加任何揪團。</p>
-              </CardContent>
+              </CardContent> */}
             </Card>
           </TabsContent>
         </Tabs>
