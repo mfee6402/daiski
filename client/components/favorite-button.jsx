@@ -90,7 +90,7 @@ export default function FavoriteButton({
           <span>{isFav ? '已收藏' : '加入收藏'}</span>
         </>
       ) : isFav ? (
-        <FaHeart size={20} />
+        <FaHeart size={20} className="text-red" />
       ) : (
         <FaRegHeart size={20} />
       )}

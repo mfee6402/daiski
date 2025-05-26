@@ -352,6 +352,7 @@ export default function ProductDetail() {
                   images && images.length > 0 ? images[0] : '/deadicon.png'
                 } // 使用第一張圖片，或提供一個預設圖片路徑
                 size={currentSku.sizeName} // 從 currentSku 取得尺寸名稱
+                isAuth={isAuth}
               />
               {/* 使用你的 FavoriteButton 元件 */}
               <FavoriteButton
