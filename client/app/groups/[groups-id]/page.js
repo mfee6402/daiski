@@ -11,12 +11,13 @@ import OrganizerIntroduction from './_components/organizer-introduction';
 import ActivityDescription from './_components/activity-description';
 import CommentSection from './_components/comment-section';
 import MobileStickyButtons from './_components/sticky-buttons';
-
+import { useCart } from '@/hooks/use-cart';
 import { Button } from '@/components/ui/button';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3005';
 
 export default function GroupDetailPage() {
+  const { onAdd } = useCart();
   const params = useParams();
   const groupId = params['groups-id'];
   const router = useRouter();
@@ -36,7 +37,8 @@ export default function GroupDetailPage() {
   const [joinError, setJoinError] = useState(''); // 加入失敗的錯誤訊息
   const [joinSuccess, setJoinSuccess] = useState(''); // 加入成功的訊息
   const [isAlreadyMember, setIsAlreadyMember] = useState(false); // 當前使用者是否已是成員
-  const [currentMemberCount, setCurrentMemberCount] = useState(0); // 目前參加人數，用於判斷是否已滿
+  const [currentMemberCount, setCurrentMemberCount] = useState(0); // 目前參加人數，用於判斷是否已滿+
+  const [hasPaidForThisGroup, setHasPaidForThisGroup] = useState(false);
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -88,15 +90,18 @@ export default function GroupDetailPage() {
           );
           if (member) {
             setIsAlreadyMember(true);
+            setHasPaidForThisGroup(!!member.paidAt);
           } else {
             setIsAlreadyMember(false);
+            setHasPaidForThisGroup(false);
           }
         } catch (memberStatusError) {
           console.error('檢查成員狀態時發生錯誤:', memberStatusError);
           setIsAlreadyMember(false); // 出錯時假設未加入
         }
       } else {
-        setIsAlreadyMember(false); // 未登入則肯定未加入
+        setIsAlreadyMember(false);
+        setHasPaidForThisGroup(false); // 未登入則肯定未加入
       }
       setError('');
     } catch (err) {
@@ -224,6 +229,15 @@ export default function GroupDetailPage() {
         // 為了獲取最新的 group 資料 (例如 currentPeople)，可以重新呼叫
         // fetchGroupDataAndMemberStatus(); // 或者只更新部分UI
         // 顯示成功訊息
+        // 加入購物車 byCart
+        onAdd('CartGroup', {
+          id: group.id,
+          price: group.price,
+          title: group.title,
+          imageUrl: group.images[0].imageUrl,
+          startDate: group.startDate,
+          endDate: group.endDate,
+        });
         alert(`已成功參加揪團！
           加入揪團 ${group?.title || groupId}
     group_id：${group.id}
@@ -251,6 +265,10 @@ export default function GroupDetailPage() {
     }
     if (!isAlreadyMember) {
       alert('請先參加此揪團才能進入聊天室。');
+      return;
+    }
+    if (!hasPaidForThisGroup) {
+      alert('您尚未完成付款，無法進入此揪團的聊天室。');
       return;
     }
   };
@@ -333,6 +351,7 @@ export default function GroupDetailPage() {
           progressWidth={progressWidth}
           onJoinGroup={handleJoinGroup}
           onJoinChat={handleJoinChat}
+          hasPaid={hasPaidForThisGroup}
           isOrganizer={isOrganizer}
           onEditGroup={handleEditGroup}
           onDeleteGroup={handleDeleteGroup}
@@ -360,6 +379,7 @@ export default function GroupDetailPage() {
         groupId={groupId}
         onJoinGroup={handleJoinGroup}
         onJoinChat={handleJoinChat}
+        hasPaid={hasPaidForThisGroup}
         isOrganizer={isOrganizer}
         onEdit={handleEditGroup}
         onDelete={handleDeleteGroup}

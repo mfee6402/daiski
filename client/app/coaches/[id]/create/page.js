@@ -76,6 +76,8 @@ const HorizontalStepper = ({ steps, current, setCurrent }) => {
 /* -------- 即時預覽卡 -------- */
 const LivePreview = ({ data, coverPreview }) => {
   const diffMap = { 初級: '初級', 中級: '中級', 高級: '高級' };
+  const boardMap = { 1: '單板', 2: '雙板' };
+
   return (
     <Card className="shadow-lg border">
       <CardHeader>
@@ -94,10 +96,31 @@ const LivePreview = ({ data, coverPreview }) => {
             <p className="mt-2 text-sm">封面圖片預覽</p>
           </div>
         )}
+
+        {data.tags && (
+          <p className="pt-2">
+            <strong>標籤：</strong>
+            {data.tags
+              .split(',')
+              .filter(Boolean)
+              .map((t) => (
+                <span
+                  key={t}
+                  className="inline-block bg-sky-100 text-sky-700 px-2 py-0.5 text-xs rounded mr-1 mt-1"
+                >
+                  {t.trim()}
+                </span>
+              ))}
+          </p>
+        )}
         <h3 className="text-xl font-bold mb-2 truncate">
           {data.name || '課程名稱'}
         </h3>
         <div className="text-sm space-y-1.5 text-muted-foreground">
+          <p>
+            <strong>單／雙板：</strong>
+            {boardMap[data.boardtype_id] || '未選擇'}
+          </p>
           <p>
             <strong>日期：</strong>
             {data.start_at || '開始'} ~ {data.end_at || '結束'}
@@ -131,12 +154,14 @@ const LivePreview = ({ data, coverPreview }) => {
 export default function CreateCoursePage() {
   const router = useRouter();
   const { isAuth } = useAuth();
+  const { user } = useAuth(); // user.id 是教練 ID
 
   /* ---- 狀態 ---- */
   const [step, setStep] = useState('basic');
   const [coverPreview, setCoverPreview] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [locations, setLocations] = useState([]); // 從 /api/location 撈既有雪場
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -148,19 +173,38 @@ export default function CreateCoursePage() {
     duration: '',
     max_people: '',
     location_id: '',
-    course_img: null,
+    newLoc: { name: '', country: '', city: '', address: '', lat: '', lng: '' },
+    course_imgs: [],
+    boardtype_id: '',
+    tags: '',
   });
 
   /* ---- 表單變更 ---- */
   const onChange = (e) => {
     const { name, value, type, files } = e.target;
+    console.log('欄位變更', name, value);
     if (type === 'file') {
       const f = files[0];
-      setForm((p) => ({ ...p, [name]: f }));
+      setForm((p) => ({ ...p, course_imgs: f }));
       if (f) setCoverPreview(URL.createObjectURL(f));
-    } else setForm((p) => ({ ...p, [name]: value }));
+    } else if (name.startsWith('newLoc')) {
+      const key = name.replace('newLoc.', '');
+      setForm((p) => ({
+        ...p,
+        newLoc: { ...p.newLoc, [key]: value },
+      }));
+    } else {
+      setForm((p) => ({ ...p, [name]: value }));
+    }
   };
-
+  /* ① 先抓雪場 */
+  useEffect(() => {
+    fetch('http://localhost:3005/api/location')
+      .then((r) => r.json())
+      .then(setLocations)
+      .catch(console.error);
+    console.log('地點選項：', locations);
+  }, []);
   /* ---- 驗證（僅示意） ---- */
   const validate = () => {
     if (!form.name.trim()) return '請輸入課程名稱';
@@ -173,19 +217,74 @@ export default function CreateCoursePage() {
   const handleSubmit = async () => {
     const errMsg = validate();
     if (errMsg) return setError(errMsg);
-
     if (!isAuth) return setError('請先登入');
 
+    const fd = new FormData();
+
+    // if (form.course_imgs?.length) {
+    // Array.from(form.course_imgs).forEach((f) => fd.append('images', f));
+    // }
+    // console.log(form.course_imgs);
+    // for (const image of form.course_imgs) {
+    //   fd.append('images', image);
+    // }
+    fd.append('images', form.course_imgs);
+    console.log(form.course_imgs);
+
+    // 文字欄位
+    fd.append('name', form.name.trim());
+    fd.append('description', form.description.trim());
+    fd.append('content', form.content.trim());
+    fd.append('start_at', form.start_at); // '2025-06-01T09:00'
+    fd.append('end_at', form.end_at);
+    fd.append('difficulty', form.difficulty);
+
+    // 數字欄位
+    ['price', 'duration', 'max_people', 'boardtype_id', 'location_id'].forEach(
+      (k) => fd.append(k, Number(form[k]) || 0)
+    );
+
+    if (form.location_id === 'other') {
+      fd.append('new_location_name', form.newLoc.name);
+      fd.append('new_location_country', form.newLoc.country);
+      fd.append('new_location_city', form.newLoc.city);
+      fd.append('new_location_address', form.newLoc.address);
+    }
+    // 4. 把 tags 字串拆成陣列，送到 tagIds[]
+    if (form.tags.trim()) {
+      form.tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean)
+        .forEach((t) => {
+          fd.append('tagIds[]', t);
+        });
+    }
+
     setIsSubmitting(true);
-    setError('');
+
     try {
-      const payload = new FormData();
-      Object.entries(form).forEach(([k, v]) => payload.append(k, v));
-      // await fetch('/api/course', { method: 'POST', body: payload });
-      alert('（DEMO）已送出！');
+      // await fetch(`http://localhost:3005/api/coaches/${user.id}/create`, { … })
+
+      const res = await fetch(
+        `http://localhost:3005/api/coaches/${user.id}/create`,
+        {
+          method: 'POST',
+          body: fd,
+          credentials: 'include',
+        }
+      );
+      // 確定拿到 JSON
+      const payload = await res.json();
+      if (!res.ok) {
+        console.error('🛑 後端錯誤明細：', payload);
+        throw new Error(payload.message || '伺服器錯誤');
+      }
+      // 成功導頁
       router.push('/courses');
     } catch (e) {
-      setError('建立失敗，請稍後再試');
+      console.error('建立錯誤細節：', e);
+      setError(`建立失敗：${e.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -226,6 +325,18 @@ export default function CreateCoursePage() {
                       onChange={onChange}
                     />
                   </div>
+                  {/* 單雙板 */}
+                  <select
+                    id="boardtype_id"
+                    name="boardtype_id"
+                    value={form.boardtype_id}
+                    onChange={onChange}
+                    className="mt-1 w-full rounded-md border px-3 py-2"
+                  >
+                    <option value="">請選擇單／雙板</option>
+                    <option value="1">單板</option> {/* 假設 1=單板 */}
+                    <option value="2">雙板</option> {/* 假設 2=雙板 */}
+                  </select>
                   {/* 簡介 / 內容 */}
                   <div>
                     <Label htmlFor="description">課程簡介</Label>
@@ -334,17 +445,76 @@ export default function CreateCoursePage() {
                       className="mt-1 w-full rounded-md border px-3 py-2"
                     >
                       <option value="">請選擇地點</option>
-                      {/* TODO: 後端取得 location list */}
+                      {locations.map((loc) => {
+                        return (
+                          <option key={loc.id} value={loc.id}>
+                            {loc.name}
+                          </option>
+                        );
+                      })}
+                      <option value="other">其他</option>
                     </select>
                   </div>
+                  {form.location_id === 'other' && (
+                    <div className="bg-slate-50 p-4 rounded mt-4 grid gap-4 sm:grid-cols-2">
+                      <Input
+                        name="newLoc.name"
+                        value={form.newLoc.name}
+                        onChange={onChange}
+                        placeholder="雪場名稱*"
+                      />
+                      <Input
+                        name="newLoc.country"
+                        value={form.newLoc.country}
+                        onChange={onChange}
+                        placeholder="國家*"
+                      />
+                      <Input
+                        name="newLoc.city"
+                        value={form.newLoc.city}
+                        onChange={onChange}
+                        placeholder="城市*"
+                      />
+                      <div className="sm:col-span-2">
+                        <Input
+                          name="newLoc.address"
+                          value={form.newLoc.address}
+                          onChange={onChange}
+                          placeholder="地址*"
+                        />
+                      </div>
+                    </div>
+                  )}
                   <div>
-                    <Label htmlFor="course_img">課程圖片</Label>
+                    <Label htmlFor="course_imgs">課程圖片</Label>
                     <Input
-                      id="course_img"
-                      name="course_img"
+                      id="course_imgs"
+                      name="course_imgs"
                       type="file"
                       accept="image/*"
+                      multiple
                       onChange={onChange}
+                    />
+                    {coverPreview && (
+                      <button
+                        onClick={() => {
+                          setForm((f) => ({ ...f, course_imgs: null }));
+                          setCoverPreview('');
+                        }}
+                        className="text-sm text-red-500 underline mt-1"
+                      >
+                        移除圖片
+                      </button>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="tags">關鍵字標籤</Label>
+                    <Input
+                      id="tags"
+                      name="tags"
+                      value={form.tags}
+                      onChange={onChange}
+                      placeholder="用逗號分隔，例如：初級,北海道"
                     />
                   </div>
                 </CardContent>

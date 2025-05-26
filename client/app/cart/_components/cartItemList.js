@@ -7,6 +7,7 @@ import QuantityButton from './quantity-button';
 import Favorite from './favorite';
 import { useCart } from '@/hooks/use-cart';
 import Image from 'next/image';
+
 export default function CartItemList({ category = '' }) {
   const { cart } = useCart();
   // NOTE 測試用，等待會員製作完收藏資料庫再修正，用於決定收藏的愛心狀態(實心、空心)
@@ -68,14 +69,11 @@ export default function CartItemList({ category = '' }) {
               {/* 數量(只有商品有) */}
               {category === 'CartProduct' && (
                 <div className="flex justify-center w-full items-center">
-                  <QuantityButton
-                    itemId={item.id}
-                    type="minus"
-                  ></QuantityButton>
+                  <QuantityButton item={item} type="minus"></QuantityButton>
                   <div className="flex justify-center w-[50]">
                     <p className="text-h6-tw">{item.quantity}</p>
                   </div>
-                  <QuantityButton itemId={item.id} type="plus"></QuantityButton>
+                  <QuantityButton item={item} type="plus"></QuantityButton>
                 </div>
               )}
               {/* FIXME */}
@@ -90,7 +88,11 @@ export default function CartItemList({ category = '' }) {
                 {/* FIXME 收藏按鈕 */}
                 {/* {category === 'CartProduct' && <Favorite data></Favorite>} */}
 
-                <Delete></Delete>
+                <Delete
+                  name={item.name}
+                  category={category}
+                  item={item}
+                ></Delete>
               </div>
             </div>
           );
