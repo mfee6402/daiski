@@ -4,13 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Delete from './delete-button';
 import WishList from './wish-list';
 import QuantityButton from './quantity-button';
-
+import Favorite from './favorite';
+import { useCart } from '@/hooks/use-cart';
 import Image from 'next/image';
-export default function CartItemList({
-  data = {},
-  setData = () => {},
-  category = '',
-}) {
+export default function CartItemList({ category = '' }) {
+  const { cart } = useCart();
   // NOTE 測試用，等待會員製作完收藏資料庫再修正，用於決定收藏的愛心狀態(實心、空心)
   const tmpWishListLeg = 3;
   const initWishList = new Array(tmpWishListLeg).fill(false);
@@ -18,9 +16,9 @@ export default function CartItemList({
   const [wishList, setWishList] = useState(initWishList);
 
   const titleMap = {
-    product: '商品',
-    course: '課程',
-    group: '揪團',
+    CartProduct: '商品',
+    CartCourse: '課程',
+    CartGroup: '揪團',
   };
 
   return (
@@ -33,9 +31,9 @@ export default function CartItemList({
       </div>
 
       <div className="mt-10 flex flex-col gap-4">
-        {data?.[category].map((item, i) => {
+        {cart?.[category].map((item, i) => {
           return (
-            <div key={item.id} className="flex justify-between">
+            <div key={category + item.id} className="flex justify-between">
               {/* 圖與名稱 */}
               <div className="flex  w-full ">
                 {item.imageUrl && (
@@ -71,33 +69,27 @@ export default function CartItemList({
               {category === 'CartProduct' && (
                 <div className="flex justify-center w-full items-center">
                   <QuantityButton
-                    category={category}
                     itemId={item.id}
-                    data={data}
-                    setData={setData}
                     type="minus"
                   ></QuantityButton>
                   <div className="flex justify-center w-[50]">
                     <p className="text-h6-tw">{item.quantity}</p>
                   </div>
-                  <QuantityButton
-                    category={category}
-                    itemId={item.id}
-                    data={data}
-                    setData={setData}
-                    type="plus"
-                  ></QuantityButton>
+                  <QuantityButton itemId={item.id} type="plus"></QuantityButton>
                 </div>
               )}
               {/* FIXME */}
               {/* 活動日期(只有課程跟揪團有) */}
               {/* 收藏、刪除 */}
               <div className="flex justify-center w-full gap-4">
-                <WishList
+                {/* <WishList
                   wishList={wishList}
                   index={i}
                   setWishList={setWishList}
-                ></WishList>
+                ></WishList> */}
+                {/* FIXME 收藏按鈕 */}
+                {/* {category === 'CartProduct' && <Favorite data></Favorite>} */}
+
                 <Delete></Delete>
               </div>
             </div>

@@ -87,25 +87,25 @@ export const useUserUpdateAvatar = () => {
   return { updateAvatar, isMutating, isError };
 };
 
-export const useUserRegister = () => {
-  const { trigger, isMutating, isError } = useMutation(
-    `${apiURL}/users`,
-    'POST'
-  );
-  // POST方法，要呼叫register(newUser)來註冊
-  // newUser資料範例(物件) 註: name改為在profile資料表中
-  // {
-  //     "account":"ginny",
-  //     "password":"123456",
-  //     "name":"金妮",
-  //     "email":"ginny@test.com",
-  // }
-  const register = async (data = {}) => {
-    return await trigger({ data: data });
-  };
+// export const useUserRegister = () => {
+//   const { trigger, isMutating, isError } = useMutation(
+//     `${apiURL}/users`,
+//     'POST'
+//   );
+// POST方法，要呼叫register(newUser)來註冊
+// newUser資料範例(物件) 註: name改為在profile資料表中
+// {
+//     "account":"ginny",
+//     "password":"123456",
+//     "name":"金妮",
+//     "email":"ginny@test.com",
+// }
+//   const register = async (data = {}) => {
+//     return await trigger({ data: data });
+//   };
 
-  return { register, isMutating, isError };
-};
+//   return { register, isMutating, isError };
+// };
 
 export const useAuthLogin = () => {
   const { trigger, isMutating, isError } = useMutation(
@@ -307,3 +307,20 @@ export const useAuthCheckSecret = () => {
 
   return { checkSecret, isMutating, isError };
 };
+
+//會員註冊
+export function useUserRegister() {
+  /**
+   * @param {Object} payload
+   * 必含：name, email, account, password, phone, birthday, is_coach
+   */
+  const register = (payload) =>
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      credentials: 'include', // 若要帶 cookie 才需要，否則可刪
+    });
+
+  return { register };
+}

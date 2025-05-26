@@ -67,7 +67,7 @@ export default function FavoriteButton({
 
   // 按鈕樣式
   const baseClasses = isRect
-    ? 'px-4 py-6 rounded-lg space-x-2 flex items-center cursor-pointer'
+    ? 'px-4 py-6 rounded-lg space-x-2 flex items-center cursor-none'
     : 'p-2 rounded-full cursor-pointer';
   const btnVariant = isRect ? 'outline' : 'ghost';
 
