@@ -19,7 +19,7 @@ export default function ProductAddCartButton({
 
   return (
     <Button
-      className="h-12 bg-primary-600 text-white w-full"
+      className="h-12 bg-primary-600 text-white w-full cursor-none"
       onClick={() => {
         // alert(`新增到購物車:${skuId}`);
         // console.log({
