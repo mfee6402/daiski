@@ -9,11 +9,19 @@ body {
   font-family: 'Noto Sans TC', Arial, Helvetica, sans-serif;
   max-width: 100vw;
   overflow-x: clip;
+  cursor: none;
 }
 
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+.animate-marquee {
+  animation: marquee 15s linear infinite; /* 您可以調整 30s 來改變速度 */
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused; /* 滑鼠懸停時暫停動畫 */
 }
 
 @theme {
@@ -74,6 +82,15 @@ body {
       height: 0;
     }
   }
+  @keyframes marquee {
+    0% {
+      transform: translateX(100%);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+
   /* 設定對應的 animate-* 變數 */
   --animate-expand: slideDown 300ms ease-out;
   --animate-collapse: slideUp 300ms ease-out;
@@ -155,7 +172,7 @@ body {
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: oklch(0.2972 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
@@ -204,4 +221,14 @@ body {
   /* 如果要分開改 ⇩ */
   --swiper-navigation-color: #404040; /* 左右箭頭 */
   --swiper-pagination-color: #404040; /* bullet 或 fraction */
+}
+
+/* 錯誤訊息樣式 */
+@layer components {
+  .newerror {
+    @apply text-xs  
+           text-red-500
+           h-4
+           block;
+  }
 }
