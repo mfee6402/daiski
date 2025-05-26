@@ -54,14 +54,20 @@ export function CartProvider({ children }) {
   // 將資料傳給後端
   async function fetchData(category = '', item = {}, method = '') {
     try {
-      const url =
-        method === 'POST'
-          ? 'http://localhost:3005/api/cart'
-          : `http://localhost:3005/api/cart/${item.id}`;
-      const data =
-        method === 'POST'
-          ? { itemId: item.id, category: category }
-          : { updateQuantity: item.quantity };
+      let url = '';
+      if (method === 'POST') {
+        url = 'http://localhost:3005/api/cart';
+      } else if (method === 'PUT' || method === 'DELETE') {
+        url = `http://localhost:3005/api/cart/${item.id}`;
+      }
+      console.log(url);
+      let data = {};
+      if (method === 'POST') {
+        data = { itemId: item.id, category: category };
+      } else if (method === 'PUT' || method === 'DELETE') {
+        data = { category };
+      }
+
       const res = await fetch(url, {
         method: method,
         credentials: 'include',
@@ -72,6 +78,7 @@ export function CartProvider({ children }) {
       });
       const response = await res.json();
 
+      console.log(response);
       fetchSyncData();
       //  設定到狀態(第二次同步確認用，第一次為樂觀更新)
     } catch (err) {
@@ -81,7 +88,6 @@ export function CartProvider({ children }) {
 
   // // 處理遞增
   const onIncrease = (category, item) => {
-    console.log('增加');
     // 處理單一類別
     const nextList = cart[category].map((v) => {
       if (v.id === item.id) {
@@ -99,7 +105,8 @@ export function CartProvider({ children }) {
     };
     // 3 設定到狀態(不等待後端，樂觀更新)
     setCart(nextCart);
-    fetchData(category, nextCart, 'PUT');
+
+    fetchData(category, item, 'PUT');
   };
 
   // // FIXME 處理遞減
@@ -117,15 +124,10 @@ export function CartProvider({ children }) {
   //   // 3 設定到狀態
   //   setCart(...cart, nextCart);
   // };
-  // // 處理刪除
-  // const onRemove = (category, itemId) => {
-  //   const nextCart = cart[category].filter((v) => {
-  //     // 過濾出id不為itemId的物件資料
-  //     return v.id !== itemId;
-  //   });
-  //   // 3
-  //   setCart(...cart, nextCart);
-  // };
+  // 處理刪除
+  const onRemove = (category, item) => {
+    fetchData(category, item, 'DELETE');
+  };
 
   // 處理新增
   const onAdd = (category = '', item = {}) => {
@@ -205,7 +207,7 @@ export function CartProvider({ children }) {
           onAdd,
           // onDecrease,
           // onIncrease,
-          // onRemove,
+          onRemove,
         }}
       >
         {children}
