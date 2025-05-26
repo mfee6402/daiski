@@ -190,7 +190,7 @@ export default function GroupMainInfoCard({
       ? `${API_BASE}${group.images[0].imageUrl}`
       : group.cover_image
         ? `${API_BASE}${group.cover_image}`
-        : '/images/placeholder-daiski.png';
+        : '/deadicon.png';
 
   return (
     <Card className="w-full max-w-screen-2xl mx-auto shadow-lg p-6 grid grid-cols-1 md:grid-cols-2 gap-6 rounded-lg bg-card">
