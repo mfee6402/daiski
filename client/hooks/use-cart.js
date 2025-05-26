@@ -39,37 +39,51 @@ export function CartProvider({ children }) {
   // 代表是否完成第一次渲染呈現的布林狀態值(信號值)
   const [didMount, setDidMount] = useState(false);
 
-  async function fetchData(category, item) {
+  // 資料庫與狀態同步
+  async function fetchSyncData() {
     try {
       const url = 'http://localhost:3005/api/cart';
-      const res = await fetch(url, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          itemId: item.id,
-          category: category,
-        }),
-      });
+      const res = await fetch(url, { credentials: 'include' });
       const json = await res.json();
-      console.log(json);
-      const nextCart = {
-        ...cart,
-        [category]: [...(cart[category] || []), item],
-      };
-      //  設定到狀態(第二次同步確認用，第一次為樂觀更新)
-      setCart(nextCart);
+      setCart(json.cart);
     } catch (err) {
       throw new Error(err);
     }
   }
+
+  // 將資料傳給後端
+  async function fetchData(category = '', item = {}, method = '') {
+    try {
+      const url =
+        method === 'POST'
+          ? 'http://localhost:3005/api/cart'
+          : `http://localhost:3005/api/cart/${item.id}`;
+      const data =
+        method === 'POST'
+          ? { itemId: item.id, category: category }
+          : { updateQuantity: item.quantity };
+      const res = await fetch(url, {
+        method: method,
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      const response = await res.json();
+
+      fetchSyncData();
+      //  設定到狀態(第二次同步確認用，第一次為樂觀更新)
+    } catch (err) {
+      throw new Error(err);
+    }
+  }
+
   // // 處理遞增
   const onIncrease = (category, item) => {
+    console.log('增加');
     // 處理單一類別
-
-    const nextItems = cart[category].map((v) => {
+    const nextList = cart[category].map((v) => {
       if (v.id === item.id) {
         // 如果比對出id=itemId的成員，則進行再拷貝物件，並且作修改`count: v.count+1`
         return { ...v, quantity: v.quantity + 1 };
@@ -78,15 +92,17 @@ export function CartProvider({ children }) {
         return v;
       }
     });
+
     const nextCart = {
       ...cart,
-      [category]: nextItems,
+      [category]: nextList,
     };
     // 3 設定到狀態(不等待後端，樂觀更新)
     setCart(nextCart);
-    fetchData(category, item);
+    fetchData(category, nextCart, 'PUT');
   };
-  // // 處理遞減
+
+  // // FIXME 處理遞減
   // const onDecrease = (category, itemId) => {
   //   const nextCart = cart[category].map((v) => {
   //     if (v.id === itemId) {
@@ -110,8 +126,8 @@ export function CartProvider({ children }) {
   //   // 3
   //   setCart(...cart, nextCart);
   // };
-  // 處理新增
 
+  // 處理新增
   const onAdd = (category = '', item = {}) => {
     const categoryOptions = ['CartGroup', 'CartProduct', 'CartCourse'];
 
@@ -121,7 +137,6 @@ export function CartProvider({ children }) {
     }
     // 判斷要加入的商品物件是否已經在購物車狀態
     const foundIndex = cart[category].findIndex((v) => v.id === item.id);
-
     if (foundIndex !== -1) {
       // 如果有找到 ===> 遞增購物車狀態商品數量
       if (category === 'CartProduct') {
@@ -131,7 +146,12 @@ export function CartProvider({ children }) {
       }
     } else {
       // 否則 ===> 新增到購物車狀態
-      fetchData(category, item);
+      const nextCart = {
+        ...cart,
+        [category]: [...(cart[category] || []), item],
+      };
+      setCart(nextCart);
+      fetchData(category, item, 'POST');
     }
   };
 
@@ -167,41 +187,11 @@ export function CartProvider({ children }) {
   // 第一次渲染完成後，從localStorage取出儲存購物車資料進行同步化
   useEffect(() => {
     // 讀取資料庫資料，如果不存在(null)會使用預設值空陣列([])
-    async function fetchData() {
-      try {
-        const url = 'http://localhost:3005/api/cart';
-        const res = await fetch(url, { credentials: 'include' });
 
-        const json = await res.json();
-        setCart(json.cart);
-      } catch (err) {
-        throw new Error(err);
-      }
-    }
-    fetchData();
+    fetchSyncData();
     // 第一次渲染完成
     setDidMount(true);
   }, []);
-
-  // FIXME要改成讀資料庫
-  // 當狀態cart有更動時，要進行和購物車寫入的同步化
-  // useEffect(() => {
-  //   // 排除第一次的渲染同步化工作
-  //   if (didMount) {
-  //     async function fetchData() {
-  //       try {
-  //         const url = 'http://localhost:3005/api/cart';
-  //         const res = await fetch(url, { credentials: 'include' });
-  //         const json = await res.json();
-  //         setCart(json.cart);
-  //       } catch (err) {
-  //         throw new Error(err);
-  //       }
-  //     }
-  //     fetchData();
-  //   }
-  //   // eslint-disable-next-line
-  // }, [cart]);
 
   return (
     <>
