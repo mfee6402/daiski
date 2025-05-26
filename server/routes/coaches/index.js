@@ -4,27 +4,10 @@ import { body, validationResult } from 'express-validator';
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
+// import { exit } from 'process';
 // import { fail } from 'assert';
 
 const router = express.Router();
-
-// multer上傳設定
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = 'upload/course';
-    fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  // 檔名加時間戳避免重複
-  filename(req, file, cb) {
-    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, unique + path.extname(file.originalname));
-  },
-});
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 單檔案5MB
-});
 
 // 抓教練列表
 router.get('/', async function (req, res) {
@@ -140,67 +123,48 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// 1. multer 設定：把上傳的圖存到 upload/course/
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, 'upload/course/'),
+  filename: (req, file, cb) => {
+    const ext = file.originalname.split('.').pop();
+    cb(
+      null,
+      `course_${Date.now()}_${Math.random().toString(36).slice(-6)}.${ext}`
+    );
+  },
+});
+const upload = multer({ storage });
+
+// 2. express-validator 規則
+const courseValidators = [
+  body('name').notEmpty().withMessage('課程名稱必填'),
+  body('description').isLength({ min: 10 }).withMessage('簡述至少 10 字'),
+  body('content').notEmpty().withMessage('內文必填'),
+  body('start_at').optional().isISO8601().withMessage('開始時間格式異常'),
+  body('end_at').isISO8601().withMessage('結束時間格式異常'),
+  body('difficulty').notEmpty().withMessage('難度必填'),
+  body('price').isNumeric().withMessage('價格須為數字'),
+  body('duration').isInt().withMessage('時長須為整數（分鐘）'),
+  body('max_people').isInt().withMessage('人數上限須為整數'),
+  // location_id 沒填或選「其他」時，可以傳 0，再看 new_location_* 欄位
+  body('location_id').isInt().withMessage('地點 ID 必須是數字'),
+  body('tagIds').optional().isArray().withMessage('標籤須以陣列形式傳送'),
+  body('boardtype_id').isInt().withMessage('請選擇單/雙板'),
+];
+
+// 3. 路由
 router.post(
-  '/:id/create',
-  upload.array('images', 5), // ① 先跑圖片上傳
-  [
-    /* ---------- ② express-validator 基本欄位檢查 ---------- */
-    body('name').notEmpty().withMessage('課程名稱必填'),
-    body('description').notEmpty(),
-    body('content').notEmpty(),
-    body('difficulty').isIn(['初級', '中級', '高級']),
-    body('price').isFloat({ min: 0 }),
-    body('duration').isInt({ min: 1 }),
-    body('max_people').isInt({ min: 1 }),
-    body('location_id').custom((v, { req }) => {
-      if (v === 'other') {
-        if (!req.body.new_name?.trim()) throw new Error('雪場名稱必填');
-        if (!req.body.new_country?.trim()) throw new Error('國家必填');
-        if (!req.body.new_city?.trim()) throw new Error('城市必填');
-      } else if (!/^\d+$/.test(v)) {
-        throw new Error('location_id 格式錯誤');
-      }
-      return true;
-    }),
-    body('coach_id').isInt(),
-    body('boardtype_id').isInt(),
-    body('start_at').isISO8601(),
-    body('end_at').isISO8601(),
-  ],
+  '/:id/create', // :id 可改成你要的路徑參數（教練 id 或不用也行）
+  upload.array('images', 5), // 處理上傳欄位 images (最多 5 張)
+  courseValidators, // 欄位驗證
   async (req, res) => {
-    /* ---------- ③ 驗證失敗回 400 ---------- */
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ status: 'fail', errors: errors.array() });
+    // 3.1 驗證錯誤
+    const errs = validationResult(req);
+    if (!errs.isEmpty()) {
+      return res.status(400).json({ errors: errs.array() });
     }
-    // ---------- 解析地點 ----------
-    let locId = Number(req.body.location_id);
-    if (req.body.location_id === 'other') {
-      const { new_name, new_country, new_city, new_address, new_lat, new_lng } =
-        req.body;
-
-      // ① 先查重：同名同國城市 → 直接用舊 id
-      const existed = await prisma.location.findFirst({
-        where: { name: new_name, country: new_country, city: new_city },
-      });
-
-      if (existed) locId = existed.id;
-      else {
-        // ② 新增 location
-        const newLoc = await prisma.location.create({
-          data: {
-            name: new_name,
-            country: new_country,
-            city: new_city,
-            address: new_address || null,
-            latitude: new_lat ? Number(new_lat) : null,
-            longitude: new_lng ? Number(new_lng) : null,
-          },
-        });
-        locId = newLoc.id;
-      }
-    }
-    /* ---------- ④ 解析表單欄位 ---------- */
+    // 3.2 拆解欄位
     const {
       name,
       description,
@@ -211,101 +175,124 @@ router.post(
       price,
       duration,
       max_people,
-      location_id,
-      coach_id,
+      location_id, // 既有地點的 id，若選「其他」可傳 0
       boardtype_id,
-      tags,
+      new_location_name, // 如果選「其他」，前端另外傳這些欄位
+      new_location_country,
+      new_location_city,
+      new_location_address,
+      tagIds = [],
     } = req.body;
+    console.log('收到的 body:', req.body);
+    console.log(
+      '收到的 files:',
+      req.files.map((f) => f.fieldname)
+    );
+    console.log('-------');
+    console.log(req.body);
 
-    /* ---------- ⑤ 處理圖片 ---------- */
-    const files = req.files || [];
-    if (!files.length) {
-      return res
-        .status(400)
-        .json({ status: 'fail', message: '請至少上傳一張圖片' });
-    }
-    // 每張圖存到 course_img，第一張設為封面 isCover=true
-    const imgBulkData = files.map((f, idx) => ({
-      img: `/uploads/course/${f.filename}`,
-      isCover: idx === 0,
-    }));
+    // 圖片檔案路徑
+    const imagePaths = req.files.map((f) => `/upload/course/${f.filename}`);
 
-    /* ---------- ⑥ 處理 TAG：轉成陣列 ---------- */
-    let tagList = [];
-    if (tags) {
-      try {
-        // 前端若送 JSON 字串 ["粉雪","北海道"]
-        tagList = Array.isArray(tags) ? tags : JSON.parse(tags);
-      } catch {
-        // 退而求其次：逗號字串 "粉雪,北海道"
-        tagList = String(tags)
-          .split(',')
-          .map((t) => t.trim())
-          .filter(Boolean);
-      }
-    }
-
-    /* ---------- ⑦ Prisma Transaction ---------- */
     try {
-      const created = await prisma.$transaction(async (tx) => {
-        /* ① course 主表 */
-        const course = await tx.course.create({
+      // 3.3 transaction 一次處理所有建立
+      const course = await prisma.$transaction(async (tx) => {
+        // 3.3.1 如果選了「其他」，先建 Location
+        let locId = parseInt(location_id, 10);
+        if (locId === 0 && new_location_name) {
+          const loc = await tx.location.create({
+            data: {
+              name: new_location_name,
+              country: new_location_country,
+              city: new_location_city,
+              address: new_location_address,
+              // latitude/longitude 如要 geocode 可留 0 或後續更新
+              latitude: 0,
+              longitude: 0,
+            },
+          });
+          locId = loc.id;
+        }
+
+        // 3.3.2 建 Course
+        const created = await tx.course.create({
           data: {
             name,
             description,
             content,
-            start_at: new Date(start_at),
+            start_at: start_at ? new Date(start_at) : new Date(),
             end_at: new Date(end_at),
+            // 其它欄位 if needed...
           },
         });
 
-        /* ② 批次插入圖片 */
-        await tx.courseImg.createMany({
-          data: imgBulkData.map((d) => ({ ...d, course_id: course.id })),
+        // 3.3.3 建多張 CourseImg
+        const savedImgs = await tx.courseImg.createMany({
+          data: imagePaths.map((url) => ({
+            course_id: created.id,
+            img: url,
+          })),
         });
 
-        /* ③ 找封面圖 id */
-        const coverImg = await tx.courseImg.findFirst({
-          where: { course_id: course.id, isCover: true },
+        // 3.3.4 建 CourseVariant
+        // 用第一張圖做為 variant 的 course_img_id
+        const firstImg = await tx.courseImg.findFirst({
+          where: { course_id: created.id },
         });
-
-        /* ④ 建 course_variant */
+        console.log({
+          course_id: created.id,
+          difficulty,
+          price,
+          duration: parseInt(duration, 10),
+          max_people: parseInt(max_people, 10),
+          location_id: locId,
+          coach_id: parseInt(req.params.id, 10), // or req.user.id
+          course_img_id: firstImg?.id,
+          start_at: start_at ? new Date(start_at) : new Date(),
+        });
         await tx.courseVariant.create({
           data: {
-            course_id: course.id,
+            course_id: created.id,
             difficulty,
-            price: String(price), // 你若 Prisma schema 改 Decimal 就存 Number(price)
-            duration: Number(duration),
-            max_people: Number(max_people),
-            location_id: Number(location_id),
-            coach_id: Number(coach_id),
-            boardtype_id: Number(boardtype_id),
-            course_img_id: coverImg.id,
-            start_at: new Date(start_at),
+            price,
+            duration: parseInt(duration, 10),
+            max_people: parseInt(max_people, 10),
+            location_id: locId,
+            coach_id: parseInt(req.params.id, 10), // or req.user.id
+            course_img_id: firstImg?.id,
+            start_at: start_at ? new Date(start_at) : new Date(),
+          },
+        });
+        // 5) 建立教練跟板型的關聯
+        await tx.boardtypeCoach.create({
+          data: {
+            coach_id: parseInt(req.params.id, 10),
+            boardtype_id: parseInt(boardtype_id, 10),
           },
         });
 
-        /* ⑤ tag upsert + 關聯 */
-        for (const t of tagList) {
-          const tag = await tx.tag.upsert({
-            where: { name: t },
-            update: {},
-            create: { name: t },
-          });
-          await tx.courseTag.create({
-            data: { course_id: course.id, tag_id: tag.id },
+        // 3.3.5 建 CourseTag
+        console.log('--------------------');
+        const tagMap = {
+          初級: 1,
+        };
+        if (tagIds.length) {
+          console.log(tagIds);
+          await tx.courseTag.createMany({
+            data: tagIds.map((tag) => ({
+              course_id: created.id,
+              tag_id: parseInt(tagMap[tag], 10),
+            })),
           });
         }
 
-        return course; // transaction 回傳
+        return created;
       });
 
-      return res.json({ status: 'success', data: created });
-    } catch (err) {
-      console.error('Create course error:', err);
-      return res
-        .status(500)
-        .json({ status: 'fail', message: '伺服器錯誤，無法建立課程' });
+      return res.status(201).json({ status: 'success', data: course });
+    } catch (error) {
+      console.error('建立課程失敗, 詳細錯誤：', error);
+      return res.status(500).json({ status: 'error', message: '伺服器錯誤' });
     }
   }
 );
