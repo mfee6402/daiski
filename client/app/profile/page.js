@@ -238,8 +238,8 @@ export default function MemberPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="groups">
-            <Card>
+          <TabsContent value="groups" className="w-full">
+            <Card className="w-full">
               <ProfileGroups />
               {/* <CardHeader>
                 <CardTitle>揪團</CardTitle>

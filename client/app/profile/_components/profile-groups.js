@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { useGroups } from '@/hooks/use-group';
 import Link from 'next/link';
+import { CiCalendarDate } from 'react-icons/ci';
+import { IoLocationOutline } from 'react-icons/io5';
 import {
   Card,
   CardContent,
@@ -31,19 +33,20 @@ export default function ProfileGroups(props) {
 
   return (
     <>
-      <Card className="w-full max-w-3xl">
+      <Card className="w-full ">
         <CardHeader>
           <CardTitle>已報名團隊活動</CardTitle>
           <CardDescription>共 {groups.length} 筆</CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent className="grid grid-cols-2 gap-3">
           {groups.length === 0 && (
             <p className="text-muted-foreground">目前沒有任何報名紀錄。</p>
           )}
 
           {groups.map((g) => (
             <article key={g.id} className="flex gap-4 rounded-lg border p-4">
+              <div></div>
               <Image
                 src={
                   g.imageUrl
@@ -51,16 +54,20 @@ export default function ProfileGroups(props) {
                     : 'deadicon.png'
                 }
                 alt={g.title}
-                width={10}
-                height={10}
-                className="size-24 flex-shrink-0 rounded-md object-cover"
+                width={20}
+                height={20}
+                className="w-1/2 flex-shrink-0 rounded-md object-cover aspect-[4/3]"
               />
-              <div className="flex-1">
-                <h3 className="font-medium">{g.title}</h3>
-                <p className="text-sm text-muted-foreground">{g.time}</p>
-                <p className="text-sm">
+              <div className="flex flex-col justify-center items-center gap-3">
+                <div className="font-medium">{g.title}</div>
+                <div className="flex text-sm text-muted-foreground ">
+                  <CiCalendarDate />
+                  {g.time}
+                </div>
+                <div className="text-sm flex">
+                  <IoLocationOutline />
                   {g.location === 'null' ? g.customLocation : g.location}
-                </p>
+                </div>
               </div>
               <Button asChild variant="outline">
                 <Link href={`/groups/${g.id}`}>查看</Link>
