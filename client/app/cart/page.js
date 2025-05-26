@@ -13,31 +13,27 @@ import { useAuth } from '@/hooks/use-auth';
 import { useCart } from '@/hooks/use-cart';
 
 export default function CartPage({ setProcess }) {
-  const { cart } = useCart();
-  useEffect(() => {
-    console.log(cart);
-  });
+  const { cart, setCart } = useCart();
 
-  const url = 'http://localhost:3005/api/cart';
-  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user, isAuth, isLoading } = useAuth();
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const res = await fetch(url, { credentials: 'include' });
-        const json = await res.json();
-        setData(json);
-        setLoading(false);
-      } catch (err) {
-        setError(err);
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
+  // useEffect(() => {
+  //   async function fetchData() {
+  //     try {
+  //       const url = 'http://localhost:3005/api/cart';
+  //       const res = await fetch(url, { credentials: 'include' });
+  //       const json = await res.json();
+  //       setData(json);
+  //       setLoading(false);
+  //     } catch (err) {
+  //       setError(err);
+  //       setLoading(false);
+  //     }
+  //   }
+  //   fetchData();
+  // }, []);
 
   // const groups = data?.data.cart.CartGroup ? cart.CartGroup : [];
 
@@ -63,24 +59,23 @@ export default function CartPage({ setProcess }) {
   // return <p>載入中</p>;
   // }
 
-  return (
-    <>
-      <Process step="1"></Process>
-      <div className="flex justify-between">
-        <div className="w-full">
-          <CartItemList
-            data={data}
-            setData={setData}
-            category="CartProduct"
-          ></CartItemList>
-          <CartItemList
-            data={data}
-            setData={setData}
-            category="CartGroup"
-          ></CartItemList>
+  if (isAuth) {
+    return (
+      <>
+        <Process step="1"></Process>
+        <div className="flex justify-between">
+          <div className="w-full">
+            <CartItemList
+              key="CartProduct"
+              category="CartProduct"
+            ></CartItemList>
+            <CartItemList key="CartGroup" category="CartGroup"></CartItemList>
+          </div>
+          <Checkout></Checkout>
         </div>
-        <Checkout data={data}></Checkout>
-      </div>
-    </>
-  );
+      </>
+    );
+  } else {
+    return <>請先登入</>;
+  }
 }

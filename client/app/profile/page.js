@@ -37,6 +37,10 @@ import {
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 
+// 優惠卷引入
+import ProfileCoupons from './_components/profile-coupons';
+
+import Container from '@/components/container';
 //Bio區塊的驗證 schema  限制字數上限
 const FormSchema = z.object({
   bio: z.string().max(2000, {
@@ -64,7 +68,7 @@ export default function MemberPage() {
 
   return (
     <div className="min-h-screen bg-[url('/home-images/layer2.png')] bg-cover bg-center bg-no-repeat">
-      <div className="w-full max-w-5xl mx-auto px-4 py-10 space-y-10  ">
+      <Container className="  ">
         {/* Header */}
         <header className="flex flex-col items-center gap-4">
           {/* Avatar */}
@@ -126,7 +130,6 @@ export default function MemberPage() {
                             <FormControl>
                               <Textarea
                                 placeholder="Tell us a little bit about yourself"
-                                
                                 className="resize-none  overflow-y-auto h-64 max-h-64 "
                                 {...field}
                               />
@@ -208,13 +211,13 @@ export default function MemberPage() {
 
           <TabsContent value="coupons">
             <Card>
-              <CardHeader>
+              <ProfileCoupons />
+              {/* <CardHeader>
                 <CardTitle>優惠卷</CardTitle>
-                <CardDescription>您的可用優惠卷列表。</CardDescription>
-              </CardHeader>
-              <CardContent>
+              </CardHeader> */}
+              {/* <CardContent>
                 <p className="text-sm text-gray-500">暫時沒有可用優惠卷。</p>
-              </CardContent>
+              </CardContent> */}
             </Card>
           </TabsContent>
 
@@ -242,7 +245,7 @@ export default function MemberPage() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
+      </Container>
     </div>
   );
 }
