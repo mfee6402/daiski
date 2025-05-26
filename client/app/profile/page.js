@@ -39,6 +39,9 @@ import { Textarea } from '@/components/ui/textarea';
 
 // 優惠卷引入
 import ProfileCoupons from './_components/profile-coupons';
+// 收藏引入
+import ProfileWishlist from './_components/profile-wishlist';
+
 //揪團頁引入
 import ProfileGroups from './_components/profile-groups';
 import Container from '@/components/container';
@@ -198,7 +201,8 @@ export default function MemberPage() {
 
           <TabsContent value="favorites">
             <Card>
-              <CardHeader>
+              <ProfileWishlist />
+              {/* <CardHeader>
                 <CardTitle>我的收藏</CardTitle>
                 <CardDescription>
                   您喜愛的商品或文章將會顯示在此。
@@ -206,7 +210,7 @@ export default function MemberPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-500">尚未收藏任何項目。</p>
-              </CardContent>
+              </CardContent> */}
             </Card>
           </TabsContent>
 
