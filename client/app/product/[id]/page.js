@@ -184,9 +184,9 @@ export default function ProductDetail() {
                 onClick={() => thumbsSwiperRef.current?.slidePrev()}
               >
                 {isMobile ? (
-                  <ChevronLeft className="w-6 h-6 cursor-pointer" />
+                  <ChevronLeft className="w-6 h-6 cursor-none" />
                 ) : (
-                  <ChevronUp className="w-6 h-6 cursor-pointer" />
+                  <ChevronUp className="w-6 h-6 cursor-none" />
                 )}
               </button>
 
@@ -210,7 +210,7 @@ export default function ProductDetail() {
                         thumbsSwiperRef.current?.slideTo(idx);
                         mainSwiperRef.current?.swiper.slideTo(idx);
                       }}
-                      className={`border w-full h-full  aspect-square cursor-pointer ${
+                      className={`border w-full h-full  aspect-square cursor-none ${
                         thumbsSwiperRef.current?.activeIndex === idx
                           ? 'border-blue-500'
                           : 'border-gray-200'
@@ -235,9 +235,9 @@ export default function ProductDetail() {
                 onClick={() => thumbsSwiperRef.current?.slideNext()}
               >
                 {isMobile ? (
-                  <ChevronRight className="w-6 h-6 cursor-pointer" />
+                  <ChevronRight className="w-6 h-6 cursor-none" />
                 ) : (
-                  <ChevronDown className="w-6 h-6 cursor-pointer" />
+                  <ChevronDown className="w-6 h-6 cursor-none" />
                 )}
               </button>
             </div>
@@ -274,16 +274,18 @@ export default function ProductDetail() {
 
           {/* 詳細資訊 */}
           <div className="flex flex-col gap-4">
-            <p className="text-gray-500 mb-2">
+            <p className="text-black dark:text-white mb-2">
               {category?.name} | {brand?.name}
             </p>
-            <h1 className="text-2xl font-medium text-gray-800 mb-4">{name}</h1>
-            <p className="text-xl font-bold text-red-600 mb-6">NT$ {price}</p>
+            <h1 className="text-2xl font-medium text-black dark:text-white mb-4">
+              {name}
+            </h1>
+            <p className="text-xl font-bold text-red-500 mb-6">NT$ {price}</p>
 
             {/* 尺寸選擇（僅在有尺寸時顯示） */}
             {skus.some((s) => s.sizeId !== null) && (
               <div className="mb-6">
-                <p className="text-gray-500 mb-2">尺寸</p>
+                <p className="text-black dark:text-white mb-2">尺寸</p>
                 <div className="flex gap-2">
                   {skus
                     .filter((s) => s.sizeId !== null)
@@ -298,7 +300,7 @@ export default function ProductDetail() {
                           disabled={s.stock === 0}
                           className={`
                 w-12 h-10 border flex items-center justify-center text-sm rounded
-                ${isSel ? 'bg-primary-600 text-white' : 'border-gray-200 text-gray-800'}
+                ${isSel ? 'bg-primary-600 text-white' : 'border-gray-200 text-black dark:text-white'}
                 ${
                   s.stock === 0
                     ? 'opacity-50 cursor-not-allowed'
@@ -315,11 +317,13 @@ export default function ProductDetail() {
             )}
 
             {/* 庫存顯示（無論有無尺寸） */}
-            <p className="mt-2 text-sm text-gray-500">庫存：{maxStock} 件</p>
+            <p className="mt-2 text-sm text-black dark:text-white ">
+              庫存：{maxStock} 件
+            </p>
 
             {/* 數量調整 */}
             <div className="mb-6 flex items-center gap-2">
-              <p className="text-gray-500">數量</p>
+              <p className="text-black dark:text-white ">數量</p>
               <div className="flex items-center">
                 <button
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
@@ -385,7 +389,10 @@ export default function ProductDetail() {
 
             <TabsContent value="introduction">
               <div
-                className=" mt-4 leading-loose"
+                // 1. 設定父元素在亮色模式下的文字顏色 (例如 text-gray-900)
+                // 2. 設定父元素在暗色模式下的文字顏色 (例如 dark:text-white)
+                // 3. 關鍵：讓所有子元素 (除了 style 和 script 標籤) 強制繼承父元素的文字顏色
+                className="mt-4 leading-loose text-black dark:text-white [&_*:not(style):not(script)]:!text-inherit"
                 dangerouslySetInnerHTML={{ __html: introduction }}
               />
             </TabsContent>
@@ -409,7 +416,7 @@ export default function ProductDetail() {
                     viewport={{ once: true, amount: 0.2 }}
                   >
                     <Link href={`/product/${item.id}`}>
-                      <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+                      <Card className="cursor-none hover:shadow-lg transition-shadow">
                         {/* 小尺寸縮圖區 */}
                         <CardHeader className="w-full aspect-[4/3] overflow-hidden rounded-xl">
                           <Image

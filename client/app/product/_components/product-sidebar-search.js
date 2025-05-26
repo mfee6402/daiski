@@ -61,11 +61,13 @@ export default function ProductSidebarSearch({
       {(searchValue.length >= 2 || suggestions.length > 0) && (
         <CommandList className="max-h-60 overflow-auto">
           {isLoading ? (
-            <div className="p-2 text-sm text-gray-500">搜尋中...</div>
+            <div className="p-2 text-sm  text-gray-500 dark:text-white">
+              搜尋中...
+            </div>
           ) : (
             <>
               {suggestions.length === 0 ? (
-                <CommandEmpty className="p-2 text-sm text-gray-500">
+                <CommandEmpty className="p-2 text-sm  text-gray-500 dark:text-white">
                   找不到結果
                 </CommandEmpty>
               ) : (
