@@ -7,6 +7,7 @@ const prisma = new PrismaClient();
 
 // 取得目前使用者的收藏清單
 // 透過 authenticate middleware 從 HTTP-only Cookie 解出 req.user.id
+// http://localhost:3005/api/profile/favorites
 router.get('/', authenticate, async (req, res, next) => {
   try {
     const userId = req.user.id;
