@@ -472,6 +472,7 @@ router.post('/:groupId/join', authenticate, async (req, res) => {
       // 201 Created
       success: true,
       message: '成功加入揪團！',
+      groupMemberId: newMemberEntry.id, // 返回新創建的 group_member ID
       data: {
         // 可以選擇性返回新創建的記錄資訊
         groupId: newMemberEntry.groupId,
