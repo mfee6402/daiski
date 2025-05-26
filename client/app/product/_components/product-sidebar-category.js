@@ -194,17 +194,17 @@ export default function ProductSidebarCategory({
             onToggleCategory?.(label, open);
           }}
         >
-          <div className="flex justify-between items-center w-full px-2 py-1 hover:bg-gray-100 rounded-md ">
+          <div className="flex justify-between items-center w-full px-2 py-1 hover:bg-gray-100 hover:dark:bg-secondary-800 rounded-md ">
             {/* 點名稱導航主分類 */}
             <button
               type="button"
               onClick={() => onSelectCategory?.(data.__id)}
               className={`
-           flex-1 text-left font-medium cursor-pointer
+           flex-1 text-left font-medium cursor-none
            ${
              isActive
-               ? 'text-primary-500' // ← 被選中時的顏色
-               : 'text-secondary-800'
+               ? 'text-primary-500 dark:text-blue-300' // ← 被選中時的顏色
+               : ' text-black dark:text-white'
            }   
            hover:text-primary-500
          `}
@@ -217,7 +217,7 @@ export default function ProductSidebarCategory({
               <CollapsibleTrigger asChild>
                 <button
                   type="button"
-                  className="w-4 h-4 flex-shrink-0 focus:outline-none transition-transform data-[state=open]:rotate-180 hover:text-primary-500 cursor-pointer"
+                  className="w-4 h-4 flex-shrink-0 focus:outline-none transition-transform data-[state=open]:rotate-180 hover:text-primary-500  cursor-none"
                 >
                   <svg
                     className="w-4 h-4 "
@@ -253,10 +253,8 @@ export default function ProductSidebarCategory({
   const tree = buildTree(categories);
 
   return (
-    <div className="px-4 py-2">
-      <h3 className="mb-2 text-2xl font-semibold uppercase text-primary-800">
-        商品分類
-      </h3>
+    <div className="px-4 py-2 ">
+      <h3 className="mb-2 text-2xl font-semibold uppercase">商品分類</h3>
       <div className="space-y-2">{renderTree(tree)}</div>
     </div>
   );

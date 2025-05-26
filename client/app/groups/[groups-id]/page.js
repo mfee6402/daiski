@@ -11,12 +11,13 @@ import OrganizerIntroduction from './_components/organizer-introduction';
 import ActivityDescription from './_components/activity-description';
 import CommentSection from './_components/comment-section';
 import MobileStickyButtons from './_components/sticky-buttons';
-
+import { useCart } from '@/hooks/use-cart';
 import { Button } from '@/components/ui/button';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3005';
 
 export default function GroupDetailPage() {
+  const { onAdd } = useCart();
   const params = useParams();
   const groupId = params['groups-id'];
   const router = useRouter();
@@ -228,6 +229,15 @@ export default function GroupDetailPage() {
         // 為了獲取最新的 group 資料 (例如 currentPeople)，可以重新呼叫
         // fetchGroupDataAndMemberStatus(); // 或者只更新部分UI
         // 顯示成功訊息
+        // 加入購物車 byCart
+        onAdd('CartGroup', {
+          id: group.id,
+          price: group.price,
+          title: group.title,
+          imageUrl: group.images[0].imageUrl,
+          startDate: group.startDate,
+          endDate: group.endDate,
+        });
         alert(`已成功參加揪團！
           加入揪團 ${group?.title || groupId}
     group_id：${group.id}

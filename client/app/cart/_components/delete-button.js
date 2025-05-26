@@ -12,8 +12,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { useCart } from '@/hooks/use-cart';
 
-export default function Delete() {
+export default function Delete({ category = '', item = {}, name = '' }) {
+  const { onRemove } = useCart();
   return (
     <>
       <AlertDialog>
@@ -25,12 +27,12 @@ export default function Delete() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>確定要刪除?</AlertDialogTitle>
-            <AlertDialogDescription>將刪除品項</AlertDialogDescription>
+            <AlertDialogDescription>將刪除:{name}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
             {/* NOTE 待做 */}
-            <AlertDialogAction onClick={() => console.log('確認刪除')}>
+            <AlertDialogAction onClick={() => onRemove(category, item)}>
               確認
             </AlertDialogAction>
           </AlertDialogFooter>
