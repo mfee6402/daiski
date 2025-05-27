@@ -119,49 +119,27 @@ router.get('/', authenticate, async function (req, res, next) {
           },
         },
         CartCourse: {
-          select: {
-            courseVariant: {
-              select: {
-                id: true,
-                course_id: true,
-                price: true,
-                duration: true,
-                start_at: true,
-                course: {
-                  select: {
-                    name: true,
-                    CourseImg: {
-                      select: {
-                        img: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
+          include: {
+            // courseVariant: {
+            //     //     select: {
+            //     //       course_id: true,
+            //     //       price: true,
+            //     //       duration: true,
+            //     //       start_at: true,
+            //     //       course: {
+            //     //         select: {
+            //     //           name: true,
+            //     //           CourseImg: {
+            //     //             select: {
+            //     //               img: true,
+            //     //             },
+            //     //           },
+            //     //         },
+            //     //       },
+            //     //     },
+            // },
           },
         },
-
-        // CartGroup: {
-        // select: {
-        // groupMember: {
-        //       select: {
-        //         joinedAt: true,
-        //         group: {
-        //           select: {
-        //             title: true,
-        //             price: true,
-        //             images: {
-        //               select: {
-        //                 imageUrl: true,
-        //               },
-        //             },
-        //           },
-        //         },
-        //       },
-        // },
-        // },
-        // },
       },
 
       where: {
@@ -179,34 +157,37 @@ router.get('/', authenticate, async function (req, res, next) {
       size: item.productSku.product_size.name,
     }));
 
-    const CartCourse = data.CartCourse.map((item) => ({
-      id: item.courseVariant.id,
-      price: item.courseVariant.price,
-      name: item.courseVariant.course.name,
-      imageUrl: item.courseVariant.course.CourseImg[0].img,
-      start_at: item.courseVariant.start_at,
-      duration: item.courseVariant.duration,
-    }));
-
-    // const CartGroup = data.CartGroup.map((item) => ({
-    //   id: item.id,
-    //   joinedAt: item.groupMember.joinedAt,
-    //   title: item.groupMember.group.title,
-    //   price: item.groupMember.group.price,
-    //   // NOTE若無照片則回傳預設
-    //   imageUrl: item.groupMember.group.images[0]?.imageUrl
-    //     ? item.groupMember.group.images[0].imageUrl
-    //     : '',
+    // const CartCourse = data.CartCourse.map((item) => ({
+    //   id: item.courseVariant.id,
+    //   price: item.courseVariant.price,
+    //   name: item.courseVariant.course.name,
+    //   imageUrl: item.courseVariant.course.CourseImg[0].img,
+    //   start_at: item.courseVariant.start_at,
+    //   duration: item.courseVariant.duration,
     // }));
+
+    const url = `http://localhost:3005/api/group/user/1`;
+
+    let resGroup = await fetch(url);
+    let CartGroup = (await resGroup.json()).memberships;
+
+    CartGroup = CartGroup.map((item) => ({
+      id: item.groupMemberId,
+      title: item.group.title,
+      time: item.group.time,
+      price: item.group.price,
+      // NOTE若無照片則回傳預設
+      imageUrl: item.group.imageUrl ? item.group.imageUrl : '',
+    }));
 
     const cart = {
       ...data,
       CartProduct,
-      CartCourse,
-      // CartGroup,
+      // CartCourse,
+      CartGroup,
     };
 
-    res.status(200).json({ status: 'success', cart });
+    return res.status(200).json({ status: 'success', cart });
   } catch (e) {
     next(e);
   }

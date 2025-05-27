@@ -723,14 +723,14 @@ router.get('/user/:userId', async (req, res, next) => {
       return {
         userId: userId,
         groupMemberId: m.id,
-        joinedAt: m.joinedAt, 
+        joinedAt: m.joinedAt,
         group: {
           groupId: m.group.id,
           title: m.group.title,
           time: m.group.endDate
             ? `${m.group.startDate.toISOString()} — ${m.group.endDate.toISOString()}`
             : m.group.startDate.toISOString(),
-            price:m.group.price,
+          price: m.group.price,
           imageUrl: m.group.images[0]?.imageUrl || '/deadicon.png',
           location: loc || m.group.customLocation || '地點未定',
         },

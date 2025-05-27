@@ -32,7 +32,7 @@ export default function CartItemList({ category = '' }) {
       </div>
 
       <div className="mt-10 flex flex-col gap-4">
-        {cart?.[category].map((item, i) => {
+        {cart[category]?.map((item, i) => {
           return (
             <div key={category + item.id} className="flex justify-between">
               {/* 圖與名稱 */}
