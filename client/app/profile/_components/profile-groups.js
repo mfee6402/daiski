@@ -29,7 +29,7 @@ export default function ProfileGroups(props) {
   if (isLoading) return <p className="text-sm">載入中…</p>;
   if (error) return <p className="text-sm text-destructive">讀取失敗</p>;
 
-  const groups = data?.groups ?? [];
+  const groups = data?.memberships ?? [];
 
   return (
     <>
@@ -45,15 +45,18 @@ export default function ProfileGroups(props) {
           )}
 
           {groups.map((g) => (
-            <article key={g.id} className="flex gap-4 rounded-lg border p-4">
+            <article
+              key={g.groupMemberId}
+              className="flex gap-4 rounded-lg border p-4"
+            >
               <div></div>
               <Image
                 src={
-                  g.imageUrl
-                    ? `http://localhost:3005${g.imageUrl}`
+                  g.group.imageUrl
+                    ? `http://localhost:3005${g.group.imageUrl}`
                     : 'deadicon.png'
                 }
-                alt={g.title}
+                alt={g.group.title}
                 width={20}
                 height={20}
                 className="w-1/2 flex-shrink-0 rounded-md object-cover aspect-[4/3]"
