@@ -34,7 +34,7 @@ export default function ProductSidebar({
   onSelect,
 }) {
   return (
-    <div className="hidden md:flex flex-col max-w-48 xl:max-w-64 w-full bg-[#ffffff] text-[#231815]">
+    <div className="flex flex-col md:max-w-48 xl:max-w-64 w-full bg-white dark:bg-background  text-black dark:text-white">
       <ProductSidebarSearch
         suggestions={suggestions}
         isLoading={isLoading}

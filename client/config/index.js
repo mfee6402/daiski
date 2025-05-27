@@ -7,7 +7,7 @@ export const isDev = env === 'development';
 
 // 本機環境
 const local = {
-  apiUrl: 'http://localhost:3005/api',
+  apiURL: 'http://localhost:3005/api',
   serverURL: 'http://localhost:3005',
   avatarURL: 'http://localhost:3005/avatar',
   nextUrl: 'http://localhost:3000',
@@ -15,13 +15,13 @@ const local = {
 
 // 營運環境設定(部署至Vercel)
 const production = {
-  apiUrl: 'https://xxxxx.vercel.app/api',
+  apiURL: 'https://xxxxx.vercel.app/api',
   serverURL: 'https://xxxxx.vercel.app',
   avatarURL: 'https://xxxxx.vercel.app/avatar',
   nextUrl: 'https://xxxxx.vercel.app',
 };
 
-export const apiUrl = isDev ? local.apiUrl : production.apiUrl;
+export const apiURL = isDev ? local.apiURL : production.apiURL;
 export const serverURL = isDev ? local.serverURL : production.serverURL;
 export const avatarURL = isDev ? local.avatarURL : production.avatarURL;
 export const nextUrl = isDev ? local.nextUrl : production.nextUrl;
@@ -29,7 +29,7 @@ export const nextUrl = isDev ? local.nextUrl : production.nextUrl;
 // 這裡是設定不需要Layout的路由
 export const noLayoutPaths = ['/ship/callback'];
 // 登入頁路由
-export const loginRoute = '/user';
+export const loginRoute = '/auth/not-login';
 // 隱私頁面路由，未登入時會，檢查後跳轉至登入頁路由
 export const protectedRoutes = [
   // 這代表/dashboard/底下的所有路由都會被保護
@@ -38,7 +38,18 @@ export const protectedRoutes = [
   '/user/status',
   '/user/profile',
   '/user/profile-password',
-]
+  '/cart',
+  '/coupons',
+  // '/groups/create',
+  '/profile',
+];
+
+export const protectedRoutesPatterns = [
+  // 課程註冊頁面
+  /^\/courses\/[^/]+\/sign-up$/,
+  // 揪團編輯頁面
+  /^\/groups\/[^/]+\/edit$/
+];
 
 // breadcrumb面包屑使用
 // 用pathname英文對照中文的名稱(類似關聯陣列的物件)

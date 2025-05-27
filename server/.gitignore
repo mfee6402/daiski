@@ -6,7 +6,7 @@ productImages
 uploads
 coachAvatar
 courseImages
-
+upload
 # misc
 .DS_Store
 .cache
@@ -20,3 +20,4 @@ yarn-error.log*
 /config/development.json
 .env.local-nouse
 /testing
+.DS_Store

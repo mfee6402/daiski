@@ -93,9 +93,10 @@ export const getUserById = async (userId) => {
     where: {
       id: userId,
     },
-    include: {
-      profile: true,
-    },
+    // 我們沒profile?
+    // include: {
+    //   profile: true,
+    // },
   })
 
   // user=null，表示無此會員資料
@@ -103,12 +104,9 @@ export const getUserById = async (userId) => {
     throw new Error('會員資料不存在')
   }
 
-  if (user.profile.birth) {
-    // 將生日的日期格式轉為字串 yyyy-mm-dd
-    user.profile.birth = user.profile.birth.toISOString().split('T')[0]
-  }
 
-  // 如果user的屬性中有null值，轉換為空字串
+
+  // 如果user的屬性中有null值，轉換為空字串birth
   if (user) {
     for (const key in user) {
       if (user[key] === null) {
@@ -130,6 +128,7 @@ export const getUserById = async (userId) => {
   if (user) delete user.password
 
   return user
+  // return {"name":"testName"}
 }
 
 // 過濾某個欄位得到使用者資料(不包含profile)
@@ -486,24 +485,6 @@ export const isUserFavorite = async (userId, productId) => {
   })
 
   return favorite ? true : false
-}
-
-// 取得會員的加入我的最愛的商品id
-export const getUserFavorites = async (userId) => {
-  // 驗證參數是否為正整數
-  validatedParamId(userId)
-
-  // 使用findMany方法取得所有使用者的最愛商品資料
-  const favorites = await prisma.favorite.findMany({
-    where: {
-      userId: userId,
-    },
-  })
-
-  // console.log(favorites)
-
-  // 將結果中的pid取出變為一個純資料的陣列
-  return favorites.map((v) => v.productId)
 }
 
 // 新增商品到我的最愛

@@ -5,49 +5,38 @@ import React, { useState, useEffect } from 'react';
 import Process from './_components/process';
 import Checkout from './_components/checkout';
 
-import { produce } from 'immer';
+import Coupon from './_components/coupon';
 
-import Delete from './_components/delete-button';
-import WishList from './_components/wish-list';
-import QuantityButton from './_components/quantity-button';
+import CartItemList from './_components/cartItemList';
 
-import Image from 'next/image';
-// secondary
+import { useAuth } from '@/hooks/use-auth';
+import { useCart } from '@/hooks/use-cart';
+
 export default function CartPage({ setProcess }) {
-  const url = 'http://localhost:3005/api/cart';
-  const [data, setData] = useState(null);
+  const { cart, setCart } = useCart();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { user, isAuth, isLoading } = useAuth();
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const res = await fetch(url);
-        const json = await res.json();
-        setData(json);
-        setLoading(false);
-      } catch (err) {
-        setError(err);
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
-  // console.log()
+  // useEffect(() => {
+  //   async function fetchData() {
+  //     try {
+  //       const url = 'http://localhost:3005/api/cart';
+  //       const res = await fetch(url, { credentials: 'include' });
+  //       const json = await res.json();
+  //       setData(json);
+  //       setLoading(false);
+  //     } catch (err) {
+  //       setError(err);
+  //       setLoading(false);
+  //     }
+  //   }
+  //   fetchData();
+  // }, []);
+
   // const groups = data?.data.cart.CartGroup ? cart.CartGroup : [];
-  // const course = data?.data.cart.CartCourse ? cart.CartCourse : [];
 
-  // NOTE 測試用，等待會員製作完收藏資料庫再修正，用於決定收藏的愛心狀態(實心、空心)
-  const tmpWishListLeg = 3;
-  const initWishList = new Array(tmpWishListLeg).fill(false);
-
-  const [wishList, setWishList] = useState(initWishList);
-
-  console.log(
-    data?.cart.CartProduct[0].product_image ===
-      '/productImages/1/ProductPicture.jfif'
-  );
-  // console.log(products[2]);
   //   // 定義收藏用狀態
   // const [wishList, setWishList] = useState(false)
   // // 處理收藏布林值切換(toggle)
@@ -70,70 +59,24 @@ export default function CartPage({ setProcess }) {
   // return <p>載入中</p>;
   // }
 
-  return (
-    <>
-      <Process step="1"></Process>
-      <div className="flex justify-between">
-        <div className="w-full">
-          <div className="border-b-5 border-secondary-500">
-            <h6 className="text-h6-tw">商品內容</h6>
+  if (isAuth) {
+    return (
+      <>
+        <Process step="1"></Process>
+        <div className="flex justify-between">
+          <div className="w-full">
+            <CartItemList
+              key="CartProduct"
+              category="CartProduct"
+            ></CartItemList>
+            <CartItemList key="CartCourse" category="CartCourse"></CartItemList>
+            {/* <CartItemList key="CartGroup" category="CartGroup"></CartItemList> */}
           </div>
-          {/* 品項 */}
-          <div className="mt-10 flex flex-col gap-4">
-            {data?.cart.CartProduct.map((product, i) => {
-              return (
-                <div key={product.productId} className="flex justify-between">
-                  <div className="flex  w-full ">
-                    {product.product_image && (
-                      <Image
-                        src={`http://localhost:3005${product.product_image}`}
-                        alt="productImage"
-                        width={96}
-                        height={96}
-                        className="object-fill w-[96]"
-                      ></Image>
-                    )}
-
-                    <div>
-                      <p>{product.name}</p>
-                    </div>
-                  </div>
-                  <div className="w-full flex justify-center items-center ">
-                    <p className="text-h6-tw">$6000</p>
-                  </div>
-                  <div className="flex justify-center w-full items-center">
-                    <QuantityButton
-                      productId={product.productId}
-                      data={data}
-                      setData={setData}
-                      type="minus"
-                    ></QuantityButton>
-                    <div className="flex justify-center w-[50]">
-                      <p className="text-h6-tw">{product.quantity}</p>
-                    </div>
-                    <QuantityButton
-                      productId={product.productId}
-                      data={data}
-                      setData={setData}
-                      type="plus"
-                    ></QuantityButton>
-                  </div>
-
-                  <div className="flex justify-center w-full gap-4">
-                    <WishList
-                      wishList={wishList}
-                      index={i}
-                      setWishList={setWishList}
-                    ></WishList>
-                    <Delete></Delete>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <Checkout></Checkout>
         </div>
-        <Checkout></Checkout>
-      </div>
-    </>
-  );
+      </>
+    );
+  } else {
+    return <>請先登入</>;
+  }
 }

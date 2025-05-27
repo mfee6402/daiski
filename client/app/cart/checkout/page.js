@@ -3,11 +3,28 @@
 import React, { useState, useEffect } from 'react';
 import Process from '../_components/process';
 import ShippingMethod from './_components/shippingMethod';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function CheckoutPage(props) {
-  const handleSubmit = (e) => {
+  const router = useRouter();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert('表單送出，(後端可能)將網頁跳轉');
+    const form = new FormData(e.target);
+    const payment = form.get('payment');
+    console.log(payment);
+    if (payment === 'paypal') {
+      router.push('/cart/checkout/paypal');
+    } else if (payment === 'ecpay') {
+      // 可傳金額當 query 參數
+      router.push('/api/cart/ecpay-test-only?amount=2500');
+    } else {
+      // 假設是貨到付款或信用卡，這裡可以寫訂單建立邏輯
+      // 然後跳轉
+      // await fetch('/api/order', { method: 'POST', body: form });
+      // router.push('/cart/summary');
+    }
   };
 
   return (
@@ -54,29 +71,40 @@ export default function CheckoutPage(props) {
 
             <h6 className=" text-h6-tw">信用卡</h6>
           </label>
-          {/* LINE PAY */}
+          {/* Paypal */}
           <label className="inline-flex items-center space-x-2 relative">
             <input
               type="radio"
               name="payment"
+              value="paypal"
               className="peer appearance-none w-6 h-6 rounded-full border-2 border-primary-600   checked:border-primary-600"
             />
             <span className="pointer-events-none w-3  h-3 rounded-full bg-primary-600 absolute left-1.5 my-auto opacity-0 peer-checked:opacity-100" />
-
-            <h6 className=" text-h6-tw">LINE PAY</h6>
+            <h6 className=" text-h6-tw">Paypal</h6>
+            {/* FIXME 按下確認付款後在用router.push轉到指定付款方式 */}
+            <Link href="http://localhost:3000/cart/checkout/paypal">
+              PayPal
+            </Link>
           </label>
+
           {/* 綠界 */}
           <label className="inline-flex items-center space-x-2 relative">
             <input
               type="radio"
               name="payment"
+              value="ecpay"
               className="peer appearance-none w-6 h-6 rounded-full border-2 border-primary-600   checked:border-primary-600"
             />
             <span className="pointer-events-none w-3  h-3 rounded-full bg-primary-600 absolute left-1.5 my-auto opacity-0 peer-checked:opacity-100" />
 
             <h6 className=" text-h6-tw">綠界</h6>
+            {/* FIXME 按下確認付款後在用router.push轉到指定付款方式 */}
+            <Link href="http://localhost:3005/api/cart/ecpay-test-only?amount=2500">
+              綠界按鈕
+            </Link>
           </label>
         </div>
+
         <div className="flex justify-end ">
           <button
             type="submit"
