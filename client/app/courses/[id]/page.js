@@ -9,7 +9,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import Image from 'next/image';
 import { memo, useMemo } from 'react';
 import Container from '@/components/container';
-
+import Link from 'next/link';
 // 修正 Leaflet 預設圖標路徑
 // if (typeof window !== 'undefined') {
 //   delete L.Icon.Default.prototype._getIconUrl;
@@ -170,10 +170,11 @@ export default function CoursesIdPage() {
                       {course.organizer?.name}
                     </h3>
                   </div>
-                  <button className="mt-6 w-full px-4 py-2 bg-primary-600 text-white rounded-full hover:bg-primary-500 transition">
-                    立即報名
-                  </button>
-
+                  <Link href={`/courses/${id}/sign-up`}>
+                    <button className="mt-6 w-full px-4 py-2 bg-primary-600 text-white rounded-full hover:bg-primary-500 transition">
+                      立即報名
+                    </button>
+                  </Link>
                   {/* 下方提示卡片 */}
                   {/* <div className="bg-pink-50 border border-pink-200 rounded-2xl p-4">
                   <h4 className="font-semibold mb-2">線下活動</h4>

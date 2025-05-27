@@ -423,7 +423,7 @@ model CourseVariant {
   id            Int      @id @default(autoincrement())
   course_id     Int
   difficulty    String
-  price         String
+  price         Int
   duration      Int
   max_people    Int
   location_id   Int
