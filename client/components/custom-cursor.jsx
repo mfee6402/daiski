@@ -15,7 +15,7 @@ import { useTheme } from 'next-themes';
 
 const CustomCursor = () => {
   const { theme } = useTheme();
-  console.log(theme);
+  // console.log(theme);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
