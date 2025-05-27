@@ -704,6 +704,7 @@ router.get('/user/:userId', async (req, res, next) => {
             title: true,
             startDate: true,
             endDate: true,
+            price: true,
             location: { select: { name: true } },
             customLocation: true,
             images: {
@@ -729,6 +730,7 @@ router.get('/user/:userId', async (req, res, next) => {
           time: m.group.endDate
             ? `${m.group.startDate.toISOString()} — ${m.group.endDate.toISOString()}`
             : m.group.startDate.toISOString(),
+            price:m.group.price,
           imageUrl: m.group.images[0]?.imageUrl || '/deadicon.png',
           location: loc || m.group.customLocation || '地點未定',
         },
