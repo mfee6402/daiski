@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-export default function CreateGroupLayout({ children }) {
+export default function NotLogin({ children }) {
   const router = useRouter();
   const { user, isAuth, isLoading, didAuthMount } = useAuth();
   if (isAuth) {

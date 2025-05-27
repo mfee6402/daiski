@@ -119,3 +119,12 @@ export function useQuery(url) {
     isError: !!error,
   };
 }
+
+export async function fetcherGroup(url, token) {
+  const res = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    credentials: 'include',      // 若走 cookie
+  });
+  if (!res.ok) throw await res.json(); // 讓 SWR 接住 error
+  return res.json();
+}

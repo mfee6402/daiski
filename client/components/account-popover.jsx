@@ -18,7 +18,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 //PopoverClose=>點擊有效後關閉ＵＩ
-import { PopoverClose } from "@radix-ui/react-popover";
+import { PopoverClose } from '@radix-ui/react-popover';
 import { Button } from './ui/button';
 
 import {
@@ -43,7 +43,6 @@ export function AccountPopover() {
       // 將會進行重新驗證(revalidation)(將資料標記為已過期並觸發重新請求)
       mutate();
     }
-    
   };
   return (
     // <DropdownMenu>
@@ -63,7 +62,6 @@ export function AccountPopover() {
     <Popover>
       {/* 觸發按鈕 */}
       <PopoverTrigger asChild>
-      
         <Button
           variant="outline"
           size="icon"
@@ -78,55 +76,53 @@ export function AccountPopover() {
         side="bottom"
         align="end"
         sideOffset={4}
-        className="w-48 p-2"
+        className="w-48 p-2 z-1001"
       >
-      
         {/* <div className="text-sm font-medium text-gray-500 mb-2">帳號選單</div> */}
         <div className="flex flex-col gap-1">
-        <PopoverClose asChild>
-        <Link href="/profile" >
-          <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100" >
-            個人資料
-          </button>
-          </Link>
-          </PopoverClose>
           <PopoverClose asChild>
-          <Link href="/coupons" >
-          <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100" >
-            優惠券
-          </button>
-          </Link>
-          </PopoverClose>
-          <PopoverClose asChild>
-          <Link href="/groups" >
-          <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100" >
-            揪團
-          </button>
-          </Link>
-          </PopoverClose>
-          <PopoverClose asChild>
-          <Link href="/" >
-          {isAuth && (
-            <button
-              className="w-full text-left px-2 py-1 rounded hover:bg-gray-100"
-              onClick={handleLogout}
-            >
-              登出
-            </button>
-          )}
-          </Link>
-          </PopoverClose>
-          <PopoverClose asChild>
-          <Link href="/auth/login">
-          {!isAuth && (
+            <Link href="/profile">
               <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100">
-                登入
+                個人資料
               </button>
-          )}
-          </Link>
+            </Link>
+          </PopoverClose>
+          <PopoverClose asChild>
+            <Link href="/coupons">
+              <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100">
+                優惠券
+              </button>
+            </Link>
+          </PopoverClose>
+          <PopoverClose asChild>
+            <Link href="/groups">
+              <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100">
+                揪團
+              </button>
+            </Link>
+          </PopoverClose>
+          <PopoverClose asChild>
+            <Link href="/">
+              {isAuth && (
+                <button
+                  className="w-full text-left px-2 py-1 rounded hover:bg-gray-100"
+                  onClick={handleLogout}
+                >
+                  登出
+                </button>
+              )}
+            </Link>
+          </PopoverClose>
+          <PopoverClose asChild>
+            <Link href="/auth/login">
+              {!isAuth && (
+                <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100">
+                  登入
+                </button>
+              )}
+            </Link>
           </PopoverClose>
         </div>
-        
       </PopoverContent>
     </Popover>
   );

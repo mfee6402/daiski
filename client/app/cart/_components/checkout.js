@@ -2,8 +2,11 @@
 import Link from 'next/link';
 import { useCart } from '@/hooks/use-cart';
 
+import Coupon from './coupon';
+
 export default function Checkout() {
   const { cart } = useCart();
+
   return (
     <>
       <div className=" w-[450] sm:w-[200] md:w-[250] lg:w-[350] xl:w-[450]  sticky top-30">
@@ -51,7 +54,10 @@ export default function Checkout() {
         </div>
         <div>
           <div>
-            <p className="text-p-tw">折扣券</p>
+            <Coupon></Coupon>
+          </div>
+          <div>
+            <p className="text-p-tw">折扣金額</p>
             {/* FIXME 待寫入金額 */}
             <p className="text-p-tw"></p>
           </div>

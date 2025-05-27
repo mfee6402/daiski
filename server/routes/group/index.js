@@ -420,12 +420,10 @@ router.post('/:groupId/join', authenticate, async (req, res) => {
     });
 
     if (!groupToJoin) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: '找不到指定的揪團，或該揪團已不存在。',
-        });
+      return res.status(404).json({
+        success: false,
+        message: '找不到指定的揪團，或該揪團已不存在。',
+      });
     }
 
     // 3. 檢查使用者是否已經是該揪團的成員
@@ -474,6 +472,7 @@ router.post('/:groupId/join', authenticate, async (req, res) => {
       // 201 Created
       success: true,
       message: '成功加入揪團！',
+      groupMemberId: newMemberEntry.id, // 返回新創建的 group_member ID
       data: {
         // 可以選擇性返回新創建的記錄資訊
         groupId: newMemberEntry.groupId,
@@ -485,19 +484,15 @@ router.post('/:groupId/join', authenticate, async (req, res) => {
     console.error(`使用者 ${userId} 加入揪團 ${groupId} 時發生錯誤:`, error);
     if (error.code === 'P2002') {
       // Prisma unique constraint violation (雖然前面已檢查，多一層保障)
-      return res
-        .status(409)
-        .json({
-          success: false,
-          message: '您似乎已經加入了此揪團 (資料庫記錄衝突)。',
-        });
-    }
-    res
-      .status(500)
-      .json({
+      return res.status(409).json({
         success: false,
-        message: '加入揪團時伺服器發生錯誤，請稍後再試。',
+        message: '您似乎已經加入了此揪團 (資料庫記錄衝突)。',
       });
+    }
+    res.status(500).json({
+      success: false,
+      message: '加入揪團時伺服器發生錯誤，請稍後再試。',
+    });
   }
 });
 // POST /api/group/:groupId/comments (新增留言)
@@ -690,7 +685,63 @@ router.put(
     }
   }
 );
+// GET /group/user/:userId
+router.get('/user/:userId', async (req, res, next) => {
+  try {
+    const userId = Number(req.params.userId);
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: 'Invalid userId' });
+    }
 
+    const memberships = await prisma.groupMember.findMany({
+      where: { userId },
+      select: {
+        id: true, // group_member PK
+        joinedAt: true, // 加入時間
+        group: {
+          select: {
+            id: true,
+            title: true,
+            startDate: true,
+            endDate: true,
+            price: true,
+            location: { select: { name: true } },
+            customLocation: true,
+            images: {
+              select: { imageUrl: true },
+              orderBy: { sortOrder: 'asc' },
+              take: 1,
+            },
+          },
+        },
+      },
+      orderBy: { joinedAt: 'desc' },
+    });
+
+    const result = memberships.map((m) => {
+      const loc = m.group.location?.name;
+      return {
+        userId: userId,
+        groupMemberId: m.id,
+        joinedAt: m.joinedAt,
+        group: {
+          groupId: m.group.id,
+          title: m.group.title,
+          time: m.group.endDate
+            ? `${m.group.startDate.toISOString()} — ${m.group.endDate.toISOString()}`
+            : m.group.startDate.toISOString(),
+          price: m.group.price,
+          imageUrl: m.group.images[0]?.imageUrl || '/deadicon.png',
+          location: loc || m.group.customLocation || '地點未定',
+        },
+      };
+    });
+
+    res.json({ memberships: result });
+  } catch (err) {
+    next(err);
+  }
+});
 // DELETE /api/group/:groupId (刪除揪團)
 router.delete('/:groupId', async (req, res, next) => {
   try {
