@@ -84,7 +84,7 @@ router.post('/', authenticate, async function (req, res, next) {
 // 查詢
 router.get('/', authenticate, async function (req, res, next) {
   try {
-    // const userId = +req.user.id;
+    const userId = +req.user.id;
 
     const data = await prisma.cart.findUnique({
       select: {
@@ -120,22 +120,19 @@ router.get('/', authenticate, async function (req, res, next) {
         },
         CartCourse: {
           select: {
-            courseVariant: true,
-          },
-        },
-
-        CartGroup: {
-          include: {
-            groupMember: {
+            courseVariant: {
               select: {
-                joinedAt: true,
-                group: {
+                id: true,
+                course_id: true,
+                price: true,
+                duration: true,
+                start_at: true,
+                course: {
                   select: {
-                    title: true,
-                    price: true,
-                    images: {
+                    name: true,
+                    CourseImg: {
                       select: {
-                        imageUrl: true,
+                        img: true,
                       },
                     },
                   },
@@ -144,11 +141,31 @@ router.get('/', authenticate, async function (req, res, next) {
             },
           },
         },
+
+        // CartGroup: {
+        // select: {
+        // groupMember: {
+        //       select: {
+        //         joinedAt: true,
+        //         group: {
+        //           select: {
+        //             title: true,
+        //             price: true,
+        //             images: {
+        //               select: {
+        //                 imageUrl: true,
+        //               },
+        //             },
+        //           },
+        //         },
+        //       },
+        // },
+        // },
+        // },
       },
-      // FIXME等待會員資料
-      // 查詢第1台購物車
+
       where: {
-        userId: 1,
+        userId: userId,
       },
     });
 
@@ -162,21 +179,31 @@ router.get('/', authenticate, async function (req, res, next) {
       size: item.productSku.product_size.name,
     }));
 
-    const CartGroup = data.CartGroup.map((item) => ({
-      id: item.id,
-      joinedAt: item.groupMember.joinedAt,
-      title: item.groupMember.group.title,
-      price: item.groupMember.group.price,
-      // NOTE若無照片則回傳預設
-      imageUrl: item.groupMember.group.images[0]?.imageUrl
-        ? item.groupMember.group.images[0].imageUrl
-        : '',
+    const CartCourse = data.CartCourse.map((item) => ({
+      id: item.courseVariant.id,
+      price: item.courseVariant.price,
+      name: item.courseVariant.course.name,
+      imageUrl: item.courseVariant.course.CourseImg[0].img,
+      start_at: item.courseVariant.start_at,
+      duration: item.courseVariant.duration,
     }));
+
+    // const CartGroup = data.CartGroup.map((item) => ({
+    //   id: item.id,
+    //   joinedAt: item.groupMember.joinedAt,
+    //   title: item.groupMember.group.title,
+    //   price: item.groupMember.group.price,
+    //   // NOTE若無照片則回傳預設
+    //   imageUrl: item.groupMember.group.images[0]?.imageUrl
+    //     ? item.groupMember.group.images[0].imageUrl
+    //     : '',
+    // }));
 
     const cart = {
       ...data,
       CartProduct,
-      CartGroup,
+      CartCourse,
+      // CartGroup,
     };
 
     res.status(200).json({ status: 'success', cart });
