@@ -11,8 +11,11 @@ import {
   AnimatePresence, // 引入 AnimatePresence 以便更好地處理粒子進出場動畫
 } from 'framer-motion';
 import Image from 'next/image';
+import { useTheme } from 'next-themes';
 
 const CustomCursor = () => {
+  const { theme } = useTheme();
+  // console.log(theme);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -65,12 +68,27 @@ const CustomCursor = () => {
   const PARTICLE_LIFESPAN_MAX = 1500; // ms
 
   // 星塵顏色池 (靈感來自游標的閃光點，偏亮色)
-  const sparkleColors = [
-    'rgba(255, 255, 220, 0.9)', // 淡黃
-    'rgba(200, 225, 255, 0.9)', // 淡藍
-    'rgba(255, 210, 240, 0.9)', // 淡粉
-    'rgba(230, 230, 250, 0.9)', // 淡紫
-  ];
+  // const sparkleColors = [
+  //   'rgba(255, 255, 220, 0.9)', // 淡黃
+  //   'rgba(200, 225, 255, 0.9)', // 淡藍
+  //   'rgba(255, 210, 240, 0.9)', // 淡粉
+  //   'rgba(230, 230, 250, 0.9)', // 淡紫
+  // ];
+  // 2. 為亮色和暗色模式定義不同的粒子顏色
+  const sparkleColorsConfig = {
+    light: [
+      'rgba(255, 255, 200, 1)', // 淡黃, 透明度略低
+      'rgba(200, 225, 255, 1)', // 淡藍
+      'rgba(255, 210, 230, 1)', // 淡粉
+      'rgba(220, 220, 250, 1)', // 淡紫
+    ],
+    dark: [
+      'rgba(255, 255, 200, 0.7)', // 淡黃, 透明度略低
+      'rgba(200, 225, 255, 0.7)', // 淡藍
+      'rgba(255, 210, 230, 0.7)', // 淡粉
+      'rgba(220, 220, 250, 0.7)', // 淡紫
+    ],
+  };
   // --- [結束 代碼解釋區塊 F] ---
 
   useEffect(() => {
@@ -104,6 +122,8 @@ const CustomCursor = () => {
 
   useEffect(() => {
     if (isTouchDevice || !isMounted) return;
+    const currentSparkleColors =
+      theme === 'dark' ? sparkleColorsConfig.dark : sparkleColorsConfig.light;
 
     const moveCursor = (e) => {
       const currentX = e.clientX;
@@ -128,8 +148,13 @@ const CustomCursor = () => {
           // 粒子動畫的最終漂移位置
           finalX: currentX + (Math.random() - 0.5) * 60,
           finalY: currentY + (Math.random() - 0.5) * 60,
+          // color:
+          //   sparkleColors[Math.floor(Math.random() * sparkleColors.length)],
+          // 3. 根據當前主題選擇顏色
           color:
-            sparkleColors[Math.floor(Math.random() * sparkleColors.length)],
+            currentSparkleColors[
+              Math.floor(Math.random() * currentSparkleColors.length)
+            ],
           scale: Math.random() * 0.6 + 0.4, // 初始大小 0.4 到 1.0
           duration:
             Math.random() * (PARTICLE_LIFESPAN_MAX - PARTICLE_LIFESPAN_MIN) +
@@ -145,7 +170,7 @@ const CustomCursor = () => {
     };
     window.addEventListener('mousemove', moveCursor);
     return () => window.removeEventListener('mousemove', moveCursor);
-  }, [isTouchDevice, isMounted, cursorX, cursorY]); // cursorX, cursorY 作為依賴
+  }, [isTouchDevice, isMounted, cursorX, cursorY, theme]); // cursorX, cursorY 作為依賴
 
   const cursorVariants = {
     default: {
@@ -269,8 +294,8 @@ const CustomCursor = () => {
             {/* 內層div用於更精細的樣式控制，例如固定的粒子大小和發光 */}
             <div
               style={{
-                width: '5px', // 粒子固定大小
-                height: '5px',
+                width: '7px', // 粒子固定大小
+                height: '7px',
                 borderRadius: '50%',
                 backgroundColor: p.color,
                 boxShadow: `0 0 6px 2px ${p.color.replace('0.9', '0.5')}`, // 用粒子顏色創建輝光
@@ -288,7 +313,7 @@ const CustomCursor = () => {
         variants={cursorVariants}
         animate={isHoveringClickable ? 'clickable' : 'default'}
       >
-        <div className="transform -translate-x-1/2 -translate-y-1/2">
+        <div className="">
           {isHoveringClickable ? (
             <Image
               priority

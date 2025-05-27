@@ -17,7 +17,7 @@ import DarkMode from './dark-mode';
 
 export default function Header() {
   return (
-    <header className="w-full mx-auto px-10 py-8 flex items-center justify-between sticky top-0 z-10 shadow-md bg-white dark:bg-background">
+    <header className="w-full mx-auto px-10 py-8 flex items-center justify-between sticky top-0 z-1000 shadow-md bg-white dark:bg-background">
       {/* 左側 Logo */}
       <div className="flex-shrink-0">
         <Link href="/">
@@ -36,7 +36,6 @@ export default function Header() {
             className="h-10 w-auto hidden dark:block"
           />
         </Link>
-        
       </div>
 
       {/* 桌面版主導航 */}

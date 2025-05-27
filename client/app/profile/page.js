@@ -39,7 +39,11 @@ import { Textarea } from '@/components/ui/textarea';
 
 // 優惠卷引入
 import ProfileCoupons from './_components/profile-coupons';
+// 收藏引入
+import ProfileWishlist from './_components/profile-wishlist';
 
+//揪團頁引入
+import ProfileGroups from './_components/profile-groups';
 import Container from '@/components/container';
 //Bio區塊的驗證 schema  限制字數上限
 const FormSchema = z.object({
@@ -196,8 +200,9 @@ export default function MemberPage() {
           </TabsContent>
 
           <TabsContent value="favorites">
-            <Card>
-              <CardHeader>
+            <Card className="overflow-y-auto h-dvh p-4">
+              <ProfileWishlist />
+              {/* <CardHeader>
                 <CardTitle>我的收藏</CardTitle>
                 <CardDescription>
                   您喜愛的商品或文章將會顯示在此。
@@ -205,7 +210,7 @@ export default function MemberPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-500">尚未收藏任何項目。</p>
-              </CardContent>
+              </CardContent> */}
             </Card>
           </TabsContent>
 
@@ -233,15 +238,16 @@ export default function MemberPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="groups">
-            <Card>
-              <CardHeader>
+          <TabsContent value="groups" className="w-full">
+            <Card className="w-full">
+              <ProfileGroups />
+              {/* <CardHeader>
                 <CardTitle>揪團</CardTitle>
                 <CardDescription>查看與管理您的揪團活動。</CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-500">尚未參加任何揪團。</p>
-              </CardContent>
+              </CardContent> */}
             </Card>
           </TabsContent>
         </Tabs>

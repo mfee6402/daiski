@@ -570,7 +570,7 @@ export default function GroupForm({
             />
             <Label
               htmlFor="allowNewbie"
-              className="font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
+              className="font-medium text-slate-700 dark:text-slate-300 cursor-none"
             >
               歡迎新手參加
             </Label>
@@ -629,7 +629,7 @@ export default function GroupForm({
                   'dark:bg-sky-900/30'
                 )
               }
-              className="mt-1 flex h-60 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/30 hover:border-sky-500 dark:hover:border-sky-600 transition-colors"
+              className="mt-1 flex h-60 cursor-none flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/30 hover:border-sky-500 dark:hover:border-sky-600 transition-colors"
             >
               {coverPreview ? (
                 <div className="relative w-full h-full group">

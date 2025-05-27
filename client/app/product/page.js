@@ -1202,6 +1202,7 @@ export default function ProductPage() {
               products={products}
               favIds={favIds}
               onToggleFavorite={toggleFavorite}
+              isAuth={isAuth}
             />
             {/* 如果載入商品時發生錯誤，顯示錯誤訊息 */}
             {productError && (
