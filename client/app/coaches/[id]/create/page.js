@@ -169,7 +169,7 @@ export default function CreateCoursePage() {
     start_at: '',
     end_at: '',
     difficulty: '',
-    price: '',
+    price: 0,
     duration: '',
     max_people: '',
     location_id: '',
@@ -239,11 +239,16 @@ export default function CreateCoursePage() {
     fd.append('end_at', form.end_at);
     fd.append('difficulty', form.difficulty);
 
-    // 數字欄位
-    ['price', 'duration', 'max_people', 'boardtype_id', 'location_id'].forEach(
-      (k) => fd.append(k, Number(form[k]) || 0)
-    );
-
+    [
+      // 數字欄位
+      'price',
+      'duration',
+      'max_people',
+      'boardtype_id',
+      'location_id',
+    ].forEach((k) => fd.append(k, Number(form[k]) || 0));
+    fd.append('coach_id', +user.id);
+    console.log(fd.get('price'));
     if (form.location_id === 'other') {
       fd.append('new_location_name', form.newLoc.name);
       fd.append('new_location_country', form.newLoc.country);
@@ -265,7 +270,7 @@ export default function CreateCoursePage() {
 
     try {
       // await fetch(`http://localhost:3005/api/coaches/${user.id}/create`, { … })
-
+      console.log(user.id);
       const res = await fetch(
         `http://localhost:3005/api/coaches/${user.id}/create`,
         {
