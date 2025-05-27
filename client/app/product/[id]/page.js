@@ -367,6 +367,7 @@ export default function ProductDetail() {
                 // variant: 設定按鈕樣式為 'rect' (長方形)
                 variant="rect"
                 // className: 提供額外的 Tailwind CSS 類名來設定按鈕的寬度和高度
+                isAuth={isAuth}
               />
               <Button className="h-12 bg-blue-500 text-white">
                 分享 <Share2 className="ml-1" />

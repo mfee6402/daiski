@@ -222,6 +222,7 @@ export default function GroupDetailPage() {
       const data = await response.json();
 
       if (response.ok && data.success) {
+        const newMemberEntry = data.groupMemberId;
         setJoinSuccess(data.message || '成功加入揪團！');
         setIsAlreadyMember(true);
         // 成功加入後，更新參加人數 (前端樂觀更新，或重新獲取資料)
@@ -239,12 +240,14 @@ export default function GroupDetailPage() {
           endDate: group.endDate,
         });
         alert(`已成功參加揪團！
+
           加入揪團 ${group?.title || groupId}
     group_id：${group.id}
     揪團名稱：${group.title}
     時間為：${group.startDate}~${group.endDate}
     價格：${group.price}
-    圖片：${group.images[0].imageUrl}`);
+    圖片：${group.images[0].imageUrl}
+    groupMemberId：${newMemberEntry}`);
       } else {
         setJoinError(data.message || `加入揪團失敗: ${response.status}`);
         alert(data.message || `加入揪團失敗: ${response.status}`);
