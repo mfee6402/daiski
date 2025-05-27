@@ -65,13 +65,13 @@ export default function Process({ step }) {
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-p-tw">Step 1 確認訂購</p>
+              <p className="text-h6-tw">Step 1 確認訂購</p>
             </div>
             <div>
-              <p className="text-p-tw">Step 2 確認訂購</p>
+              <p className="text-h6-tw">Step 2 確認訂購</p>
             </div>
             <div>
-              <p className="text-p-tw">Step 3 確認訂購</p>
+              <p className="text-h6-tw">Step 3 確認訂購</p>
             </div>
           </div>
         </div>
