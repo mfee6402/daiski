@@ -210,7 +210,7 @@ export default function ProductDetail() {
                         thumbsSwiperRef.current?.slideTo(idx);
                         mainSwiperRef.current?.swiper.slideTo(idx);
                       }}
-                      className={`border w-full h-full  aspect-square cursor-none ${
+                      className={`border w-full h-full  aspect-square cursor-none  ${
                         thumbsSwiperRef.current?.activeIndex === idx
                           ? 'border-blue-500'
                           : 'border-gray-200'
@@ -243,7 +243,7 @@ export default function ProductDetail() {
             </div>
 
             {/* 主圖區 */}
-            <div className="flex justify-center border w-full  max-w-[400px]  lg:max-w-[300px]  xl:max-w-[400px] aspect-square">
+            <div className="flex justify-center border w-full  max-w-[400px]  lg:max-w-[300px]  xl:max-w-[400px] aspect-square mx-auto rounded-md">
               <Swiper
                 ref={mainSwiperRef}
                 modules={[Thumbs]}
@@ -273,7 +273,7 @@ export default function ProductDetail() {
           </div>
 
           {/* 詳細資訊 */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 p-4">
             <p className="text-black dark:text-white mb-2">
               {category?.name} | {brand?.name}
             </p>
@@ -369,9 +369,9 @@ export default function ProductDetail() {
                 // className: 提供額外的 Tailwind CSS 類名來設定按鈕的寬度和高度
                 isAuth={isAuth}
               />
-              <Button className="h-12 bg-blue-500 text-white">
+              {/* <Button className="h-12 bg-blue-500 text-white">
                 分享 <Share2 className="ml-1" />
-              </Button>
+              </Button> */}
             </div>
           </div>
         </div>
@@ -381,7 +381,7 @@ export default function ProductDetail() {
 
           <Tabs
             defaultValue="introduction"
-            className="mt-12 w-2/3 border rounded-md p-4"
+            className="flex flex-col mt-12 w-full md:w-2/3 border rounded-md p-4"
           >
             <TabsList className="flex w-1/2">
               <TabsTrigger value="introduction">介紹</TabsTrigger>
@@ -405,9 +405,9 @@ export default function ProductDetail() {
 
           {/* 相關商品區 */}
           {related.length > 0 && (
-            <section className="mt-12 w-1/3 border rounded-md p-4">
+            <section className="mt-12 w-full md:w-1/3 border rounded-md p-4">
               <h2 className="text-xl font-semibold mb-4">相關商品</h2>
-              <ul className="grid grid-cols-2 gap-4">
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {related.map((item) => (
                   <motion.li
                     key={item.id}

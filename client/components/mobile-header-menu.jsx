@@ -97,7 +97,7 @@ export function MobileHeaderMenu() {
         </Button>
       </SheetTrigger>
 
-      <SheetContent side="top" className="w-full p-0">
+      <SheetContent side="top" className="w-full p-0 z-1001">
         <motion.div
           className="w-full h-full bg-white flex flex-col relative"
           drag="y"

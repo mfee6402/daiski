@@ -35,13 +35,13 @@ const ProductSort = ({ currentSort, onSortChange }) => {
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
-            className="w-auto md:w-[220px] flex items-center justify-between"
+            className="w-auto md:w-[220px] flex items-center justify-between cursor-none"
           >
             <span>{currentSortLabel}</span>
             <ChevronDownIcon className="ml-2 h-4 w-4 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="flex flex-col w-auto items-center">
+        <DropdownMenuContent className="flex flex-col w-auto items-center ">
           {/* <DropdownMenuLabel className="">選擇排序依據</DropdownMenuLabel> */}
           {/* <DropdownMenuSeparator /> */}
           <DropdownMenuRadioGroup
@@ -49,7 +49,11 @@ const ProductSort = ({ currentSort, onSortChange }) => {
             onValueChange={onSortChange}
           >
             {sortOptions.map((option) => (
-              <DropdownMenuRadioItem key={option.value} value={option.value}>
+              <DropdownMenuRadioItem
+                key={option.value}
+                value={option.value}
+                className="cursor-none"
+              >
                 {option.label}
               </DropdownMenuRadioItem>
             ))}

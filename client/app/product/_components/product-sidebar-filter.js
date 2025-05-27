@@ -97,7 +97,7 @@ export default function ProductFilter({
             <div className="text-center mt-2">
               <button
                 onClick={onToggleShowAllSizes}
-                className="text-sm font-medium text-primary-600 dark:text-blue-300 hover:underline"
+                className="text-sm font-medium text-primary-600 dark:text-blue-300 hover:underline cursor-none"
               >
                 {showAllSizes ? '收合尺寸' : '查看更多尺寸'}
               </button>
@@ -106,7 +106,7 @@ export default function ProductFilter({
 
           <Button
             onClick={onResetSizes}
-            className="w-full mt-4 hover:bg-primary-500 dark:text-blue-300"
+            className="w-full mt-4 hover:bg-primary-500 dark:hover:text-blue-300 cursor-none"
           >
             重置尺寸
           </Button>
