@@ -272,7 +272,7 @@ router.post(
         /** 存檔並收集待 insert 的 course_img 資料 */
         const imgBulkData = [];
         for (const [idx, file] of files.entries()) {
-          const filename = `${Date.now()}-${idx}-${file.originalname}`;
+          const filename = `${Date.now()}${path.extname(file.originalname)}`;
           const filepath = path.join(dir, filename);
 
           fs.writeFileSync(filepath, file.buffer); // ← 真正寫入硬碟
