@@ -43,7 +43,7 @@ export function MobileAccountMenu() {
             </div>
           </AccordionTrigger>
 
-          <AccordionContent className="p-2">
+          <AccordionContent className="p-2 z-1001">
             {/* <div className="text-sm font-medium text-gray-500 mb-2">
               帳號選單
             </div> */}
