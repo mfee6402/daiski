@@ -32,7 +32,7 @@ const getAccessToken = async () => {
 // 創建 PayPal 訂單
 router.post('/', async function (req, res) {
   // 取得 PayPal access token
-
+  const amount = req.body.amount;
   try {
     const accessToken = await getAccessToken();
     const url = `${process.env.PAYPAL_BASEURL}/v2/checkout/orders`;
@@ -49,22 +49,22 @@ router.post('/', async function (req, res) {
           {
             items: [
               {
-                name: 'APPLE',
-                description: 'manyManyAPPLE',
+                name: '商品一批',
+                description: '商品一批',
                 quantity: '1',
                 unit_amount: {
                   currency_code: 'USD',
-                  value: '87.00',
+                  value: amount,
                 },
               },
             ],
             amount: {
               currency_code: 'USD',
-              value: '87.00',
+              value: amount,
               breakdown: {
                 item_total: {
                   currency_code: 'USD',
-                  value: '87.00',
+                  value: amount,
                 },
               },
             },
@@ -75,9 +75,9 @@ router.post('/', async function (req, res) {
             experience_context: {
               payment_method_preference: 'IMMEDIATE_PAYMENT_REQUIRED',
               payment_method_selected: 'PAYPAL',
-              brand_name: 'Daiski',
+              brand_name: 'DAISKI',
               shipping_preference: 'NO_SHIPPING',
-              locale: 'en-US',
+              locale: 'zh-TW',
               user_action: 'PAY_NOW',
               return_url: process.env.PAYPAL_REDIRECT_BASE_URL,
               cancel_url: process.env.PAYPAL_REDIRECT_BASE_URL,
@@ -120,7 +120,7 @@ router.get('/:paymentId', async function (req, res) {
     }
 
     const email = paymentData.payer.email_address;
-
+    // 要回傳的資料
     res.status(200).json({
       status: 'success',
       user: {

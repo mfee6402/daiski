@@ -15,6 +15,7 @@ import Image from 'next/image';
 import FavoriteButton from '@/components/favorite-button'; // 確保此路徑正確
 import { useAuth } from '@/hooks/use-auth'; // 確保此路徑正確
 import { motion, AnimatePresence } from 'framer-motion'; // 引入 framer-motion
+import Link from 'next/link';
 
 // API URL 常數
 const API_BASE_URL = 'http://localhost:3005/api';
@@ -167,57 +168,70 @@ export default function ProfileWishlist() {
   }
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-0 xl:mx-auto py-10">
       <h1 className="text-2xl font-bold text-center mb-6">我的收藏</h1>
-      <Table>
-        {/* <TableCaption>這是您收藏的商品列表。</TableCaption> */}
+      {/* 1. 加上 table-fixed 讓欄位寬度依 w-xx 定義 */}
+      <Table className="table-fixed w-full ">
         <TableHeader>
-          <TableRow>
-            <TableHead className="w-[100px]">圖片</TableHead>
-            <TableHead>商品名稱</TableHead>
-            <TableHead>分類</TableHead>
-            <TableHead>品牌</TableHead>
+          <TableRow className="">
+            {/* 2. 第一欄固定 64px，不允許縮放 */}
+            <TableHead className="w-16">圖片</TableHead>
+            {/* 3. 名稱欄響應式寬度 */}
+            <TableHead className="w-1/3 sm:w-1/2 md:w-1/3 px-4">
+              商品名稱
+            </TableHead>
             <TableHead className="text-right">價格</TableHead>
             <TableHead className="text-center w-[120px]">收藏</TableHead>
           </TableRow>
         </TableHeader>
+
         <TableBody>
           <AnimatePresence>
             {favoriteProducts.map((product) => (
               <MotionTableRow
                 key={product.id}
                 layout
-                initial={{ opacity: 0 }} // 初始時不可見且高度為0
-                animate={{ opacity: 1 }} // 動畫到可見且自動高度
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 exit={{
                   opacity: 0,
-                  transition: {
-                    opacity: { duration: 0.2, ease: 'easeOut' },
-                  },
+                  transition: { opacity: { duration: 0.2, ease: 'easeOut' } },
                 }}
               >
-                <TableCell>
-                  {product.image ? (
-                    <Image
-                      src={product.image}
-                      alt={product.name}
-                      width={64}
-                      height={64}
-                      className="h-16 w-16 object-cover rounded"
-                      priority={false}
-                    />
-                  ) : (
-                    <div className="h-16 w-16 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">
-                      無圖片
-                    </div>
-                  )}
+                {/* 圖片欄：flex-none + 固定大小容器 */}
+                <TableCell className="p-2">
+                  <div className="flex-none h-16 w-16">
+                    {product.image ? (
+                      <Image
+                        src={product.image}
+                        alt={product.name}
+                        width={64}
+                        height={64}
+                        className="h-full w-full object-cover rounded"
+                        priority={false}
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">
+                        無圖片
+                      </div>
+                    )}
+                  </div>
                 </TableCell>
-                <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>{product.category?.name || '未分類'}</TableCell>
-                <TableCell>{product.brand?.name || '無品牌'}</TableCell>
+
+                {/* 名稱欄：允許換行 */}
+                <TableCell className="font-medium whitespace-normal break-words px-4">
+                  <Link
+                    href={`/product/${product.id}`}
+                    className="hover:text-primary-500 cursor-none"
+                  >
+                    <p className="line-clamp-3">{product.name}</p>
+                  </Link>
+                </TableCell>
+
                 <TableCell className="text-right">
-                  ${product.price ? product.price.toLocaleString() : 'N/A'}
+                  ${product.price?.toLocaleString() ?? 'N/A'}
                 </TableCell>
+
                 <TableCell className="text-center">
                   <FavoriteButton
                     isFav={favoriteIds.includes(product.id)}
@@ -231,7 +245,7 @@ export default function ProfileWishlist() {
           </AnimatePresence>
         </TableBody>
       </Table>
-      {/* 只有在登入、非載入中、無錯誤，且收藏列表為空時，才顯示此訊息 */}
+
       {isAuth && !isLoading && !error && favoriteProducts.length === 0 && (
         <p className="text-center mt-6 text-gray-500">
           您的收藏清單目前是空的。
