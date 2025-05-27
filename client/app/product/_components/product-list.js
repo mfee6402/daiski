@@ -214,7 +214,7 @@ export default function ProductList({
           </div>
 
           {/* 用 Link 本身或一層 motion.div 來偵測 hover */}
-          <Link href={`/product/${p.id}`} className="block">
+          <Link href={`/product/${p.id}`} className="block cursor-none">
             <motion.div
               className="relative overflow-hidden" // 卡片大小由下面 Card 定義，這個容器負責裁切雪球
               initial="rest"

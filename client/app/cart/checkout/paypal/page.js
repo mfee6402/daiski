@@ -7,6 +7,10 @@ import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 
 export default function PaypalPage(props) {
   const router = useRouter();
+
+  // FIXME 根據結帳金額 設定為變數
+  const amount = 3000;
+
   const initialOptions = {
     // 使用NEXT_PUBLIC_開頭的環境變數，瀏覽器才看的到
     // 沒加之所以能log出來是因為next編譯時就靜態載入
@@ -26,6 +30,10 @@ export default function PaypalPage(props) {
         headers: {
           'Content-Type': 'application/json',
         },
+
+        body: JSON.stringify({
+          amount: amount,
+        }),
       });
       const data = await response.json();
       console.log(data);
