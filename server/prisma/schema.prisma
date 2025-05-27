@@ -10,20 +10,20 @@ datasource db {
 // 會員 
 // #region 
 model User {
-  id        Int      @id @default(autoincrement())
-  account   String   @unique
+  id        Int       @id @default(autoincrement())
+  account   String    @unique
   password  String
   name      String
   phone     String
   // String->DateTime
-  birthday  DateTime
+  birthday  DateTime?
   email     String
   // 更改為與資料庫相同
   is_coach  Int
   avatar    String?
   bio       String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 
   deleted_at DateTime? @map("deleted_at")
 
@@ -420,18 +420,21 @@ model CourseImg {
 }
 
 model CourseVariant {
-  id            Int          @id @default(autoincrement())
+  id            Int      @id @default(autoincrement())
   course_id     Int
   difficulty    String
-  price         String
+  price         Int
   duration      Int
   max_people    Int
   location_id   Int
   coach_id      Int
   course_img_id Int
-  start_at      DateTime     @updatedAt @map("start_at")
-  deleted_at    DateTime?    @map("deleted_at")
-  CartCourse    CartCourse[]
+  created_at    DateTime @default(now()) @map("created_at")
+  update_at     DateTime @updatedAt @map("update_at")
+
+  start_at   DateTime     @updatedAt @map("start_at")
+  deleted_at DateTime?    @map("deleted_at")
+  CartCourse CartCourse[]
 
   course            Course              @relation(fields: [course_id], references: [id])
   coach             Coach               @relation(fields: [coach_id], references: [id])

@@ -7,6 +7,7 @@ import QuantityButton from './quantity-button';
 import Favorite from './favorite';
 import { useCart } from '@/hooks/use-cart';
 import Image from 'next/image';
+
 export default function CartItemList({ category = '' }) {
   const { cart } = useCart();
   // NOTE 測試用，等待會員製作完收藏資料庫再修正，用於決定收藏的愛心狀態(實心、空心)
@@ -31,7 +32,7 @@ export default function CartItemList({ category = '' }) {
       </div>
 
       <div className="mt-10 flex flex-col gap-4">
-        {cart?.[category].map((item, i) => {
+        {cart[category]?.map((item, i) => {
           return (
             <div key={category + item.id} className="flex justify-between">
               {/* 圖與名稱 */}
@@ -43,7 +44,7 @@ export default function CartItemList({ category = '' }) {
                         ? `http://localhost:3005${item.imageUrl}`
                         : ''
                     }
-                    alt="productImage"
+                    alt={item.imageUrl}
                     width={96}
                     height={96}
                     className="object-fill w-[96]"
@@ -69,13 +70,18 @@ export default function CartItemList({ category = '' }) {
               {category === 'CartProduct' && (
                 <div className="flex justify-center w-full items-center">
                   <QuantityButton
-                    itemId={item.id}
+                    item={item}
+                    category={category}
                     type="minus"
                   ></QuantityButton>
                   <div className="flex justify-center w-[50]">
                     <p className="text-h6-tw">{item.quantity}</p>
                   </div>
-                  <QuantityButton itemId={item.id} type="plus"></QuantityButton>
+                  <QuantityButton
+                    item={item}
+                    category={category}
+                    type="plus"
+                  ></QuantityButton>
                 </div>
               )}
               {/* FIXME */}
@@ -90,7 +96,11 @@ export default function CartItemList({ category = '' }) {
                 {/* FIXME 收藏按鈕 */}
                 {/* {category === 'CartProduct' && <Favorite data></Favorite>} */}
 
-                <Delete></Delete>
+                <Delete
+                  name={item.name}
+                  category={category}
+                  item={item}
+                ></Delete>
               </div>
             </div>
           );

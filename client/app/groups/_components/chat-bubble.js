@@ -1,7 +1,13 @@
 // chat-bubble.js
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from 'react';
 import { io } from 'socket.io-client';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -10,23 +16,33 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 
+const MESSAGES_PER_PAGE = 20; // 每次載入的歷史訊息數量
+
 export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
   const [msgs, setMsgs] = useState([]);
   const [text, setText] = useState('');
   const [unread, setUnread] = useState(0);
+  // --- 連線與授權相關狀態 ---
   const [isConnected, setIsConnected] = useState(false);
   const [isCheckingGroupAuth, setIsCheckingGroupAuth] = useState(false);
   const [isChatAllowedForActiveGroup, setIsChatAllowedForActiveGroup] =
     useState(false);
+  // --- 群組列表與選擇相關狀態 ---
   const [joinedGroups, setJoinedGroups] = useState([]);
   const [isLoadingGroups, setIsLoadingGroups] = useState(false);
   const [activeChatGroupId, setActiveChatGroupId] = useState(null);
   const [showGroupList, setShowGroupList] = useState(true);
-
+  // --- 歷史訊息相關狀態 ---
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false); // 是否正在載入歷史訊息
+  const [hasMoreHistory, setHasMoreHistory] = useState(true); // 是否還有更多歷史訊息可以載入
+  const [historyCursor, setHistoryCursor] = useState(null); // 用於歷史訊息分頁的 cursor (上一批最舊訊息的 ID)
+  // --- Refs ---
   const pathname = usePathname();
   const fileRef = useRef(null);
   const scrollAreaRef = useRef(null);
   const socketRef = useRef(null);
+  const isFetchingHistoryRef = useRef(false); // 防止重複獲取歷史記錄的 flag
+  const initialMessagesLoadedRef = useRef(false); // 標記初始歷史訊息是否已載入
 
   useEffect(() => {
     if (apiBase && !socketRef.current) {
@@ -43,15 +59,17 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
       socketRef.current = null;
     };
   }, [apiBase]);
-
-  const getGroupIdFromUrl = () => {
+  // --- 輔助函數：從 URL 解析 groupId ---
+  const getGroupIdFromUrl = useCallback(() => {
     const pathSegments = pathname.split('/');
+    // 假設群組詳細頁的 URL 格式是 /groups/:groupId/...
     if (
       pathSegments.length > 2 &&
       pathSegments[1] === 'groups' &&
       pathSegments[2]
     ) {
       const potentialGroupId = pathSegments[2];
+      // 簡單驗證 groupId 是否為數字或非空字串 (根據您的 groupId 格式調整)
       if (
         /^\d+$/.test(potentialGroupId) ||
         (typeof potentialGroupId === 'string' && potentialGroupId.trim() !== '')
@@ -60,88 +78,179 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
       }
     }
     return null;
-  };
+  }, [pathname]);
 
-  const fetchJoinedGroups = async () => {
+  // --- API 呼叫：獲取使用者已加入的群組列表 ---
+  const fetchJoinedGroups = useCallback(async () => {
     if (!currentUser?.id || !apiBase) return;
     setIsLoadingGroups(true);
     try {
+      // 後端 API 路徑，請根據您的實際設定調整
       const response = await fetch(
         `${apiBase}/api/group/groupchat/my-joined-list`,
         {
-          credentials: 'include',
+          credentials: 'include', // 確保攜帶 cookie
         }
       );
       if (response.ok) {
         const data = await response.json();
-        if (data.success) setJoinedGroups(data.groups || []);
-        else setJoinedGroups([]);
+        if (data.success) {
+          setJoinedGroups(data.groups || []);
+        } else {
+          console.error('後端 API (my-joined-list) 返回失敗:', data.message);
+          setJoinedGroups([]);
+        }
       } else {
+        console.error('獲取已加入群組列表 HTTP 錯誤:', response.status);
         setJoinedGroups([]);
       }
     } catch (error) {
-      console.error('[fetchJoinedGroups] API call error:', error); // 保留錯誤日誌
+      console.error('獲取已加入群組列表 API 呼叫失敗:', error);
       setJoinedGroups([]);
     } finally {
       setIsLoadingGroups(false);
     }
-  };
+  }, [currentUser?.id, apiBase]);
 
-  const selectGroupAndEnterChat = async (groupId) => {
-    if (!groupId || !currentUser || !socketRef.current || !apiBase) {
-      return;
-    }
-    setActiveChatGroupId(groupId);
-    setShowGroupList(false);
-    setIsCheckingGroupAuth(true);
-    setIsChatAllowedForActiveGroup(false);
-    setMsgs([]);
+  // --- API 呼叫：獲取歷史訊息 ---
+  const fetchHistoryMessages = useCallback(
+    async (groupIdToFetch, cursor = null) => {
+      if (
+        !groupIdToFetch ||
+        !apiBase ||
+        !currentUser?.id ||
+        isFetchingHistoryRef.current
+      )
+        return;
 
-    try {
-      const response = await fetch(
-        `${apiBase}/api/group/groupchat/${groupId}/authorize`,
-        {
-          method: 'GET',
+      setIsLoadingHistory(true);
+      isFetchingHistoryRef.current = true;
+      try {
+        let url = `${apiBase}/api/group/groupchat/${groupIdToFetch}/messages?limit=${MESSAGES_PER_PAGE}`;
+        if (cursor) {
+          url += `&cursor=${cursor}`;
+        }
+        const response = await fetch(url, {
           credentials: 'include',
           cache: 'no-store',
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        if (data.authorized) {
-          setIsChatAllowedForActiveGroup(true);
-          if (!socketRef.current.connected) {
-            socketRef.current.connect();
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.messages) {
+            if (data.messages.length > 0) {
+              setMsgs((prevMsgs) =>
+                cursor ? [...data.messages, ...prevMsgs] : data.messages
+              );
+              setHistoryCursor(data.nextCursor); // 更新 cursor 以便下次使用
+              setHasMoreHistory(!!data.nextCursor); // 如果 nextCursor 為 null，表示沒有更多了
+            } else {
+              setHasMoreHistory(false); // API 返回空陣列，表示沒有更多了
+            }
+            if (!cursor) initialMessagesLoadedRef.current = true; // 標記初始訊息已載入
           } else {
-            socketRef.current.emit('joinGroupChat', groupId, currentUser.id);
+            console.error('獲取歷史訊息 API 回應失敗:', data.message);
+            setHasMoreHistory(false);
           }
         } else {
-          setIsChatAllowedForActiveGroup(false);
-          setShowGroupList(true);
-          setActiveChatGroupId(null);
+          console.error('獲取歷史訊息 HTTP 錯誤:', response.status);
+          setHasMoreHistory(false);
         }
-      } else {
-        const errText = await response.text();
-        console.error(
-          `[selectGroupAndEnterChat] Auth API HTTP error for group ${groupId}: ${response.status}`,
-          errText
-        ); // 保留錯誤日誌
-        setIsChatAllowedForActiveGroup(false);
-        setShowGroupList(true);
-        setActiveChatGroupId(null);
+      } catch (error) {
+        console.error('呼叫獲取歷史訊息 API 失敗:', error);
+        setHasMoreHistory(false);
+      } finally {
+        setIsLoadingHistory(false);
+        isFetchingHistoryRef.current = false;
       }
-    } catch (error) {
-      console.error(
-        `[selectGroupAndEnterChat] Auth API call failed for group ${groupId}:`,
-        error
-      ); // 保留錯誤日誌
-      setIsChatAllowedForActiveGroup(false);
-      setShowGroupList(true);
-      setActiveChatGroupId(null);
-    } finally {
-      setIsCheckingGroupAuth(false);
-    }
-  };
+    },
+    [apiBase, currentUser?.id]
+  );
+
+  const selectGroupAndEnterChat = useCallback(
+    async (groupId) => {
+      if (!groupId || !currentUser || !socketRef.current || !apiBase) return;
+
+      // 如果是同一個群組且已經授權，則不重複執行 (除非強制刷新)
+      if (
+        activeChatGroupId === groupId &&
+        isChatAllowedForActiveGroup &&
+        !isCheckingGroupAuth
+      ) {
+        setShowGroupList(false); // 確保顯示訊息界面
+        return;
+      }
+
+      // 重設狀態，準備進入新的聊天室
+      if (socketRef.current.connected) socketRef.current.disconnect(); // 先斷開舊的 socket 連接
+      setMsgs([]); // 清空舊訊息
+      setActiveChatGroupId(groupId); // 設定當前活躍的群組 ID
+      setShowGroupList(false); // 隱藏群組列表，準備顯示訊息界面
+      setIsCheckingGroupAuth(true); // 開始檢查授權
+      setIsChatAllowedForActiveGroup(false); // 重設授權狀態
+      setHasMoreHistory(true); // 重設是否有更多歷史訊息的狀態
+      setHistoryCursor(null); // 重設歷史訊息的 cursor
+      initialMessagesLoadedRef.current = false; // 重設初始訊息載入標記
+
+      try {
+        const response = await fetch(
+          `${apiBase}/api/group/groupchat/${groupId}/authorize`,
+          {
+            method: 'GET',
+            credentials: 'include',
+            cache: 'no-store',
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          if (data.authorized) {
+            setIsChatAllowedForActiveGroup(true); // 授權成功
+            await fetchHistoryMessages(groupId); // 載入該群組的初始歷史訊息
+            if (!socketRef.current.connected) {
+              // 如果 socket 未連接
+              socketRef.current.connect(); // 則進行連接 (連接成功後會在 'connect' 事件中加入房間)
+            } else {
+              // 如果 socket 已經因為某些原因連接上了 (理論上不應該，因為上面有 disconnect)
+              socketRef.current.emit('joinGroupChat', groupId, currentUser.id); // 直接嘗試加入房間
+            }
+          } else {
+            // 後端 API 返回未授權
+            console.warn(
+              `使用者未被授權加入群組 ${groupId} 的聊天室: ${data.message}`
+            );
+            setIsChatAllowedForActiveGroup(false);
+            // 可以選擇是否跳回列表或保持顯示 "無法進入"
+            // setShowGroupList(true);
+            // setActiveChatGroupId(null);
+          }
+        } else {
+          // HTTP 請求失敗 (例如 401, 403, 500)
+          const errText = await response.text();
+          console.error(
+            `授權檢查 API HTTP 錯誤 (群組 ${groupId}): ${response.status}`,
+            errText
+          );
+          setIsChatAllowedForActiveGroup(false);
+          // setShowGroupList(true); setActiveChatGroupId(null);
+        }
+      } catch (error) {
+        // fetch 本身拋出錯誤 (例如網路問題)
+        console.error(`呼叫授權 API 失敗 (群組 ${groupId}):`, error);
+        setIsChatAllowedForActiveGroup(false);
+        // setShowGroupList(true); setActiveChatGroupId(null);
+      } finally {
+        setIsCheckingGroupAuth(false); // 結束授權檢查
+      }
+    },
+    // eslint-disable-next-line
+    [
+      currentUser,
+      apiBase,
+      socketRef,
+      fetchHistoryMessages,
+      activeChatGroupId,
+      isChatAllowedForActiveGroup,
+    ]
+  );
 
   useEffect(() => {
     if (open && currentUser?.id) {
@@ -511,7 +620,7 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
                       <div className="flex items-end gap-1.5">
                         {m.user.id !== currentUser.id && (
                           <Image
-                            src={m.user.avatar || '/default-avatar.png'}
+                            src={m.user.avatar || '/deadicon.png'}
                             alt={m.user.name || '用戶'}
                             width={24}
                             height={24}
@@ -541,7 +650,7 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
                               alt="聊天圖片"
                               width={200}
                               height={150}
-                              className="max-w-full h-auto rounded-md object-cover cursor-pointer"
+                              className="max-w-full h-auto rounded-md object-cover cursor-none"
                               onClick={() =>
                                 window.open(
                                   m.imageUrl.startsWith('http') ||

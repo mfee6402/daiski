@@ -154,7 +154,7 @@ export default function CouponsPage(props) {
       return c.status === selectedTarget;
     }
     if (['全站', '商品', '課程'].includes(selectedTarget)) {
-      //不顯示不能領取的優惠卷
+      //不顯示不能領取的優惠券
       return (
         c.target === selectedTarget &&
         (c.status === '可領取' || c.status === '已領取')
@@ -190,7 +190,7 @@ export default function CouponsPage(props) {
           {/* 領取 */}
           <div className="border border-primary-600 w-full flex flex-row p-5 items-center justify-around rounded-lg">
             <button className="font-tw leading-p-tw cursor-pointer">
-              玩遊戲獲取優惠卷
+              <a href="http://localhost:3000/game">玩遊戲獲取優惠券</a>
             </button>
             <div className="h-4 w-px border-l-2 border-secondary-800"></div>
             <button

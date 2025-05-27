@@ -129,7 +129,12 @@ import {
 import Image from 'next/image';
 import FavoriteButton from '@/components/favorite-button';
 
-export default function ProductList({ products, favIds, onToggleFavorite }) {
+export default function ProductList({
+  products,
+  favIds,
+  onToggleFavorite,
+  isAuth,
+}) {
   return (
     // <ul className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-hidden">
     //   {products.map((p) => (
@@ -204,11 +209,12 @@ export default function ProductList({ products, favIds, onToggleFavorite }) {
               isFav={favIds.includes(p.id)}
               onToggle={() => onToggleFavorite(p.id)}
               variant="circle"
+              isAuth={isAuth}
             />
           </div>
 
           {/* 用 Link 本身或一層 motion.div 來偵測 hover */}
-          <Link href={`/product/${p.id}`} className="block">
+          <Link href={`/product/${p.id}`} className="block cursor-none">
             <motion.div
               className="relative overflow-hidden" // 卡片大小由下面 Card 定義，這個容器負責裁切雪球
               initial="rest"
@@ -266,7 +272,7 @@ export default function ProductList({ products, favIds, onToggleFavorite }) {
               </motion.div>
 
               {/* 卡片結構 (目前雪球會蓋在這個之上) */}
-              <Card className="">
+              <Card className="border dark:border-white bg-white dark:bg-background ">
                 <CardHeader className="w-full overflow-hidden p-4">
                   <div className="aspect-[4/3]">
                     <Image
@@ -274,7 +280,7 @@ export default function ProductList({ products, favIds, onToggleFavorite }) {
                       alt={p.name}
                       width={10}
                       height={10}
-                      className="w-full h-full object-contain transition duration-300 hover:scale-120"
+                      className="w-full h-full object-contain transition duration-300 hover:scale-120 dark:bg-white rounded"
                     />
                   </div>
                 </CardHeader>
@@ -282,7 +288,7 @@ export default function ProductList({ products, favIds, onToggleFavorite }) {
                   <CardTitle className="text-lg font-bold mt-2 line-clamp-2 hover:text-primary-500">
                     {p.name}
                   </CardTitle>
-                  <CardDescription className="text-sm text-gray-600 mt-1 line-clamp-1 hover:text-primary-500">
+                  <CardDescription className="text-sm text-black dark:text-white mt-1 line-clamp-1 hover:text-primary-500">
                     {p.category} / {p.brand}
                   </CardDescription>
                   <p className="text-red-500 font-semibold text-base mt-2">
@@ -290,7 +296,7 @@ export default function ProductList({ products, favIds, onToggleFavorite }) {
                   </p>
                 </CardContent>
                 <CardFooter>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-black dark:text-white">
                     評價：{p.rating || '尚無評價'}
                   </p>
                 </CardFooter>

@@ -2,6 +2,7 @@
 
 import { FaRegHeart, FaHeart } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 
 /**
  * 收藏按鈕元件 (受控元件)
@@ -56,26 +57,34 @@ import { Button } from '@/components/ui/button';
             onToggleFavorite={toggleFavorite}
           />
  */
+
 export default function FavoriteButton({
   isFav,
   onToggle,
   variant,
+  isAuth,
   className = '',
 }) {
   // 只有當 variant 顯式為 'rect' 時，才採用長方形樣式，其他情況都用 circle
   const isRect = variant === 'rect';
+  const router = useRouter();
 
   // 按鈕樣式
   const baseClasses = isRect
     ? 'px-4 py-6 rounded-lg space-x-2 flex items-center cursor-none'
-    : 'p-2 rounded-full cursor-pointer';
+    : 'p-2 rounded-full cursor-none';
   const btnVariant = isRect ? 'outline' : 'ghost';
 
   // 先阻止事件冒泡，再執行切換收藏
   const handleClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    onToggle();
+    if (isAuth) {
+      onToggle();
+    } else {
+      // router.push('/auth/not-login');
+      console.log('沒登入');
+    }
   };
 
   return (
@@ -86,11 +95,15 @@ export default function FavoriteButton({
     >
       {isRect ? (
         <>
-          {isFav ? <FaHeart size={16} /> : <FaRegHeart size={16} />}
+          {isFav ? (
+            <FaHeart size={16} className="text-red" />
+          ) : (
+            <FaRegHeart size={16} />
+          )}
           <span>{isFav ? '已收藏' : '加入收藏'}</span>
         </>
       ) : isFav ? (
-        <FaHeart size={20} />
+        <FaHeart size={20} className="text-red" />
       ) : (
         <FaRegHeart size={20} />
       )}

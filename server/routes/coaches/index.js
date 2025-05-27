@@ -11,7 +11,7 @@ const router = express.Router();
 // multer上傳設定
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const dir = 'upload/course';
+    const dir = 'public/courseImages';
     fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
@@ -21,10 +21,11 @@ const storage = multer.diskStorage({
     cb(null, unique + path.extname(file.originalname));
   },
 });
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 單檔案5MB
-});
+// const upload = multer({
+//   storage,
+//   limits: { fileSize: 5 * 1024 * 1024 },
+// });
+const upload = multer({ storage: multer.memoryStorage() });
 
 // 抓教練列表
 router.get('/', async function (req, res) {
@@ -216,18 +217,20 @@ router.post(
       boardtype_id,
       tags,
     } = req.body;
+    console.log(req.body);
+    console.log('fnfkws');
 
     /* ---------- ⑤ 處理圖片 ---------- */
     const files = req.files || [];
+
     if (!files.length) {
       return res
         .status(400)
-        .json({ status: 'fail', message: '請至少上傳一張圖片' });
+        .json({ status: 'fail', message: '請至少上傳一張圖片' + files.length });
     }
-    // 每張圖存到 course_img，第一張設為封面 isCover=true
+    // 每張圖存到 courseImages
     const imgBulkData = files.map((f, idx) => ({
-      img: `/uploads/course/${f.filename}`,
-      isCover: idx === 0,
+      img: `public/courseImages/${req.params.id}/${f.filename}`,
     }));
 
     /* ---------- ⑥ 處理 TAG：轉成陣列 ---------- */
@@ -259,27 +262,58 @@ router.post(
           },
         });
 
-        /* ② 批次插入圖片 */
-        await tx.courseImg.createMany({
-          data: imgBulkData.map((d) => ({ ...d, course_id: course.id })),
+        //
+        const courseId = course.id;
+
+        /* ❷ 建圖片資料夾 & 寫檔 ------------------------------------------- */
+        const dir = path.join('public', 'courseImages', String(courseId));
+        fs.mkdirSync(dir, { recursive: true });
+
+        /** 存檔並收集待 insert 的 course_img 資料 */
+        const imgBulkData = [];
+        for (const [idx, file] of files.entries()) {
+          const filename = `${Date.now()}${path.extname(file.originalname)}`;
+          const filepath = path.join(dir, filename);
+
+          fs.writeFileSync(filepath, file.buffer); // ← 真正寫入硬碟
+
+          imgBulkData.push({
+            course_id: courseId,
+            img: `/courseImages/${courseId}/${filename}`, // ⚠️ 不含 public/
+            // is_cover: idx === 0, // 第一張預設封面
+            // order: idx,
+          });
+        }
+        /* ❸ 批次插入 course_img ------------------------------------------ */
+        await tx.courseImg.createMany({ data: imgBulkData });
+
+        /* 取得剛插入的封面圖 id（order=0） */
+        const coverImg = await tx.courseImg.findFirst({
+          where: { course_id: courseId },
+          select: { id: true },
         });
 
-        /* ③ 找封面圖 id */
-        const coverImg = await tx.courseImg.findFirst({
-          where: { course_id: course.id, isCover: true },
-        });
+        // /* ② 批次插入圖片 */
+        // await tx.courseImg.createMany({
+        //   data: imgBulkData.map((d) => ({ ...d, course_id: course.id })),
+        // });
+
+        // /* ③ 找封面圖 id */
+        // const coverImg = await tx.courseImg.findFirst({
+        //   where: { course_id: course.id },
+        // });
 
         /* ④ 建 course_variant */
         await tx.courseVariant.create({
           data: {
             course_id: course.id,
             difficulty,
-            price: String(price), // 你若 Prisma schema 改 Decimal 就存 Number(price)
+            price: Number(price), // 你若 Prisma schema 改 Decimal 就存 Number(price)
             duration: Number(duration),
             max_people: Number(max_people),
             location_id: Number(location_id),
             coach_id: Number(coach_id),
-            boardtype_id: Number(boardtype_id),
+            // boardtype_id: Number(boardtype_id),
             course_img_id: coverImg.id,
             start_at: new Date(start_at),
           },
@@ -287,14 +321,27 @@ router.post(
 
         /* ⑤ tag upsert + 關聯 */
         for (const t of tagList) {
-          const tag = await tx.tag.upsert({
+          const existing = await prisma.tag.findFirst({
             where: { name: t },
-            update: {},
-            create: { name: t },
           });
-          await tx.courseTag.create({
-            data: { course_id: course.id, tag_id: tag.id },
-          });
+
+          if (existing) {
+            await tx.courseTag.create({
+              data: { course_id: course.id, tag_id: existing.id },
+            });
+          } else {
+            await prisma.tag.create({
+              data: { name: t },
+            });
+          }
+          // const tag = await tx.tag.upsert({
+          //   where: { name: t },
+          //   update: {},
+          //   create: { name: t },
+          // });
+          // await tx.courseTag.create({
+          //   data: { course_id: course.id, tag_id: tag.id },
+          // });
         }
 
         return course; // transaction 回傳
