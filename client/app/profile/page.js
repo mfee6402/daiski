@@ -73,7 +73,8 @@ export default function MemberPage() {
   }
   const [src, setSrc] = useState(
     // user.avatar ? `http://localhost:3005${user.avatar}` : '/avatar.webp'
-    `http://localhost:3005${user.avatar}`
+    user.avatar
+    // `http://localhost:3005/api/profile/avatar/${user.id}`
   ); // 當前顯示的頭像 URL
   console.log(src);
   return (
