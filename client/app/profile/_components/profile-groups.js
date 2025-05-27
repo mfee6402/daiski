@@ -56,6 +56,7 @@ export default function ProfileGroups(props) {
                     ? `http://localhost:3005${g.group.imageUrl}`
                     : 'deadicon.png'
                 }
+                // onError={() => setImg('/deadicon.png')} 
                 alt={g.group.title}
                 width={20}
                 height={20}
