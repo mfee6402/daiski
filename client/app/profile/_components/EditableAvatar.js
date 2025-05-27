@@ -12,11 +12,11 @@ import { toast } from 'sonner'; // shadcn 已內建小提示元件，若沒裝�
  */
 export default function EditableAvatar({
   userId = 0,
-  src = 'aaaaaa',
+  src = '',
   setSrc = () => {},
 }) {
+  const [fresh, setFresh] = useState(false);
   const fileInputRef = useRef(null);
-  console.log(src);
   /* ⬇︎ 1. 點擊頭像 → 模擬點擊 <input type="file"> */
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -28,7 +28,7 @@ export default function EditableAvatar({
     if (!file) return;
 
     // (2-1) 先用 URL.createObjectURL 做本地預覽
-    const previewUrl = URL.createObjectURL(file);
+    // const previewUrl = URL.createObjectURL(file);
     // setSrc(previewUrl);
 
     try {
@@ -50,6 +50,8 @@ export default function EditableAvatar({
       const { url } = await res.json();
       setSrc(url);
       toast.success('頭像更新成功!');
+      setFresh(!fresh);
+      
     } catch (err) {
       toast.error('上傳失敗，請重試' + err);
       setSrc(src); // 還原舊頭像
@@ -76,7 +78,7 @@ export default function EditableAvatar({
         onClick={handleAvatarClick}
       >
         <AvatarImage
-          src={src}
+          src={`http://localhost:3005${src}`}
           alt="member avatar"
           className="w-full h-full object-cover"
         />

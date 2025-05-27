@@ -47,7 +47,7 @@ router.post('/:userId', avatar.single('avatar'), async (req, res, next) => {
     await fs.mkdir(userDir, { recursive: true });
     await fs.rename(req.file.path, destPath);
 
-    const avatarUrl = `http://localhost:3005/avatar/${userId}/${fileName}`;
+    const avatarUrl = `/avatar/${userId}/${fileName}`;
 
     /* ---------- 4. 更新資料庫 ---------- */
     await prisma.user.update({
