@@ -4,127 +4,64 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from '@/components/ui/popover';
 import { Card, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { CustomPagination } from './_components/group-pagination';
 import Image from 'next/image';
 import Link from 'next/link';
+
+// 從 lucide-react 引入圖示
+import { CirclePlus, BadgeCheck, Megaphone } from 'lucide-react';
 
 export default function GroupsPage() {
   const router = useRouter();
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3005';
 
-  const [groups, setGroups] = useState([]);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [filters, setFilters] = useState({
-    type: '全部',
-    date: '',
-    location: '全部',
-    keyword: '',
+  const [groupStats, setGroupStats] = useState({
+    total: 0,
+    ongoing: 0,
+    formed: 0,
   });
-  const [typeOptions, setTypeOptions] = useState(['全部']);
-  const [locationOptions, setLocationOptions] = useState(['全部']);
-  const PAGE_SIZE = 12;
+  const [latestGroups, setLatestGroups] = useState([]);
+  const [loadingLatest, setLoadingLatest] = useState(true);
 
   useEffect(() => {
-    async function loadFilterOptions() {
+    async function fetchGroupStats() {
       try {
-        const [typesRes, locsRes] = await Promise.all([
-          fetch(`${API_BASE}/api/group?onlyTypes=true`),
-          fetch(`${API_BASE}/api/location`),
-        ]);
-        const typesData = await typesRes.json();
-        const locsData = await locsRes.json();
-        const uniqueTypes = Array.from(new Set(typesData || []));
-        setTypeOptions(['全部', ...uniqueTypes]);
-        const locationNames = (locsData || []).map((loc) => loc.name);
-        const uniqueLocationNames = Array.from(new Set(locationNames));
-        setLocationOptions(['全部', ...uniqueLocationNames]);
+        const statsRes = await fetch(`${API_BASE}/api/group/summary`);
+        if (!statsRes.ok) throw new Error('無法獲取揪團統計數據');
+        const statsData = await statsRes.json();
+        setGroupStats({
+          total: statsData.totalGroups || 0,
+          ongoing: statsData.ongoingGroups || 0,
+          formed: statsData.formedGroups || 0,
+        });
       } catch (err) {
-        console.error('載入篩選選項失敗:', err);
-        setTypeOptions(['全部']);
-        setLocationOptions(['全部']);
+        console.error('載入揪團統計數據失敗:', err);
+        setGroupStats({ total: 0, ongoing: 0, formed: 0 });
       }
     }
-    loadFilterOptions();
-  }, [API_BASE]);
-
-  useEffect(() => {
-    async function fetchGroups() {
+    async function fetchLatestGroups() {
       try {
-        const params = new URLSearchParams({ pageSize: String(PAGE_SIZE) });
-        if (filters.type !== '全部') params.append('type', filters.type);
-        if (filters.date) params.append('date', filters.date);
-        if (filters.location !== '全部')
-          params.append('location', filters.location);
-        if (filters.keyword) params.append('keyword', filters.keyword);
-        params.append('page', String(page));
-        const res = await fetch(`${API_BASE}/api/group?${params}`);
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}));
-          throw new Error(
-            errorData.error || `無法獲取揪團列表 (狀態 ${res.status})`
-          );
-        }
+        const res = await fetch(`${API_BASE}/api/group/latest`);
+        if (!res.ok) throw new Error('無法獲取最新揪團列表');
         const data = await res.json();
-        if (data && Array.isArray(data.groups)) {
-          setGroups(data.groups);
-          setTotalPages(data.totalPages || 1);
-        } else {
-          setGroups([]);
-          setTotalPages(1);
-        }
+        setLatestGroups(data);
       } catch (err) {
-        console.error('獲取揪團列表失敗:', err);
-        setGroups([]);
-        setTotalPages(1);
+        console.error('獲取最新揪團列表失敗:', err);
+        setLatestGroups([]);
+      } finally {
+        setLoadingLatest(false);
       }
     }
-    fetchGroups();
-  }, [filters, page, API_BASE]);
-
-  const handleJoin = (groupId) => {
-    router.push(`/groups/${groupId}`);
-  };
-
-  const formatDateRange = (startDate, endDate) => {
-    if (!startDate || !endDate) return '日期未定';
-    try {
-      const start = new Date(startDate).toLocaleDateString('zh-TW', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      });
-      const end = new Date(endDate).toLocaleDateString('zh-TW', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      });
-      return `${start} ~ ${end}`;
-    } catch (err) {
-      return '日期格式錯誤';
-    }
-  };
+    fetchGroupStats();
+    fetchLatestGroups();
+  }, [API_BASE]);
 
   return (
     <>
-      <title>Daiski 揪團總覽</title>
+      {/* 跑馬燈 */}
       <section className="bg-secondary-200 dark:bg-slate-800 py-3">
-        {' '}
-        {/* Dark mode 背景 */}
         <div className="relative overflow-hidden max-w-screen-xl mx-auto">
           <div className="whitespace-nowrap animate-marquee pause text-primary-800 dark:text-white text-p-tw font-medium flex items-center gap-4">
-            {' '}
-            {/* Dark mode 文字 */}
             <span>🏂 現正招募中：北海道出國團</span>
             <span>⛷️ 苗場初學教學團</span>
             <span>🎿 富良野自由行！</span>
@@ -132,311 +69,191 @@ export default function GroupsPage() {
           </div>
         </div>
       </section>
-
-      <section className="relative py-36 text-center">
+      {/* Hero Section with Video */}
+      <section className="relative pt-36 pb-24 sm:pb-28 md:pb-32 text-center">
+        {/* 調整 padding 為統計卡片留空間 */}
         <video
           className="absolute inset-0 w-full h-full object-cover"
           src="/ProductHeroSection.mp4"
           autoPlay
           muted
           loop
-          playsInline
         />
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-        <div className="relative max-w-3xl mx-auto px-7 py-14 bg-white/85 dark:bg-slate-900/85 shadow-2xl rounded-lg">
-          {' '}
-          {/* Dark mode 背景 */}
-          <h2 className="font-extrabold mb-6 tracking-wider text-h2-tw text-primary-800 dark:text-white leading-h2-tw">
-            {' '}
-            {/* Dark mode 文字 */}
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="relative z-10 max-w-3xl mx-auto px-4">
+          <h1 className="text-4xl sm:text-5xl md:text-5xl font-bold text-white">
             找人開團滑雪，一起嗨翻雪場！
-          </h2>
-          <p className="mb-8 text-p-tw text-secondary-800 dark:text-slate-300 leading-p-tw">
-            {' '}
-            {/* Dark mode 文字 */}
+          </h1>
+          <p className="mt-4 text-lg sm:text-xl text-white/90">
             不論是自由行或是想體驗教學，歡迎發起屬於你的行程，官方協助安排課程與教練，讓旅程更加完美！
           </p>
-          {/* ... Buttons ... */}
-          <div className="flex justify-center gap-6">
+          <div className="mt-6 flex justify-center gap-4">
             <Button
               onClick={() => router.push('/groups/create')}
-              className="px-8 py-3 bg-primary-500  text-white font-semibold shadow-lg transition transform hover:scale-105 rounded-md hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700 cursor-none"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               立即開團
             </Button>
             <Button
               variant="outline"
-              onClick={() => router.push('/groups')}
-              className="px-8 py-3 border-primary-500 text-primary-500 dark:border-primary-400 dark:text-primary-400 font-semibold transition transform hover:scale-105 rounded-md hover:bg-primary-500/10 dark:hover:bg-primary-400/10 cursor-none"
+              onClick={() => router.push('/groups/list')}
             >
-              查看開團
+              查看揪團
             </Button>
           </div>
         </div>
       </section>
 
-      <section className="max-w-screen-xl mx-auto px-6 py-8 ">
-        <form className="grid grid-cols-1 md:grid-cols-5 gap-6 bg-card dark:bg-slate-800 p-6 shadow-md rounded-lg">
-          {' '}
-          {/* Dark mode 背景 */}
-          <div className="cursor-none">
-            <Label
-              htmlFor="type-filter"
-              className="text-p-tw text-secondary-800 dark:text-slate-300 cursor-none"
-            >
-              類型
-            </Label>{' '}
-            {/* Dark mode 文字 */}
-            {/* ... Popover for type ... */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  id="type-filter"
-                  variant="outline"
-                  className="w-full justify-between mt-1 text-p-tw cursor-none dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700"
+      {/* 統計卡片 */}
+      <div className="relative -mt-16 z-20 flex justify-center px-4">
+        <div className="w-[600px] bg-white dark:bg-transparent backdrop-blur-md shadow-xl rounded-lg p-6 sm:p-8">
+          <div className="grid grid-cols-3 divide-x divide-gray-300 dark:divide-slate-700 text-center">
+            <div className="px-2 sm:px-3 md:px-4">
+              <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-blue-600 dark:text-blue-400">
+                {groupStats.total}
+              </p>
+              <p className="text-xs sm:text-sm md:text-base text-slate-600 dark:text-slate-300 mt-1 sm:mt-2">
+                總揪團
+              </p>
+            </div>
+            <div className="px-2 sm:px-3 md:px-4">
+              <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-blue-600 dark:text-blue-400">
+                {groupStats.ongoing}
+              </p>
+              <p className="text-xs sm:text-sm md:text-base text-slate-600 dark:text-slate-300 mt-1 sm:mt-2">
+                揪團中
+              </p>
+            </div>
+            <div className="px-2 sm:px-3 md:px-4">
+              <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-blue-600 dark:text-blue-400">
+                {groupStats.formed}
+              </p>
+              <p className="text-xs sm:text-sm md:text-base text-slate-600 dark:text-slate-300 mt-1 sm:mt-2">
+                已成團
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 最新揪團 Section */}
+      <section className="bg-transparent dark:bg-transparent py-12 md:py-16 pt-10 sm:pt-12 md:pt-16">
+        <div className="max-w-screen-2xl mx-auto px-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8 sm:mb-12 text-slate-800 dark:text-white">
+            最新揪團
+          </h2>
+          {loadingLatest ? (
+            <p className="text-center text-slate-500 dark:text-slate-400">
+              載入最新揪團中...
+            </p>
+          ) : latestGroups.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8">
+              {latestGroups.map((group) => (
+                <Card
+                  key={group.id}
+                  className="p-0 overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg flex flex-col group bg-white dark:bg-slate-800"
                 >
-                  {filters.type} <span aria-hidden="true">▾</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                side="bottom"
-                align="start"
-                className="w-auto min-w-[theme(spacing.44)] bg-card dark:bg-slate-800 border-border dark:border-slate-700"
-              >
-                <div className="flex flex-col space-y-1 p-1">
-                  {typeOptions.map((opt) => (
-                    <Button
-                      key={opt}
-                      variant={filters.type === opt ? 'secondary' : 'ghost'}
-                      onClick={() => setFilters((f) => ({ ...f, type: opt }))}
-                      className="w-full justify-start text-p-tw dark:text-slate-300 dark:hover:bg-slate-700"
-                    >
-                      {opt}
-                    </Button>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-          <div>
-            <Label
-              htmlFor="date-filter"
-              className="text-p-tw text-secondary-800 dark:text-slate-300 cursor-none"
-            >
-              日期
-            </Label>
-            <Input
-              id="date-filter"
-              type="date"
-              value={filters.date}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, date: e.target.value }))
-              }
-              className="w-full mt-1 text-p-tw !cursor-none dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600"
-            />
-          </div>
-          <div>
-            <Label
-              htmlFor="location-filter"
-              className="text-p-tw text-secondary-800 dark:text-slate-300 cursor-none"
-            >
-              地點
-            </Label>
-            {/* ... Popover for location ... */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  id="location-filter"
-                  variant="outline"
-                  className="w-full justify-between mt-1 text-p-tw cursor-none dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700"
-                >
-                  {filters.location} <span aria-hidden="true">▾</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                side="bottom"
-                align="start"
-                className="w-auto min-w-[theme(spacing.44)] bg-card dark:bg-slate-800 border-border dark:border-slate-700"
-              >
-                <div className="flex flex-col space-y-1 p-1">
-                  {locationOptions.map((opt) => (
-                    <Button
-                      key={opt}
-                      variant={filters.location === opt ? 'secondary' : 'ghost'}
-                      onClick={() =>
-                        setFilters((f) => ({ ...f, location: opt }))
-                      }
-                      className="w-full justify-start text-p-tw dark:text-slate-300 dark:hover:bg-slate-700"
-                    >
-                      {opt}
-                    </Button>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-          <div className="md:col-span-2">
-            <Label
-              htmlFor="keyword-filter"
-              className="text-p-tw text-secondary-800 dark:text-slate-300 cursor-none"
-            >
-              關鍵字搜尋
-            </Label>
-            <Input
-              id="keyword-filter"
-              placeholder="輸入揪團名稱、描述等關鍵字..."
-              value={filters.keyword}
-              onChange={(e) =>
-                setFilters((f) => ({ ...f, keyword: e.target.value }))
-              }
-              className="w-full mt-1 text-p-tw cursor-none dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600"
-            />
-          </div>
-        </form>
+                  <Link href={`/groups/${group.id}`}>
+                    <div className="relative w-full h-50">
+                      <Image
+                        src={
+                          group.imageUrl && group.imageUrl.startsWith('/')
+                            ? `${API_BASE}${group.imageUrl}`
+                            : group.imageUrl || '/deadicon.png'
+                        }
+                        alt={group.title || '揪團封面'}
+                        fill
+                        style={{ objectFit: 'cover' }}
+                        className="group-hover:scale-105 transition-transform duration-300 rounded-t-lg"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        onError={(e) => {
+                          e.currentTarget.src = '/deadicon.png';
+                          e.currentTarget.alt = '圖片載入失敗';
+                        }}
+                      />
+                    </div>
+                  </Link>
+                  <CardContent className="p-4 flex flex-col flex-grow">
+                    <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-1">
+                      {group.type}
+                    </p>
+                    <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">
+                      {group.title}
+                    </h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-2 flex-grow">
+                      {group.description}
+                    </p>
+                    <div className="mt-auto pt-2 border-t border-gray-200 dark:border-slate-700 flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+                      <span>{group.location}</span>
+                      <span>
+                        {new Date(group.startDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-slate-500 dark:text-slate-400">
+              目前沒有最新揪團。
+            </p>
+          )}
+        </div>
       </section>
 
-      <section className="max-w-screen-2xl mx-auto px-6 pb-16">
-        {groups.length === 0 && (
-          <div className="text-center py-10 text-secondary-800 dark:text-slate-400 text-p-tw">
-            <p>目前沒有符合條件的揪團，試試調整篩選條件吧！</p>
-          </div>
-        )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-8">
-          {' '}
-          {groups.map((group, index) => (
-            <Card
-              key={group.id}
-              className="overflow-hidden pt-0 pb-2 shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg flex flex-col group bg-card text-foreground dark:bg-slate-800 dark:text-slate-200" // Dark mode 卡片背景和文字
-            >
-              {/* 圖片容器修改：添加 rounded-t-lg 和 overflow-hidden */}
-              <Link
-                href={`/groups/${group.id}`}
-                className="relative block w-full aspect-[4/3] cursor-none rounded-t-lg overflow-hidden"
-              >
-                {' '}
-                {/* 使用 aspect-ratio 替代固定高度 h-48 */}
-                <Image
-                  src={
-                    group.images && group.images[0]?.imageUrl
-                      ? `${API_BASE}${group.images[0].imageUrl}`
-                      : '/deadicon.png' // 確認 placeholder 圖片路徑是否正確
-                  }
-                  alt={group.title || '揪團封面'}
-                  fill
-                  style={{ objectFit: 'cover' }}
-                  className="transition-transform duration-300 group-hover:scale-105 rounded-lg"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                  priority={index < 4} // 優先載入首屏可見的圖片
-                  onError={(e) => {
-                    // 新增圖片載入錯誤處理
-                    e.currentTarget.src = '/deadicon.png'; // 錯誤時替換為 /deadicon.png
-                    e.currentTarget.alt = '圖片載入失敗';
-                  }}
+      {/* Daiski 幫你揪 Section */}
+      <section className="py-12 md:py-20 bg-white dark:bg-slate-800">
+        <div className="max-w-screen-2xl mx-auto px-6 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-10 sm:mb-14 text-slate-800 dark:text-white">
+            Daiski 幫你揪
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
+            {/* 特色 1: 免費開團 */}
+            <div className="flex flex-col items-center p-6 bg-slate-50 dark:bg-slate-700/50 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+              <div className="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-full mb-4">
+                <CirclePlus
+                  className="w-10 h-10 text-blue-600 dark:text-blue-400"
+                  strokeWidth={1.5}
                 />
-              </Link>
-
-              <CardContent className="p-4 pt-0 flex flex-col flex-grow">
-                {' '}
-                {/* CardContent 保持 padding */}
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 truncate">
-                    <Avatar className="w-8 h-8 flex-shrink-0">
-                      <AvatarImage
-                        src={
-                          group.user?.avatar
-                            ? group.user.avatar.startsWith('http')
-                              ? group.user.avatar
-                              : `${API_BASE}${group.user.avatar}`
-                            : undefined // 讓 AvatarFallback 顯示
-                        }
-                        alt={group.user?.name || '開團者'}
-                      />
-                      <AvatarFallback>
-                        {group.user?.name
-                          ? group.user.name[0].toUpperCase()
-                          : 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="truncate text-p-tw text-secondary-800 dark:text-slate-400">
-                      {' '}
-                      {/* Dark mode 文字 */}
-                      開團者：{group.user?.name || '匿名用戶'}
-                    </span>
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className="text-xs flex-shrink-0 dark:border-slate-600 dark:text-slate-400"
-                  >
-                    {' '}
-                    {/* Dark mode Badge */}
-                    {group.type}
-                  </Badge>
-                </div>
-                <button
-                  onClick={() => router.push(`/groups/${group.id}`)}
-                  className="font-bold mb-2 leading-tight truncate text-h6-tw text-primary-800 dark:text-white cursor-none hover:underline text-left w-full " // text-left 和 w-full 確保行為像區塊元素
-                  aria-label={group.title || '無標題揪團'} // 提供更清晰的語音描述
-                >
-                  {group.title || '無標題揪團'}
-                </button>
-                <p
-                  className="text-sm text-gray-600 dark:text-gray-400 mb-1 truncate"
-                  title={group.location || '地點未提供'}
-                >
-                  <span className="font-semibold dark:text-gray-200">
-                    地點：
-                  </span>
-                  {group.location || '地點未提供'}
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  <span className="font-semibold dark:text-gray-200">
-                    時間：
-                  </span>
-                  {formatDateRange(group.startDate, group.endDate)}
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                  {' '}
-                  {/* 價格文字加深一點 */}
-                  <span className="font-semibold dark:text-gray-100">
-                    費用：
-                  </span>
-                  NT$ {group.price !== undefined ? group.price : '未定'} /人
-                </p>
-                <p className="mb-4 text-p-tw text-secondary-800 dark:text-slate-400">
-                  {typeof group.currentPeople === 'number' &&
-                  typeof group.maxPeople === 'number'
-                    ? `${group.currentPeople}/${group.maxPeople} 人`
-                    : '人數未定'}
-                </p>
-                <div className="mt-auto pt-2 flex justify-between items-center border-t border-gray-200 dark:border-gray-700">
-                  {' '}
-                  {/* Dark mode 分隔線 */}
-                  <Button
-                    variant="link"
-                    className="px-0 text-p-tw text-primary-500 dark:text-primary-400 hover:text-primary-600 dark:hover:text-primary-300 cursor-none"
-                    onClick={() => router.push(`/groups/${group.id}`)}
-                  >
-                    查看詳情
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="font-semibold bg-primary-500 text-white rounded-none text-base hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-700 cursor-none"
-                    onClick={() => handleJoin(group.id)}
-                  >
-                    我要參加
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        <div className="mt-10 flex justify-center">
-          <CustomPagination
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-          />
+              </div>
+              <h3 className="text-lg font-semibold mb-2 text-slate-700 dark:text-white">
+                免費開團
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                註冊開團完全免費，不收上架費，不限制開團數，輕鬆成為開團主。
+              </p>
+            </div>
+            {/* 特色 2: 快速審核 */}
+            <div className="flex flex-col items-center p-6 bg-slate-50 dark:bg-slate-700/50 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+              <div className="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-full mb-4">
+                <BadgeCheck
+                  className="w-10 h-10 text-blue-600 dark:text-blue-400"
+                  strokeWidth={1.5}
+                />
+              </div>
+              <h3 className="text-lg font-semibold mb-2 text-slate-700 dark:text-white">
+                快速審核
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                開團確認上架審核機制，審核快速準確，避免揪團資訊錯誤不到位。
+              </p>
+            </div>
+            {/* 特色 3: 社群曝光 */}
+            <div className="flex flex-col items-center p-6 bg-slate-50 dark:bg-slate-700/50 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+              <div className="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-full mb-4">
+                <Megaphone
+                  className="w-10 h-10 text-blue-600 dark:text-blue-400"
+                  strokeWidth={1.5}
+                />
+              </div>
+              <h3 className="text-lg font-semibold mb-2 text-slate-700 dark:text-white">
+                社群曝光
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                開團審核上架後可免費曝光，協助快速找到團員。
+              </p>
+            </div>
+          </div>
         </div>
       </section>
     </>
