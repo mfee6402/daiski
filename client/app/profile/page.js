@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Card,
@@ -11,6 +10,7 @@ import {
   CardContent,
   CardFooter,
 } from '@/components/ui/card';
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import { useAuth } from '@/hooks/use-auth';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -36,12 +37,12 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-
+//頭像互動引入
+import EditableAvatar from './_components/EditableAvatar';
 // 優惠卷引入
 import ProfileCoupons from './_components/profile-coupons';
 // 收藏引入
 import ProfileWishlist from './_components/profile-wishlist';
-
 //揪團頁引入
 import ProfileGroups from './_components/profile-groups';
 import Container from '@/components/container';
@@ -58,7 +59,8 @@ export default function MemberPage() {
     resolver: zodResolver(FormSchema),
     defaultValues: { bio: '' }, // 建議加上預設值，避免未定義警告
   });
-
+  const { user } = useAuth();
+  console.log(user);
   function onSubmit(values) {
     toast.success('更新成功！', {
       description: (
@@ -69,24 +71,19 @@ export default function MemberPage() {
       duration: 2000,
     });
   }
-
+  const [src, setSrc] = useState(
+    // user.avatar ? `http://localhost:3005${user.avatar}` : '/avatar.webp'
+    user.avatar
+    // `http://localhost:3005/api/profile/avatar/${user.id}`
+  ); // 當前顯示的頭像 URL
+  console.log(src);
   return (
     <div className="min-h-screen bg-[url('/home-images/layer2.png')] bg-cover bg-center bg-no-repeat">
       <Container className="  ">
         {/* Header */}
         <header className="flex flex-col items-center gap-4">
           {/* Avatar */}
-          <Avatar className="w-48 h-48 ">
-            {/* TODO: Replace src with the real member avatar */}
-            <AvatarImage
-              src="/avatar.webp"
-              alt="member avatar"
-              className="w-full h-full object-cover"
-            />
-            <AvatarFallback className="text-3xl font-semibold bg-secondary-500 text-white">
-              ME
-            </AvatarFallback>
-          </Avatar>
+          <EditableAvatar userId={user.id} src={src} setSrc={setSrc} />
           <h1 className="text-h6-tw font-medium tracking-tight text-base">
             會員中心
           </h1>

@@ -119,25 +119,25 @@ router.get('/', authenticate, async function (req, res, next) {
           },
         },
         CartCourse: {
-          include: {
-            // courseVariant: {
-            //     //     select: {
-            //     //       course_id: true,
-            //     //       price: true,
-            //     //       duration: true,
-            //     //       start_at: true,
-            //     //       course: {
-            //     //         select: {
-            //     //           name: true,
-            //     //           CourseImg: {
-            //     //             select: {
-            //     //               img: true,
-            //     //             },
-            //     //           },
-            //     //         },
-            //     //       },
-            //     //     },
-            // },
+          select: {
+            courseVariant: {
+              select: {
+                id: true,
+                price: true,
+                duration: true,
+                start_at: true,
+                course: {
+                  select: {
+                    name: true,
+                    CourseImg: {
+                      select: {
+                        img: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -157,16 +157,17 @@ router.get('/', authenticate, async function (req, res, next) {
       size: item.productSku.product_size.name,
     }));
 
-    // const CartCourse = data.CartCourse.map((item) => ({
-    //   id: item.courseVariant.id,
-    //   price: item.courseVariant.price,
-    //   name: item.courseVariant.course.name,
-    //   imageUrl: item.courseVariant.course.CourseImg[0].img,
-    //   start_at: item.courseVariant.start_at,
-    //   duration: item.courseVariant.duration,
-    // }));
+    const CartCourse = data.CartCourse.map((item) => ({
+      id: item.courseVariant.id,
+      price: item.courseVariant.price,
+      name: item.courseVariant.course.name,
+      imageUrl: item.courseVariant.course.CourseImg[0].img,
+      time: item.courseVariant.start_at,
+      duration: item.courseVariant.duration,
+    }));
 
-    const url = `http://localhost:3005/api/group/user/1`;
+    // 調用後端API
+    const url = `http://localhost:3005/api/group/user/${userId}`;
 
     let resGroup = await fetch(url);
     let CartGroup = (await resGroup.json()).memberships;
@@ -183,7 +184,7 @@ router.get('/', authenticate, async function (req, res, next) {
     const cart = {
       ...data,
       CartProduct,
-      // CartCourse,
+      CartCourse,
       CartGroup,
     };
 

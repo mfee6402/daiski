@@ -9,8 +9,9 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { useGroups } from '@/hooks/use-group';
 import Link from 'next/link';
-import { CiCalendarDate } from 'react-icons/ci';
 import { IoLocationOutline } from 'react-icons/io5';
+import { HiCalendarDateRange } from 'react-icons/hi2';
+import { GiArtificialHive } from 'react-icons/gi';
 import {
   Card,
   CardContent,
@@ -56,25 +57,30 @@ export default function ProfileGroups(props) {
                     ? `http://localhost:3005${g.group.imageUrl}`
                     : 'deadicon.png'
                 }
-                // onError={() => setImg('/deadicon.png')} 
+                // onError={() => setImg('/deadicon.png')}
                 alt={g.group.title}
                 width={20}
                 height={20}
                 className="w-1/2 flex-shrink-0 rounded-md object-cover aspect-[4/3]"
               />
-              <div className="flex flex-col justify-center items-center gap-3">
-                <div className="font-medium">{g.title}</div>
+              <div className="flex flex-col justify-center items-start gap-3">
+                <div className="font-medium flex">
+                  <GiArtificialHive />
+                  {g.group.title}
+                </div>
                 <div className="flex text-sm text-muted-foreground ">
-                  <CiCalendarDate />
-                  {g.time}
+                  <HiCalendarDateRange className="size-10" />
+                  {g.group.time}
                 </div>
                 <div className="text-sm flex">
                   <IoLocationOutline />
-                  {g.location === 'null' ? g.customLocation : g.location}
+                  {g.group.location === 'null'
+                    ? g.customLocation
+                    : g.group.location}
                 </div>
               </div>
               <Button asChild variant="outline">
-                <Link href={`/groups/${g.id}`}>查看</Link>
+                <Link href={`/groups/${g.groupMemberId}`}>查看</Link>
               </Button>
             </article>
           ))}
