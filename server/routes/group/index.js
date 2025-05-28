@@ -26,7 +26,161 @@ function parseYMD(str) {
   const d = new Date(str + 'T00:00:00Z'); // 使用 UTC 以避免時區問題
   return isNaN(d.getTime()) ? null : d;
 }
+// --- 新增的 API 端點：獲取最新揪團 ---
+// GET /api/group/latest
+router.get('/latest', async (req, res, next) => {
+  try {
+    // 你可以透過查詢參數來決定要獲取幾筆，預設為 4 筆
+    const limit = parseInt(req.query.limit) || 4;
 
+    const latestGroupsFromDb = await prisma.group.findMany({
+      where: {
+        deletedAt: null, // 排除已軟刪除的揪團
+        // endDate: { // 可選：只顯示尚未結束的揪團
+        //   gte: new Date(),
+        // }
+      },
+      orderBy: {
+        createdAt: 'desc', // 根據創建時間倒序排列
+      },
+      take: limit, // 取回指定的筆數
+      include: {
+        // 包含顯示卡片所需的基本資訊
+        user: {
+          select: {
+            name: true,
+            avatar: true,
+          },
+        },
+        images: {
+          select: {
+            imageUrl: true,
+          },
+          orderBy: { sortOrder: 'asc' },
+          take: 1, // 通常列表卡片只需要第一張圖
+        },
+        location: {
+          // 如果是滑雪團，需要地點名稱
+          select: { name: true },
+        },
+        _count: {
+          // 如果需要顯示目前人數
+          select: { members: true },
+        },
+      },
+    });
+
+    // 轉換資料格式以符合前端卡片需求
+    const latestGroupsForFrontend = latestGroupsFromDb.map((group) => {
+      const {
+        _count,
+        location,
+        customLocation,
+        type: groupType,
+        images,
+        ...restOfGroup
+      } = group;
+
+      let displayLocation = '地點未定';
+      if (groupType === ActivityType.SKI && location) {
+        displayLocation = location.name;
+      } else if (customLocation) {
+        // 其他類型，或滑雪但無關聯地點時，優先用 customLocation
+        displayLocation = customLocation;
+      } else if (location) {
+        // 若無 customLocation 但有關聯地點
+        displayLocation = location.name;
+      }
+
+      let displayType = groupType; // 預設為 Enum Key
+      if (groupType === ActivityType.MEAL)
+        displayType = '揪美食團YO'; // 根據圖片範例
+      else if (groupType === ActivityType.SKI) displayType = '揪滑雪團YO'; // 假設的滑雪團顯示文字
+      // 你可以根據需要擴展其他 ActivityType 的顯示名稱
+
+      return {
+        ...restOfGroup,
+        type: displayType, // 使用轉換後的類型顯示名稱
+        originalType: groupType, // 保留原始類型，以便前端可能需要的邏輯判斷
+        location: displayLocation,
+        currentPeople: _count?.members || 0,
+        // 確保圖片路徑，若無則使用預設圖
+        imageUrl:
+          images && images.length > 0 ? images[0].imageUrl : '/deadicon.png', // 使用你專案中的預設圖示
+      };
+    });
+
+    res.json(latestGroupsForFrontend);
+  } catch (err) {
+    console.error('獲取最新揪團失敗:', err);
+    next(err); // 將錯誤傳遞給 Express 的錯誤處理中介軟體
+  }
+});
+// --- 最新揪團 API 端點結束 ---
+// GET /api/group/summary (計算首頁上所有團/揪團中/已成團)
+router.get('/summary', async (req, res, next) => {
+  try {
+    const currentDate = new Date(); // 獲取當前伺服器時間
+
+    // 1. 總揪團數量 (totalGroups)
+    // 計算所有未被軟刪除 (deletedAt 為 null) 的揪團總數
+    const totalGroups = await prisma.group.count({
+      where: {
+        deletedAt: null,
+      },
+    });
+
+    // 2. 揪團中數量 (ongoingGroups)
+    // 計算未被軟刪除，且 startDate (開始日期) 在未來 (大於當前時間) 的揪團數量
+    const ongoingGroups = await prisma.group.count({
+      where: {
+        deletedAt: null,
+        startDate: {
+          gt: currentDate, // gt (greater than) 表示大於
+        },
+      },
+    });
+
+    // 3. 已成團數量 (formedGroups)
+    // 計算未被軟刪除，且 startDate (開始日期) 在過去或今天 (小於等於當前時間)，
+    // 並且 endDate (結束日期) 在未來 (大於當前時間) 的揪團數量。
+    const potentialFormedGroups = await prisma.group.findMany({
+      where: {
+        deletedAt: null,
+        startDate: {
+          lte: currentDate, // lte (less than or equal to) 表示小於等於
+        },
+        endDate: {
+          gt: currentDate,
+        },
+      },
+      include: {
+        _count: {
+          select: { members: true }, // 計算每個揪團的成員數量
+        },
+      },
+    });
+
+    let actualFormedGroupsCount = 0;
+    for (const group of potentialFormedGroups) {
+      if (group._count.members >= group.minPeople) {
+        actualFormedGroupsCount++;
+      }
+    }
+
+    // 回傳 JSON 格式的統計數據
+    res.status(200).json({
+      totalGroups,
+      ongoingGroups,
+      formedGroups: actualFormedGroupsCount, // 使用新的計算結果
+    });
+  } catch (error) {
+    // 如果發生錯誤，記錄錯誤並傳遞給下一個錯誤處理中介軟體
+    console.error('獲取揪團統計數據時發生錯誤:', error);
+    next(error); // 將錯誤傳遞給 Express 的錯誤處理機制
+  }
+});
+// --- 統計數據 API 端點結束 ---
 // POST /api/group (創建揪團的路由)
 router.post(
   '/',
@@ -499,7 +653,7 @@ router.post('/:groupId/join', authenticate, async (req, res) => {
 router.post('/:groupId/comments', authenticate, async (req, res, next) => {
   try {
     const groupId = parseInt(req.params.groupId, 10);
-    const { content } = req.body;
+    const { content, parentId } = req.body;
     const userId = req.user?.id;
 
     if (isNaN(groupId)) return res.status(400).json({ error: '無效的群組 ID' });
@@ -514,15 +668,45 @@ router.post('/:groupId/comments', authenticate, async (req, res, next) => {
       where: { id: groupId },
     });
     if (!groupExists)
-      return res.status(404).json({ error: '找不到指定的群組' });
+      return res.status(404).json({ error: '找不到指定的揪團' });
+
+    // 新增:遞迴回覆
+    if (parentId) {
+      const parentCommentExists = await prisma.groupComment.findUnique({
+        where: { id: parseInt(parentId, 10) },
+      });
+      if (!parentCommentExists) {
+        return res
+          .status(404)
+          .json({ success: false, message: '回覆的目標留言不存在' });
+      }
+      // 也可以檢查父留言是否屬於同一個 groupId
+      if (parentCommentExists.groupId !== groupId) {
+        return res
+          .status(400)
+          .json({ success: false, message: '回覆的目標留言不屬於此揪團' });
+      }
+    }
+
+    const newCommentData = {
+      content: content.trim(),
+      groupId: groupId, // 已經是數字
+      userId: userId, // 已經是數字
+      replyId: parentId ? parseInt(parentId, 10) : null, // 如果有 parentId，則轉換為數字，否則為 null
+    };
 
     const newComment = await prisma.groupComment.create({
-      data: {
-        content: content.trim(),
-        groupId: Number(groupId),
-        userId: Number(userId),
-      }, // 確保是數字
-      include: { user: { select: { id: true, name: true, avatar: true } } },
+      data: newCommentData,
+      include: {
+        // 返回留言時，帶上用戶資訊
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+      },
     });
     res.status(201).json(newComment);
   } catch (err) {
