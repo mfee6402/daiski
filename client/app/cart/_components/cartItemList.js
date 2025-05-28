@@ -21,14 +21,16 @@ export default function CartItemList({ category = '' }) {
     CartCourse: '課程',
     CartGroup: '揪團',
   };
-
+  const formatDateTime = (d) => {
+    new Date(d.setHours(d.getHours() + 8));
+    const [date, time] = d.toISOString().split('T');
+    return `${date} ${time.split('.')[0]}`;
+  };
+  
   return (
     <>
-      {/* 商品 */}
-      {/* 課程 */}
-      {/* 揪團 */}
       <div className="border-b-5 border-secondary-500">
-        <h6 className="text-h6-tw">商品內容</h6>
+        <h6 className="text-h6-tw">{titleMap[category]}</h6>
       </div>
 
       <div className="mt-10 flex flex-col gap-4">
@@ -54,10 +56,21 @@ export default function CartItemList({ category = '' }) {
                   <p>{item.name}</p>
                 </div>
               </div>
+              {/* 時間 */}
+
+              {category !== 'CartProduct' && (
+                <div className="w-full flex justify-center items-center ">
+                  <p className="text-h6-tw">{item?.time}</p>
+                </div>
+              )}
+
               {/* 尺寸 */}
-              <div className="w-full flex justify-center items-center ">
-                <p className="text-h6-tw">{item?.size}</p>
-              </div>
+              {category === 'CartProduct' && (
+                <div className="w-full flex justify-center items-center ">
+                  <p className="text-h6-tw">{item?.size}</p>
+                </div>
+              )}
+
               {/* 價格 */}
               <div className="w-full flex justify-center items-center ">
                 <p className="text-h6-tw">
@@ -96,11 +109,14 @@ export default function CartItemList({ category = '' }) {
                 {/* FIXME 收藏按鈕 */}
                 {/* {category === 'CartProduct' && <Favorite data></Favorite>} */}
 
-                <Delete
-                  name={item.name}
-                  category={category}
-                  item={item}
-                ></Delete>
+                {/* 刪除只有商品有 */}
+                {category === 'CartProduct' && (
+                  <Delete
+                    name={item.name}
+                    category={category}
+                    item={item}
+                  ></Delete>
+                )}
               </div>
             </div>
           );
