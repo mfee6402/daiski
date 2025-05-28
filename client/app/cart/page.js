@@ -70,7 +70,7 @@ export default function CartPage({ setProcess }) {
               category="CartProduct"
             ></CartItemList>
             <CartItemList key="CartCourse" category="CartCourse"></CartItemList>
-            {/* <CartItemList key="CartGroup" category="CartGroup"></CartItemList> */}
+            <CartItemList key="CartGroup" category="CartGroup"></CartItemList>
           </div>
           <Checkout></Checkout>
         </div>
