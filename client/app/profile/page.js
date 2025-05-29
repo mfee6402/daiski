@@ -160,7 +160,7 @@ export default function MemberPage() {
                           <Input id="phone" placeholder="09xx-xxx-xxx" />
                         </div>
 
-                        <div className="flex flex-col space-y-1.5">
+                        {/* <div className="flex flex-col space-y-1.5">
                           <DropdownMenu modal={false}>
                             <DropdownMenuTrigger>開啟選單</DropdownMenuTrigger>
                             <DropdownMenuContent>
@@ -172,7 +172,7 @@ export default function MemberPage() {
                               <DropdownMenuItem>Subscription</DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                        </div>
+                        </div> */}
                       </div>
 
                       {/* 送出按鈕 */}
