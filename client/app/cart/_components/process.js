@@ -5,8 +5,8 @@ import { CircleCheckBig } from 'lucide-react';
 import clsx from 'clsx';
 
 export default function Process({ step }) {
-  const bgSize = 'flex items-center justify-center rounded-full w-25 h-25';
-  const iconSize = 'h-16 w-16 p-0 flex items-center justify-center stroke-1';
+  const bgSize = 'flex items-center justify-center rounded-full w-20 h-20';
+  const iconSize = 'h-12 w-12 p-0 flex items-center justify-center stroke-1';
   const nowStepBgColor = `bg-primary-600`;
   const nowStepIconColor = `stroke-secondary-200`;
   const otherStepBgColor = `bg-secondary-500`;
@@ -63,15 +63,18 @@ export default function Process({ step }) {
               />
             </div>
           </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-h6-tw">Step 1 確認訂購</p>
+          <div className="flex items-center justify-between m-5">
+            <div className="flex items-center justify-center flex-col">
+              <p className="text-h6-tw">Step 1</p>
+              <p className="text-h6-tw">確認訂購</p>
             </div>
-            <div>
-              <p className="text-h6-tw">Step 2 確認訂購</p>
+            <div className="flex items-center justify-center flex-col">
+              <p className="text-h6-tw">Step 2</p>
+              <p className="text-h6-tw">填寫資料</p>
             </div>
-            <div>
-              <p className="text-h6-tw">Step 3 確認訂購</p>
+            <div className="flex items-center justify-center flex-col">
+              <p className="text-h6-tw">Step 3</p>
+              <p className="text-h6-tw">完成訂購</p>
             </div>
           </div>
         </div>
