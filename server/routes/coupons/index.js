@@ -157,6 +157,7 @@ router.get('/cartcoupon', authenticate, async function (req, res) {
     const cartcoupons = await prisma.userCoupon.findMany({
       where: {
         userId: userId,
+        usedAt: null,
         coupon: {
           // 開始時間要小於等於現在
           startAt: { lte: now },
@@ -188,7 +189,7 @@ router.get('/cartcoupon', authenticate, async function (req, res) {
       },
     });
     // usercoupons.map((usecoupon) => usecoupon.coupon);
-    const cartcoupon = cartcoupons.map(({ coupon, usedAt }) => ({
+    const cartcoupon = cartcoupons.map(({ coupon }) => ({
       id: coupon.id,
       name: coupon.name,
       startAt: coupon.startAt,
@@ -198,7 +199,6 @@ router.get('/cartcoupon', authenticate, async function (req, res) {
       type: coupon.couponType.type,
       amount: coupon.couponType.amount,
       target: coupon.couponTarget.target,
-      usedAt,
     }));
     res.status(200).json({ status: 'success', cartcoupon });
   } catch (error) {
