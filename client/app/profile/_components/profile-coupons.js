@@ -134,7 +134,7 @@ export default function ProfileCoupons(props) {
     );
 
   return (
-    <>
+    <div className="overflow-y-auto h-dvh">
       <section className="flex flex-col gap-6 px-5">
         {/* 開頭 */}
         <a
@@ -241,6 +241,6 @@ export default function ProfileCoupons(props) {
         </ul>
       )}
       <Toaster position="bottom-right" richColors />
-    </>
+    </div>
   );
 }
