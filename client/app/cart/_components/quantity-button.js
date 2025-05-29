@@ -10,7 +10,7 @@ export default function QuantityButton({
   type = '',
 }) {
   const url = `http://localhost:3005/api/cart/${item.id}`;
-  const { cart, setCart, onAdd } = useCart();
+  const { cart, setCart, onIncrease, onDecrease } = useCart();
 
   // FIXME 使用useCart鉤子，避免程式碼重複
   // 將更新傳回後端
@@ -42,17 +42,21 @@ export default function QuantityButton({
             draft.CartProduct.map((product) => {
               if (product.id === item.id) {
                 if (type === 'minus') {
-                  // FIXME 增加刪除功能
-                  return product.quantity === 1
-                    ? product.quantity
-                    : product.quantity--;
+                  if (product.quantity === 1) {
+                    return product.quantity;
+                  } else {
+                    onDecrease('CartProduct', item);
+                    return product.quantity--;
+                  }
                 } else if (type === 'plus') {
+                  onIncrease('CartProduct', item);
                   return product.quantity++;
                 }
               }
             });
           });
           setCart(nextCart);
+
           // const updatedItem = nextCart.CartProduct.find(
           //   (item) => item.id === itemId
           // );
