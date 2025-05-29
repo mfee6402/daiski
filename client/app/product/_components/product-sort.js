@@ -29,7 +29,7 @@ const ProductSort = ({ currentSort, onSortChange }) => {
   return (
     <div className="flex items-center gap-2 my-4">
       <span className="text-sm font-medium  text-black dark:text-white">
-        排序方式：
+        {/* 排序方式： */}
       </span>
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
