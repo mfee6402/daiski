@@ -280,7 +280,9 @@ export default function ProductDetail() {
             <h1 className="text-2xl font-medium text-black dark:text-white mb-4">
               {name}
             </h1>
-            <p className="text-xl font-bold text-red-500 mb-6">NT$ {price}</p>
+            <p className="text-xl font-bold text-red-500 mb-6">
+              NT$ {price.toLocaleString()}
+            </p>
 
             {/* 尺寸選擇（僅在有尺寸時顯示） */}
             {skus.some((s) => s.sizeId !== null) && (
@@ -435,7 +437,7 @@ export default function ProductDetail() {
                             {item.name}
                           </CardTitle>
                           <p className="text-sm font-semibold text-red-500 mt-1">
-                            NT$ {item.price}
+                            NT$ {item.price.toLocaleString()}
                           </p>
                         </CardContent>
 
