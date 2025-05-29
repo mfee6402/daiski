@@ -6,6 +6,7 @@ import Process from './_components/process';
 import Checkout from './_components/checkout';
 
 import Coupon from './_components/coupon';
+import Coupon2 from './_components/coupon2';
 
 import CartItemList from './_components/cartItemList';
 
@@ -13,10 +14,6 @@ import { useAuth } from '@/hooks/use-auth';
 import { useCart } from '@/hooks/use-cart';
 
 export default function CartPage({ setProcess }) {
-  const { cart, setCart } = useCart();
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const { user, isAuth, isLoading } = useAuth();
 
   // useEffect(() => {
@@ -36,7 +33,7 @@ export default function CartPage({ setProcess }) {
   // }, []);
 
   // const groups = data?.data.cart.CartGroup ? cart.CartGroup : [];
-
+  // FIXME收藏未做
   //   // 定義收藏用狀態
   // const [wishList, setWishList] = useState(false)
   // // 處理收藏布林值切換(toggle)
@@ -64,15 +61,18 @@ export default function CartPage({ setProcess }) {
       <>
         <Process step="1"></Process>
         <div className="flex justify-between">
-          <div className="w-full">
+          <div className="w-[400] sm:w-[450] md:w-[550] lg:w-[750] xl:w-[900] 2xl:w-full ">
             <CartItemList
               key="CartProduct"
               category="CartProduct"
             ></CartItemList>
             <CartItemList key="CartCourse" category="CartCourse"></CartItemList>
             <CartItemList key="CartGroup" category="CartGroup"></CartItemList>
+            <Coupon2></Coupon2>
           </div>
-          <Checkout></Checkout>
+          <div>
+            <Checkout></Checkout>
+          </div>
         </div>
       </>
     );
