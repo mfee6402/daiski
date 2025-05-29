@@ -78,8 +78,8 @@ export default function MemberPage() {
   ); // 當前顯示的頭像 URL
   console.log(src);
   return (
-    <div className="min-h-screen bg-[url('/home-images/layer2.png')] bg-cover bg-center bg-no-repeat">
-      <Container className="  ">
+    <div className="min-h-screen max-h-270 bg-[url('/home-images/layer2.png')]  bg-no-repeat ">
+      <Container className="">
         {/* Header */}
         <header className="flex flex-col items-center gap-4">
           {/* Avatar */}
@@ -102,7 +102,10 @@ export default function MemberPage() {
           </TabsList>
 
           {/* Tabs Content */}
-          <TabsContent value="info" className="space-y-6">
+          <TabsContent
+            value="info"
+            className="space-y-6 max-h-[580px] overflow-y-auto"
+          >
             {/* Example Card inside a tab */}
             <Card>
               <CardHeader>
@@ -157,7 +160,7 @@ export default function MemberPage() {
                           <Input id="phone" placeholder="09xx-xxx-xxx" />
                         </div>
 
-                        <div className="flex flex-col space-y-1.5">
+                        {/* <div className="flex flex-col space-y-1.5">
                           <DropdownMenu modal={false}>
                             <DropdownMenuTrigger>開啟選單</DropdownMenuTrigger>
                             <DropdownMenuContent>
@@ -169,7 +172,7 @@ export default function MemberPage() {
                               <DropdownMenuItem>Subscription</DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                        </div>
+                        </div> */}
                       </div>
 
                       {/* 送出按鈕 */}
@@ -197,7 +200,7 @@ export default function MemberPage() {
           </TabsContent>
 
           <TabsContent value="favorites">
-            <Card className="overflow-y-auto h-dvh p-4">
+            <Card className="max-h-[580px] overflow-y-auto h-dvh p-4">
               <ProfileWishlist />
               {/* <CardHeader>
                 <CardTitle>我的收藏</CardTitle>
@@ -211,7 +214,10 @@ export default function MemberPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="coupons">
+          <TabsContent
+            value="coupons"
+            className="max-h-[580px] overflow-y-auto"
+          >
             <Card>
               <ProfileCoupons />
               {/* <CardHeader>
@@ -235,17 +241,15 @@ export default function MemberPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="groups" className="w-full">
-            <Card className="w-full">
-              <ProfileGroups />
-              {/* <CardHeader>
+          <TabsContent value="groups" className="max-h-[580px] overflow-y-auto">
+            <ProfileGroups />
+            {/* <CardHeader>
                 <CardTitle>揪團</CardTitle>
                 <CardDescription>查看與管理您的揪團活動。</CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-500">尚未參加任何揪團。</p>
               </CardContent> */}
-            </Card>
           </TabsContent>
         </Tabs>
       </Container>
