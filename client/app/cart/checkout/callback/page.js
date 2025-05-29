@@ -1,10 +1,10 @@
-'use client'
+'use client';
 
-import { useShip711StoreCallback } from '../_hooks/use-ship-711-store'
+import { useShip711StoreCallback } from '../_hooks/use-ship-711-store';
 
 export default function ShipCallbackPage() {
   // 呼叫回送到母視窗用的勾子函式
-  useShip711StoreCallback()
+  useShip711StoreCallback();
 
   return (
     <>
@@ -14,14 +14,14 @@ export default function ShipCallbackPage() {
           <p>
             <button
               onClick={() => {
-                window.close()
+                window.close();
               }}
             >
-              關閉視窗
+              即將關閉視窗
             </button>
           </p>
         </div>
       </div>
     </>
-  )
+  );
 }

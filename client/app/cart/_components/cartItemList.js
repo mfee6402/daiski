@@ -21,12 +21,13 @@ export default function CartItemList({ category = '' }) {
     CartCourse: '課程',
     CartGroup: '揪團',
   };
-  const formatDateTime = (d) => {
-    new Date(d.setHours(d.getHours() + 8));
-    const [date, time] = d.toISOString().split('T');
-    return `${date} ${time.split('.')[0]}`;
+  const toUTC8 = (utcString) => {
+    const date = new Date(utcString);
+    date.setHours(date.getHours() + 8); // 加上 8 小時
+    const [d, t] = date.toISOString().split('T');
+    return `${d} ${t.split('.')[0]}`; // 回傳 "YYYY-MM-DD HH:mm:ss"
   };
-  
+
   return (
     <>
       <div className="border-b-5 border-secondary-500">
@@ -35,6 +36,10 @@ export default function CartItemList({ category = '' }) {
 
       <div className="mt-10 flex flex-col gap-4">
         {cart[category]?.map((item, i) => {
+          const totalPrice = (
+            item.price * (item.quantity ? item.quantity : 1)
+          ).toLocaleString();
+
           return (
             <div key={category + item.id} className="flex justify-between">
               {/* 圖與名稱 */}
@@ -59,8 +64,13 @@ export default function CartItemList({ category = '' }) {
               {/* 時間 */}
 
               {category !== 'CartProduct' && (
-                <div className="w-full flex justify-center items-center ">
-                  <p className="text-h6-tw">{item?.time}</p>
+                <div className="w-full flex justify-center items-center flex-col ">
+                  <p className="flex flex-col">
+                    <span className="text-h6-tw ">{toUTC8(item?.startAt)}</span>
+                    <span className="text-p-tw flex justify-end  ">
+                      ~{toUTC8(item?.endAt)}
+                    </span>
+                  </p>
                 </div>
               )}
 
@@ -73,11 +83,7 @@ export default function CartItemList({ category = '' }) {
 
               {/* 價格 */}
               <div className="w-full flex justify-center items-center ">
-                <p className="text-h6-tw">
-                  {(
-                    item.price * (item.quantity ? item.quantity : 1)
-                  ).toLocaleString()}
-                </p>
+                <p className="text-h6-tw">${totalPrice}</p>
               </div>
               {/* 數量(只有商品有) */}
               {category === 'CartProduct' && (
