@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { CustomPagination } from '../_components/group-pagination'; // 假設分頁元件路徑
 import Image from 'next/image';
 import Link from 'next/link';
+import { PopoverClose } from '@radix-ui/react-popover';
 
 export default function GroupListPage() {
   const router = useRouter();
@@ -180,26 +181,28 @@ export default function GroupListPage() {
                   </span>
                 </Button>
               </PopoverTrigger>
-              <PopoverContent
-                side="bottom"
-                align="start"
-                className="w-[var(--radix-popover-trigger-width)] bg-white dark:bg-slate-800 border-border dark:border-slate-700"
-              >
-                <div className="flex flex-col space-y-1 p-1">
-                  {typeOptions.map((opt) => (
-                    <Button
-                      key={opt}
-                      variant={filters.type === opt ? 'secondary' : 'ghost'}
-                      onClick={() =>
-                        handleFilterChange({ ...filters, type: opt })
-                      }
-                      className="w-full justify-start dark:text-slate-300 dark:hover:bg-slate-700"
-                    >
-                      {opt}
-                    </Button>
-                  ))}
-                </div>
-              </PopoverContent>
+              <PopoverClose>
+                <PopoverContent
+                  side="bottom"
+                  align="start"
+                  className="w-[var(--radix-popover-trigger-width)] bg-white dark:bg-slate-800 border-border dark:border-slate-700"
+                >
+                  <div className="flex flex-col space-y-1 p-1">
+                    {typeOptions.map((opt) => (
+                      <Button
+                        key={opt}
+                        variant={filters.type === opt ? 'secondary' : 'ghost'}
+                        onClick={() =>
+                          handleFilterChange({ ...filters, type: opt })
+                        }
+                        className="w-full justify-start dark:text-slate-300 dark:hover:bg-slate-700"
+                      >
+                        {opt}
+                      </Button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </PopoverClose>
             </Popover>
           </div>
           {/* 日期篩選 */}
@@ -241,26 +244,30 @@ export default function GroupListPage() {
                   </span>
                 </Button>
               </PopoverTrigger>
-              <PopoverContent
-                side="bottom"
-                align="start"
-                className="w-[var(--radix-popover-trigger-width)] bg-white dark:bg-slate-800 border-border dark:border-slate-700"
-              >
-                <div className="flex flex-col space-y-1 p-1">
-                  {locationOptions.map((opt) => (
-                    <Button
-                      key={opt}
-                      variant={filters.location === opt ? 'secondary' : 'ghost'}
-                      onClick={() =>
-                        handleFilterChange({ ...filters, location: opt })
-                      }
-                      className="w-full justify-start dark:text-slate-300 dark:hover:bg-slate-700"
-                    >
-                      {opt}
-                    </Button>
-                  ))}
-                </div>
-              </PopoverContent>
+              <PopoverClose>
+                <PopoverContent
+                  side="bottom"
+                  align="start"
+                  className="w-[var(--radix-popover-trigger-width)] bg-white dark:bg-slate-800 border-border dark:border-slate-700"
+                >
+                  <div className="flex flex-col space-y-1 p-1">
+                    {locationOptions.map((opt) => (
+                      <Button
+                        key={opt}
+                        variant={
+                          filters.location === opt ? 'secondary' : 'ghost'
+                        }
+                        onClick={() =>
+                          handleFilterChange({ ...filters, location: opt })
+                        }
+                        className="w-full justify-start dark:text-slate-300 dark:hover:bg-slate-700"
+                      >
+                        {opt}
+                      </Button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </PopoverClose>
             </Popover>
           </div>
           {/* 關鍵字搜尋 */}
@@ -377,7 +384,10 @@ export default function GroupListPage() {
                         {group.currentPeople}/{group.maxPeople} 人
                       </span>
                       <span className="font-semibold text-blue-600 dark:text-blue-400">
-                        NT$ {group.price !== undefined ? group.price : '洽詢'}
+                        NT${' '}
+                        {group.price?.toLocaleString() !== undefined
+                          ? group.price?.toLocaleString()
+                          : '洽詢'}
                       </span>
                     </div>
                   </CardContent>
