@@ -200,7 +200,7 @@ export default function MemberPage() {
           </TabsContent>
 
           <TabsContent value="favorites">
-            <Card className="max-h-[580px] overflow-y-auto h-dvh p-4">
+            <Card className="p-4">
               <ProfileWishlist />
               {/* <CardHeader>
                 <CardTitle>我的收藏</CardTitle>
@@ -216,7 +216,7 @@ export default function MemberPage() {
 
           <TabsContent
             value="coupons"
-            className="max-h-[580px] overflow-y-auto"
+            className=" "
           >
             <Card>
               <ProfileCoupons />
