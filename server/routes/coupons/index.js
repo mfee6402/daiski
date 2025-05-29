@@ -1,6 +1,5 @@
 import express from 'express';
 import prisma from '../../lib/prisma.js';
-import { date } from 'zod';
 import authenticate from '../../middlewares/authenticate.js';
 
 const router = express.Router();
@@ -22,6 +21,9 @@ router.get('/', authenticate, async function (req, res) {
         // 只撈 已開始 尚未過期
         startAt: { lte: now },
         endAt: { gte: now },
+        id: {
+          not: 5,
+        },
 
         // 還沒領取
         UserCoupon: {
@@ -29,6 +31,8 @@ router.get('/', authenticate, async function (req, res) {
             userId: userId,
           },
         },
+
+        // 遊戲用
       },
       select: {
         // 想顯示的 scalar 欄位
