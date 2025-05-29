@@ -5,36 +5,35 @@ import React, { useState, useEffect } from 'react';
 import Process from './_components/process';
 import Checkout from './_components/checkout';
 
-import { produce } from 'immer';
+import Coupon from './_components/coupon';
+import Coupon2 from './_components/coupon2';
 
 import CartItemList from './_components/cartItemList';
 
 import { useAuth } from '@/hooks/use-auth';
-// secondary
+import { useCart } from '@/hooks/use-cart';
+
 export default function CartPage({ setProcess }) {
-  const url = 'http://localhost:3005/api/cart';
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const { user, isAuth, isLoading } = useAuth();
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const res = await fetch(url, { credentials: 'include' });
-        const json = await res.json();
-        setData(json);
-        setLoading(false);
-      } catch (err) {
-        setError(err);
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
+  // useEffect(() => {
+  //   async function fetchData() {
+  //     try {
+  //       const url = 'http://localhost:3005/api/cart';
+  //       const res = await fetch(url, { credentials: 'include' });
+  //       const json = await res.json();
+  //       setData(json);
+  //       setLoading(false);
+  //     } catch (err) {
+  //       setError(err);
+  //       setLoading(false);
+  //     }
+  //   }
+  //   fetchData();
+  // }, []);
 
   // const groups = data?.data.cart.CartGroup ? cart.CartGroup : [];
-
+  // FIXME收藏未做
   //   // 定義收藏用狀態
   // const [wishList, setWishList] = useState(false)
   // // 處理收藏布林值切換(toggle)
@@ -56,28 +55,28 @@ export default function CartPage({ setProcess }) {
   // if (loading) {
   // return <p>載入中</p>;
   // }
+
   if (isAuth) {
     return (
       <>
         <Process step="1"></Process>
         <div className="flex justify-between">
-          <div className="w-full">
+          <div className="w-[400] sm:w-[450] md:w-[550] lg:w-[750] xl:w-[900] 2xl:w-full ">
             <CartItemList
-              data={data}
-              setData={setData}
+              key="CartProduct"
               category="CartProduct"
             ></CartItemList>
-            <CartItemList
-              data={data}
-              setData={setData}
-              category="CartGroup"
-            ></CartItemList>
+            <CartItemList key="CartCourse" category="CartCourse"></CartItemList>
+            <CartItemList key="CartGroup" category="CartGroup"></CartItemList>
+            <Coupon2></Coupon2>
           </div>
-          <Checkout data={data}></Checkout>
+          <div>
+            <Checkout></Checkout>
+          </div>
         </div>
       </>
     );
   } else {
-    return <>尚未登入</>;
+    return <>請先登入</>;
   }
 }

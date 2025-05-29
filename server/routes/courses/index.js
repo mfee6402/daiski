@@ -159,7 +159,7 @@ router.get('/:id', async (req, res) => {
             duration: true,
             // location_id: true,
             coach: {
-              select: { id: true, name: true },
+              select: { id: true, name: true, profilephoto: true },
             },
             courseImg: {
               select: { img: true },
@@ -210,12 +210,16 @@ router.get('/:id', async (req, res) => {
       price: course.CourseVariant[0].price,
       duration: course.CourseVariant[0].duration,
       variants: course.CourseVariant.map((v) => ({
-        id: v.id,
-        difficulty: v.difficulty,
-        price: v.price,
-        duration: v.duration,
+        // id: v.id,
+        // difficulty: v.difficulty,
+        // price: v.price,
+        // duration: v.duration,
         // locationId: v.location_id,
-        coach: { id: v.coach.id, name: v.coach.name },
+        coach: {
+          id: v.coach.id,
+          name: v.coach.name,
+          photo: v.coach.profilephoto,
+        },
         photo: v.courseImg?.img ?? null,
         location: {
           id: v.location.id,

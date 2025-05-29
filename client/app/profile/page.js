@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Card,
@@ -11,31 +10,83 @@ import {
   CardContent,
   CardFooter,
 } from '@/components/ui/card';
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { useAuth } from '@/hooks/use-auth';
+import { z } from 'zod';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Textarea } from '@/components/ui/textarea';
+//頭像互動引入
+import EditableAvatar from './_components/EditableAvatar';
+// 優惠卷引入
+import ProfileCoupons from './_components/profile-coupons';
+// 收藏引入
+import ProfileWishlist from './_components/profile-wishlist';
+//揪團頁引入
+import ProfileGroups from './_components/profile-groups';
+import Container from '@/components/container';
+//Bio區塊的驗證 schema  限制字數上限
+const FormSchema = z.object({
+  bio: z.string().max(2000, {
+    message: '自我簡介上限1000字 ',
+  }),
+});
 
 export default function MemberPage() {
+  //Bio區塊，使用Textarea+form元件的變數宣告
+  const form = useForm({
+    resolver: zodResolver(FormSchema),
+    defaultValues: { bio: '' }, // 建議加上預設值，避免未定義警告
+  });
+  const { user } = useAuth();
+  console.log(user);
+  function onSubmit(values) {
+    toast.success('更新成功！', {
+      description: (
+        <div className=" rounded-md ">
+          {/* <code className="text-white">{JSON.stringify(values, null, 2)}</code> */}
+        </div>
+      ),
+      duration: 2000,
+    });
+  }
+  const [src, setSrc] = useState(
+    // user.avatar ? `http://localhost:3005${user.avatar}` : '/avatar.webp'
+    user.avatar
+    // `http://localhost:3005/api/profile/avatar/${user.id}`
+  ); // 當前顯示的頭像 URL
+  console.log(src);
   return (
     <div className="min-h-screen bg-[url('/home-images/layer2.png')] bg-cover bg-center bg-no-repeat">
-      <div className="w-full max-w-5xl mx-auto px-4 py-10 space-y-10  ">
+      <Container className="  ">
         {/* Header */}
         <header className="flex flex-col items-center gap-4">
           {/* Avatar */}
-          <Avatar className="w-48 h-48 ">
-            {/* TODO: Replace src with the real member avatar */}
-            <AvatarImage src="/avatar.jpg" alt="member avatar" />
-            <AvatarFallback className="text-3xl font-semibold bg-secondary-500 text-white">
-              ME
-            </AvatarFallback>
-          </Avatar>
-          <h1 className="text-h6-tw font-medium tracking-tight text-base">會員中心</h1>
+          <EditableAvatar userId={user.id} src={src} setSrc={setSrc} />
+          <h1 className="text-h6-tw font-medium tracking-tight text-base">
+            會員中心
+          </h1>
         </header>
 
         {/* Tabs */}
@@ -60,47 +111,76 @@ export default function MemberPage() {
                   更新您的個人信息以保持資料最新。
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-2 ">
-                {/* ------- */}  
-                    <form>
-                      <div className="grid w-1/3 items-center gap-4">
+
+              <CardContent className="space-y-6">
+                <div>
+                  {/* shadcn 的 Form 只是 Context Provider，不會輸出 <form> 標籤 */}
+                  <Form {...form}>
+                    {/* 這裡保留唯一的 <form>，負責整段提交 */}
+                    <form
+                      onSubmit={form.handleSubmit(onSubmit)}
+                      className="space-y-6"
+                    >
+                      {/* ---- React-Hook-Form 欄位 ---- */}
+                      <FormField
+                        control={form.control}
+                        name="bio"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>個人簡介</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Tell us a little bit about yourself"
+                                className="resize-none  overflow-y-auto h-64 max-h-64 "
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* ---- 其他 Input 也放在同一個 form 中 ---- */}
+                      <div className="grid gap-4 md:grid-cols-2">
                         <div className="flex flex-col space-y-1.5">
                           <Label htmlFor="name">Name</Label>
                           <Input id="name" placeholder="Input your name" />
                         </div>
+
                         <div className="flex flex-col space-y-1.5">
-                          <Label htmlFor="email">email</Label>
-                          <Input id="name" placeholder="" />
+                          <Label htmlFor="email">Email</Label>
+                          <Input id="email" placeholder="you@example.com" />
                         </div>
+
                         <div className="flex flex-col space-y-1.5">
                           <Label htmlFor="phone">電話</Label>
-                          <Input id="name" placeholder="" />
+                          <Input id="phone" placeholder="09xx-xxx-xxx" />
                         </div>
+
                         <div className="flex flex-col space-y-1.5">
-                          <Label htmlFor="framework">Framework</Label>
-                          <Select>
-                            <SelectTrigger id="framework">
-                              <SelectValue placeholder="Select" />
-                            </SelectTrigger>
-                            <SelectContent position="popper">
-                              <SelectItem value="next">Next.js</SelectItem>
-                              <SelectItem value="sveltekit">
-                                SvelteKit
-                              </SelectItem>
-                              <SelectItem value="astro">Astro</SelectItem>
-                              <SelectItem value="nuxt">Nuxt.js</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <DropdownMenu modal={false}>
+                            <DropdownMenuTrigger>開啟選單</DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem>Profile</DropdownMenuItem>
+                              <DropdownMenuItem>Billing</DropdownMenuItem>
+                              <DropdownMenuItem>Team</DropdownMenuItem>
+                              <DropdownMenuItem>Subscription</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
+
+                      {/* 送出按鈕 */}
+                      <Button type="submit">更新</Button>
                     </form>
+                  </Form>
+                </div>
                 {/* ------- */}
               </CardContent>
-              <CardFooter>
-                <button className="px-4 py-2 text-sm font-medium rounded-lg bg-primary-500 text-white hover:bg-primary-600 transition flex justify-between">
-                  編輯資料
-                </button>
-              </CardFooter>
+
+              <CardFooter></CardFooter>
             </Card>
           </TabsContent>
 
@@ -117,8 +197,9 @@ export default function MemberPage() {
           </TabsContent>
 
           <TabsContent value="favorites">
-            <Card>
-              <CardHeader>
+            <Card className="overflow-y-auto h-dvh p-4">
+              <ProfileWishlist />
+              {/* <CardHeader>
                 <CardTitle>我的收藏</CardTitle>
                 <CardDescription>
                   您喜愛的商品或文章將會顯示在此。
@@ -126,19 +207,19 @@ export default function MemberPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-500">尚未收藏任何項目。</p>
-              </CardContent>
+              </CardContent> */}
             </Card>
           </TabsContent>
 
           <TabsContent value="coupons">
             <Card>
-              <CardHeader>
+              <ProfileCoupons />
+              {/* <CardHeader>
                 <CardTitle>優惠卷</CardTitle>
-                <CardDescription>您的可用優惠卷列表。</CardDescription>
-              </CardHeader>
-              <CardContent>
+              </CardHeader> */}
+              {/* <CardContent>
                 <p className="text-sm text-gray-500">暫時沒有可用優惠卷。</p>
-              </CardContent>
+              </CardContent> */}
             </Card>
           </TabsContent>
 
@@ -154,19 +235,20 @@ export default function MemberPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="groups">
-            <Card>
-              <CardHeader>
+          <TabsContent value="groups" className="w-full">
+            <Card className="w-full">
+              <ProfileGroups />
+              {/* <CardHeader>
                 <CardTitle>揪團</CardTitle>
                 <CardDescription>查看與管理您的揪團活動。</CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-500">尚未參加任何揪團。</p>
-              </CardContent>
+              </CardContent> */}
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
+      </Container>
     </div>
   );
 }

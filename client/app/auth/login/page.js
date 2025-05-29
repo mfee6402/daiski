@@ -10,7 +10,11 @@ import {
 } from '@/services/rest-client/use-user';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { color } from 'framer-motion';
+import { Toaster } from 'sonner';
+// import { register } from 'module';
+// 為了跳轉頁面（App Router）
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function UserPage() {
   // 輸入表單用的狀態
@@ -20,7 +24,8 @@ export default function UserPage() {
   const { mutate } = useAuthGet();
   const { login } = useAuthLogin();
   const { logout } = useAuthLogout();
-
+  //取用router，為了跳轉頁面
+  const router = useRouter();
   // 取得登入狀態
   const { isAuth, isLoading } = useAuth();
 
@@ -46,8 +51,9 @@ export default function UserPage() {
       // 呼叫useAuthGet的mutate方法
       // 將會進行重新驗證(revalidation)(將資料標記為已過期並觸發重新請求)
       mutate();
-
-      toast.success('已成功登入');
+      router.push('/');
+      // toast.success("已成功登入");
+      // toast.success("已成功登入", { onClose: () => router.push("/profile") });
     } else {
       toast.error(`登入失敗`);
     }
@@ -86,6 +92,7 @@ export default function UserPage() {
     );
   }
 
+
   return (
     <>
       <div className="flex container justify-center  mx-auto  gap-1">
@@ -94,9 +101,9 @@ export default function UserPage() {
             <h1 className="text-h2-tw">登入</h1>
             <p>
               還不是會員？
-              <a href="">
-                <span className="text-primary-600">現在加入！</span>
-              </a>
+              <Link href="/auth/register">
+                <span className="text-primary-500">現在加入！</span>
+              </Link>
             </p>
           </div>
           <div className="max-w-md mx-auto mt-6">
@@ -123,7 +130,7 @@ export default function UserPage() {
 
             <button
               onClick={handleLogin}
-              className="w-full mt-16 px-4 py-3 bg-[#2770ea] rounded-md hover:text-amber-100"
+              className="w-full mt-16 px-4 py-3 hover:bg-primary-500 rounded-md text-white bg-primary-600"
             >
               登入(login)
             </button>
@@ -155,7 +162,7 @@ export default function UserPage() {
             </p>
           </div>
         </div>
-        <div className="w-1/2 sr-only sm:not-sr-only">
+        {/* <div className="w-1/2 sr-only sm:not-sr-only">
           <figure>
             <img
               src="/login.png"
@@ -163,11 +170,20 @@ export default function UserPage() {
               className="w-full shadow-lg"
             />
           </figure>
+        </div> */}
+        <div className="w-1/2 sr-only sm:not-sr-only">
+          <Image
+            src="/login.png"
+            alt="Login Image"
+            width={100}
+            height={100}
+            className="object-cover shadow-lg w-full"
+          />
         </div>
       </div>
 
       {/* 土司訊息視窗用 */}
-      <ToastContainer />
+      <ToastContainer position="bottom-right" autoClose={1000} closeOnClick />
     </>
   );
 }

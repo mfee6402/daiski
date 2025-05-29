@@ -5,6 +5,10 @@ import '@/styles/globals.css';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { ThemeProvider } from '@/components/theme-provider';
+//shadCN的sonner
+import { Toaster } from 'sonner';
+
+import CustomCursorLoader from '@/components/custom-cursor-loader';
 
 export const metadata = {
   title: 'DAISKI',
@@ -23,10 +27,15 @@ export default function RootLayout({ children }) {
         >
           <Providers>
             <Header></Header>
-            {children}
+            <div className="min-h-screen">{children}</div>
             <Footer></Footer>
           </Providers>
+
+          {/* 2. 渲染新的加載器組件 */}
+          <CustomCursorLoader />
         </ThemeProvider>
+        {/* richColors套用更飽和、對比更高的背景與文字色;position決定通知在螢幕上的停靠位置;expand為 true 後，所有 toast 一出現即為展開狀態 */}
+        <Toaster position="bottom-right" />
       </body>
     </html>
   );

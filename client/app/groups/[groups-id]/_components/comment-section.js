@@ -1,208 +1,211 @@
 // app/groups/[groups-id]/_components/CommentSection.js
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-// import { FaPaperPlane } from 'react-icons/fa'; // 如果您想使用圖示
+import { useAuth } from '@/hooks/use-auth';
+import CommentForm from './comment-form';
+import CommentItem from './comment-item';
+
+// 輔助函數：將扁平的留言列表轉換為樹狀結構
+const buildCommentTree = (commentsList) => {
+  if (!commentsList || commentsList.length === 0) return [];
+  const commentsMap = {};
+  const tree = [];
+
+  // 確保每個留言物件都有 replies 陣列
+  commentsList.forEach((comment) => {
+    commentsMap[comment.id] = { ...comment, replies: [] };
+  });
+
+  commentsList.forEach((comment) => {
+    // 使用 replyId (來自 Prisma schema，後端返回的欄位)
+    if (comment.replyId && commentsMap[comment.replyId]) {
+      // 確保父留言存在於 map 中
+      commentsMap[comment.replyId].replies.push(commentsMap[comment.id]);
+    } else {
+      // 頂層留言
+      tree.push(commentsMap[comment.id]);
+    }
+  });
+  return tree;
+};
 
 export default function CommentSection({
   groupId,
-  initialComments = [],
+  initialComments = [], // 從 page.js 傳入的扁平留言列表
   API_BASE,
-  currentUserId, // 當前登入使用者的 ID
-  currentUserInfo, // 當前登入使用者的資訊 { id, name, avatar }
-  isClient,
-  onCommentPosted, // 新增回呼函數，當留言成功後通知父組件
+  onCommentPosted, // 新留言/回覆成功後的回調，通知 page.js
 }) {
-  const [comments, setComments] = useState(initialComments || []);
-  const [newComment, setNewComment] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const { user, isAuth, isLoading: isAuthLoading } = useAuth();
+  const currentUserInfo = user
+    ? { id: user.id, name: user.name, avatar: user.avatar }
+    : null;
+
+  const [comments, setComments] = useState(initialComments || []); // 儲存扁平的留言列表
+  const [isSubmitting, setIsSubmitting] = useState(false); // 全局的提交狀態
+  const [error, setError] = useState(''); // 用於顯示頂層錯誤
+  const [activeReplyToId, setActiveReplyToId] = useState(null); // 追蹤哪個留言正在被回覆
+  const [isClientSide, setIsClientSide] = useState(false); // 處理客戶端渲染
 
   useEffect(() => {
+    setIsClientSide(true);
+  }, []);
+
+  useEffect(() => {
+    // 當 initialComments 從父元件更新時，同步到內部的 comments 狀態
     setComments(initialComments || []);
   }, [initialComments]);
 
-  const handlePostComment = async (e) => {
-    e.preventDefault();
-    if (!newComment.trim() || !groupId || isSubmitting || !currentUserId) {
-      if (!currentUserId) {
-        setError('請先登入才能發表留言。');
-      }
+  const commentTree = useMemo(() => {
+    // 排序對於 buildCommentTree 正確構建父子關係和顯示順序很重要
+    // 按 createdAt 升序排序，舊的在前，新的在後
+    const sortedComments = [...comments].sort(
+      (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+    );
+    return buildCommentTree(sortedComments);
+  }, [comments]); // 當扁平的 comments 列表改變時，重新計算 commentTree
+
+  // 通用的留言/回覆提交處理函數
+  const handlePost = async (content, parentId = null) => {
+    if (!isAuth || !currentUserInfo) {
+      setError('請先登入才能發表。');
       return;
     }
+    if (!content.trim() || !groupId) return;
 
     setIsSubmitting(true);
-    setError('');
+    setError(''); // 清除之前的頂層錯誤
 
-    // 為了即時反饋，先在前端模擬加入留言
-    // 確保 currentUserInfo 存在且包含必要資訊
-    const tempUser = currentUserInfo || {
-      id: currentUserId,
-      name: '您',
-      avatar: null,
-    };
-    const tempCommentId = `temp-${Date.now()}`;
+    const tempCommentId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const optimisticComment = {
       id: tempCommentId,
-      content: newComment,
+      content: content,
       createdAt: new Date().toISOString(),
-      user: tempUser,
-      isTemporary: true, // 標記為臨時留言
+      user: currentUserInfo,
+      replyId: parentId,
+      isTemporary: true,
     };
 
-    // 先將臨時留言加到列表最前面
     setComments((prevComments) => [optimisticComment, ...prevComments]);
-    const commentToSubmit = newComment; // 保存當前的留言內容
-    setNewComment(''); // 清空輸入框
+    if (parentId) {
+      setActiveReplyToId(null);
+    }
 
     try {
       const response = await fetch(
         `${API_BASE}/api/group/${groupId}/comments`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            // 如果您的 API 需要身份驗證 (例如 JWT Token)
-            // 'Authorization': `Bearer ${localStorage.getItem('your_auth_token')}`,
-            // 或是透過 header 傳遞 userId (後端 getUserIdFromRequest 會讀取)
-            'x-user-id': String(currentUserId),
-          },
-          body: JSON.stringify({ content: commentToSubmit }), // 後端會從 token 或 header 獲取 userId
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: content, parentId: parentId }),
+          credentials: 'include',
         }
       );
+      const responseText = await response.text();
 
-      if (!response.ok) {
-        const errData = await response
-          .json()
-          .catch(() => ({ error: '發表留言失敗，無法解析錯誤回應' }));
-        throw new Error(errData.error || `伺服器錯誤: ${response.status}`);
+      let parsedResult;
+      try {
+        parsedResult = JSON.parse(responseText);
+        console.log(parsedResult);
+      } catch (parseError) {
+        console.error(parseError);
+        throw new Error();
       }
 
-      const savedComment = await response.json(); // API 應返回包含 user 資訊的完整留言物件
+      // 步驟 1: 檢查 HTTP 狀態碼是否成功 (2xx)
+      if (!response.ok) {
+        const errMsg =
+          (parsedResult && (parsedResult.message || parsedResult.error)) ||
+          `伺服器回報錯誤，狀態碼: ${response.status}`;
+        console.error('[CommentSection] HTTP Error:', {
+          ok: response.ok,
+          errMsg,
+          responseStatus: response.status,
+          parsedResult,
+        });
+        throw new Error(errMsg);
+      }
 
-      // 用伺服器回傳的留言替換臨時留言
-      setComments((prevComments) => [
-        savedComment,
-        ...prevComments.filter((c) => c.id !== tempCommentId),
-      ]);
+      // 步驟 2: 後端直接返回 comment 物件，所以 parsedResult 就是 savedComment
+      // 檢查 parsedResult (即留言物件本身) 是否有效，特別是是否有 id
+      if (!parsedResult || typeof parsedResult.id === 'undefined') {
+        parsedResult;
+        throw new Error('後端回應成功，但缺少有效的留言資料。');
+      }
+
+      const savedComment = parsedResult; // 直接使用解析後的結果作為留言物件
+
+      setComments((prevComments) => {
+        const filtered = prevComments.filter((c) => c.id !== tempCommentId);
+        return savedComment && savedComment.id
+          ? [savedComment, ...filtered]
+          : filtered;
+      });
 
       if (onCommentPosted) {
-        onCommentPosted(savedComment); // 通知父組件有新留言
+        onCommentPosted(savedComment);
       }
     } catch (err) {
-      console.error('發表留言錯誤:', err);
-      setError(`發表留言失敗: ${err.message}`);
-      // API 失敗則移除臨時留言，並還原輸入框內容
+      console.error('[CommentSection] 發表留言/回覆錯誤 (catch block):', err);
+      setError(`發表失敗: ${err.message}`);
       setComments((prevComments) =>
         prevComments.filter((c) => c.id !== tempCommentId)
       );
-      setNewComment(commentToSubmit); // 允許使用者重新編輯或提交
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const handleReplyButtonClick = (commentId) => {
+    setActiveReplyToId((prevId) => (prevId === commentId ? null : commentId));
+  };
+
+  if (isAuthLoading) {
+    return (
+      <p className="p-4 text-center text-muted-foreground">
+        正在載入使用者資訊...
+      </p>
+    );
+  }
+
+  if (!isClientSide) {
+    return (
+      <p className="p-4 text-center text-muted-foreground">正在準備留言區...</p>
+    );
+  }
 
   return (
     <Card className="w-full max-w-screen-2xl mx-auto shadow-lg p-6 rounded-lg border-t border-border bg-card text-foreground mt-8">
       <h3 className="text-lg font-semibold mb-4 text-primary-800">
         留言區 ({comments?.length || 0})
       </h3>
-      {currentUserId ? (
-        <form onSubmit={handlePostComment} className="mb-6">
-          <Textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            className="mt-1 w-full border-input p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition resize-none rounded-md bg-background text-foreground"
-            rows="3"
-            placeholder="輸入你的留言…"
-            disabled={isSubmitting}
-          />
-          {error && <p className="text-sm text-destructive mt-1">{error}</p>}
-          <div className="mt-3 text-right">
-            <Button
-              type="submit"
-              className="px-4 py-2 bg-primary-500 text-white hover:bg-primary-600 transition active:scale-95 active:shadow-sm rounded-md text-p-tw"
-              disabled={isSubmitting || !newComment.trim()}
-            >
-              {/* <FaPaperPlane className="mr-2 h-3.5 w-3.5" /> */}
-              {isSubmitting ? '發送中...' : '送出留言'}
-            </Button>
-          </div>
-        </form>
-      ) : (
-        <p className="mb-6 text-sm text-muted-foreground">
-          請先
-          <a href="/login" className="text-primary-500 hover:underline">
-            登入
-          </a>
-          以發表留言。
-        </p>
-      )}
-      <div className="space-y-4">
-        {comments && comments.length > 0 ? (
-          comments.map((comment) => (
-            <div
+
+      <CommentForm
+        isSubmitting={isSubmitting}
+        onSubmit={handlePost}
+        isAuth={isAuth}
+        placeholderText="輸入你的留言…"
+        // onCancel 在頂層表單中不需要
+      />
+      {error && <p className="text-sm text-destructive mt-1 mb-4">{error}</p>}
+
+      <div className="space-y-4 mt-6">
+        {commentTree && commentTree.length > 0 ? (
+          commentTree.map((comment) => (
+            <CommentItem
               key={comment.id}
-              className={`border-b border-border pb-4 last:border-b-0 ${comment.isTemporary ? 'opacity-60' : ''}`}
-            >
-              <div className="flex items-start space-x-3 mb-1">
-                {' '}
-                {/* 改為 items-start 以便頭像和文字對齊 */}
-                <Avatar className="w-8 h-8 flex-shrink-0">
-                  {' '}
-                  {/* flex-shrink-0 避免頭像被壓縮 */}
-                  <AvatarImage
-                    src={
-                      comment.user?.avatar // 假設 avatar 已經是完整的 URL 或後端處理過的路徑
-                        ? comment.user.avatar.startsWith('http') ||
-                          comment.user.avatar.startsWith('/uploads/')
-                          ? comment.user.avatar
-                          : `${API_BASE}${comment.user.avatar}`
-                        : undefined
-                    }
-                    alt={comment.user?.name || '使用者'}
-                  />
-                  <AvatarFallback>
-                    {comment.user?.name
-                      ? comment.user.name[0].toUpperCase()
-                      : '訪'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-grow">
-                  {' '}
-                  {/* 讓文字內容佔據剩餘空間 */}
-                  <div className="flex items-center space-x-2 mb-0.5">
-                    <p className="font-semibold text-sm text-foreground">
-                      {comment.user?.name || '匿名用戶'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {comment.isTemporary
-                        ? '傳送中...'
-                        : isClient && comment.createdAt
-                          ? new Date(comment.createdAt).toLocaleString(
-                              'zh-TW',
-                              {
-                                year: 'numeric',
-                                month: 'numeric',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              }
-                            )
-                          : '剛剛'}
-                    </p>
-                  </div>
-                  <p className="text-sm text-secondary-800 whitespace-pre-wrap break-words">
-                    {' '}
-                    {/* break-words 處理長單字換行 */}
-                    {comment.content}
-                  </p>
-                </div>
-              </div>
-            </div>
+              comment={comment}
+              API_BASE={API_BASE}
+              isClientSide={isClientSide}
+              level={0}
+              onReplyButtonClick={handleReplyButtonClick}
+              activeReplyToId={activeReplyToId}
+              groupId={groupId}
+              isSubmittingReply={isSubmitting}
+              onPostReply={handlePost}
+              currentUserInfo={currentUserInfo}
+              isAuth={isAuth}
+            />
           ))
         ) : (
           <p className="text-sm text-muted-foreground">

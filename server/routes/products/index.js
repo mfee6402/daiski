@@ -15,13 +15,14 @@ router.get('/', async (req, res, next) => {
     min_price,
     max_price,
     search,
+    sort,
   } = req.query;
   const pageNum = Math.max(parseInt(page, 10), 1);
   const pageSize = Math.max(parseInt(limit, 10), 1);
 
   try {
     // 1. 組基礎 where
-    const where = { delete_at: null };
+    const where = { deleted_at: null };
 
     // 2. 如果有 search，就加上 name 模糊搜尋
     if (typeof search === 'string' && search.trim().length >= 2) {
@@ -102,11 +103,30 @@ router.get('/', async (req, res, next) => {
       take: pageSize,
     };
 
+    // 1. 根據 sort 決定 orderByArg
+    let orderByArg;
+    switch (sort) {
+      case 'price_asc':
+        orderByArg = { min_price: 'asc' };
+        break;
+      case 'price_desc':
+        orderByArg = { min_price: 'desc' };
+        break;
+      case 'publish_at_asc':
+        orderByArg = { publish_at: 'asc' };
+        break;
+      case 'publish_at_desc':
+        orderByArg = { publish_at: 'desc' };
+        break;
+    }
+
     // 5. include=card
     if (include === 'card') {
       const raw = await prisma.product.findMany({
         where,
         ...pagination,
+        // 如果有設定排序條件，就把它放進陣列裡
+        ...(orderByArg ? { orderBy: [orderByArg] } : {}),
         include: {
           product_image: {
             where: { sort_order: 0, deleted_at: null },
@@ -130,7 +150,8 @@ router.get('/', async (req, res, next) => {
         image: p.product_image[0]
           ? `http://localhost:3005${p.product_image[0].url}`
           : 'http://localhost:3005/placeholder.jpg',
-        price: p.product_sku[0]?.price ?? 0,
+        // price: p.product_sku[0]?.price ?? 0,
+        price: p.min_price ?? 0,
         category: p.product_category?.name ?? '無分類',
         category_id: p.product_category?.id ?? null,
         brand: p.product_brand?.name ?? '無品牌',
@@ -158,9 +179,11 @@ router.get('/', async (req, res, next) => {
         created_at: true,
         publish_at: true,
         unpublish_at: true,
-        delete_at: true,
+        deleted_at: true,
       },
       ...pagination,
+      // 同樣加上排序
+      ...(orderByArg ? { orderBy: [orderByArg] } : {}),
     });
 
     res.json({
@@ -194,7 +217,7 @@ router.get('/search-suggestions', async (req, res, next) => {
 
     const suggestions = await prisma.product.findMany({
       where: {
-        delete_at: null,
+        deleted_at: null,
         name: {
           contains: keyword,
         },
@@ -321,7 +344,7 @@ router.get('/sizes', async (req, res, next) => {
           deleted_at: null,
           size_id: { not: null },
           product: {
-            delete_at: null,
+            deleted_at: null,
             category_id: { in: categoryIds },
           },
         },
@@ -370,7 +393,7 @@ router.get('/brands', async (req, res, next) => {
       // b. 從 product 找出這些分類下所有未刪除且有 brand_id 的商品
       const productRows = await prisma.product.findMany({
         where: {
-          delete_at: null,
+          deleted_at: null,
           brand_id: { not: null },
           category_id: { in: categoryIds },
         },
@@ -460,7 +483,7 @@ router.get('/:id', async (req, res, next) => {
     // 2. 撈同子分類（最多 4 筆，排除自己）
     let related = await prisma.product.findMany({
       where: {
-        delete_at: null,
+        deleted_at: null,
         category_id: catId,
         id: { not: product.id },
       },
@@ -485,7 +508,7 @@ router.get('/:id', async (req, res, next) => {
       const excludeIds = [product.id, ...related.map((p) => p.id)];
       const siblings = await prisma.product.findMany({
         where: {
-          delete_at: null,
+          deleted_at: null,
           // 取該 parentId 底下的所有子分類商品
           product_category: { parent_id: parentId },
           id: { notIn: excludeIds },
