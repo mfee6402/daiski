@@ -6,7 +6,6 @@ import Process from './_components/process';
 import Checkout from './_components/checkout';
 
 import Coupon from './_components/coupon';
-import Coupon2 from './_components/coupon2';
 
 import CartItemList from './_components/cartItemList';
 
@@ -60,15 +59,15 @@ export default function CartPage({ setProcess }) {
     return (
       <>
         <Process step="1"></Process>
-        <div className="flex justify-between ">
-          <div className="w-[400] sm:w-[450] md:w-[550] lg:w-[750] xl:w-[900] 2xl:w-full ">
+        <div className="flex justify-between md:gap-6  ">
+          <div className="flex flex-col w-full gap-6 min-w-0 justify-center item-center">
             <CartItemList
               key="CartProduct"
               category="CartProduct"
             ></CartItemList>
             <CartItemList key="CartCourse" category="CartCourse"></CartItemList>
             <CartItemList key="CartGroup" category="CartGroup"></CartItemList>
-            <Coupon2></Coupon2>
+            <Coupon></Coupon>
           </div>
           <div className="">
             <Checkout></Checkout>
