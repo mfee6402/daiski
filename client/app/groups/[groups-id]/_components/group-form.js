@@ -50,7 +50,6 @@ export default function GroupForm({
   initialValues,
   onSubmit,
   isLoading = false,
-  submitButtonText = '提交',
   typeOptions = [],
   locationOptions = [], // 由父組件傳入，因為它依賴於 type
   skiDifficultyOptions = [
@@ -571,7 +570,7 @@ export default function GroupForm({
             />
             <Label
               htmlFor="allowNewbie"
-              className="font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
+              className="font-medium text-slate-700 dark:text-slate-300 cursor-none"
             >
               歡迎新手參加
             </Label>
@@ -605,6 +604,15 @@ export default function GroupForm({
               封面圖片 (建議比例 16:9)
             </Label>
             <div
+              role="button"
+              tabIndex={0}
+              onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
               onDrop={handleDrop}
               onDragOver={(e) => e.preventDefault()}
               onDragEnter={(e) =>
@@ -621,17 +629,17 @@ export default function GroupForm({
                   'dark:bg-sky-900/30'
                 )
               }
-              onClick={() => fileInputRef.current?.click()}
-              className="mt-1 flex h-60 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/30 hover:border-sky-500 dark:hover:border-sky-600 transition-colors"
+              className="mt-1 flex h-60 cursor-none flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/30 hover:border-sky-500 dark:hover:border-sky-600 transition-colors"
             >
               {coverPreview ? (
                 <div className="relative w-full h-full group">
                   <Image
+                    width={400} // 你預估的一個寬
+                    height={240} // 依比例算出高
                     src={coverPreview}
                     alt="封面預覽"
-                    className="h-full w-full object-contain
-                    rounded-lg"
-                  ></Image>
+                    className="h-full w-full object-contain rounded-lg"
+                  />
                   <Button
                     type="button"
                     variant="ghost"
@@ -675,39 +683,6 @@ export default function GroupForm({
           {/* 在實際的多步驟表單中，這個按鈕可能被 "下一步" 或 "上一步" 取代 */}
           {/* 為了通用性，我們假設父組件會處理按鈕的顯示和提交邏輯 */}
           {/* 如果 GroupForm 只用於單步驟提交，則可以保留這個按鈕 */}
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="bg-sky-600 hover:bg-sky-700 text-white dark:bg-sky-500 dark:hover:bg-sky-600"
-          >
-            {isLoading ? (
-              <>
-                <svg
-                  className="animate-spin -ml-1 mr-3 h-5 w-5"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                處理中...
-              </>
-            ) : (
-              submitButtonText
-            )}
-          </Button>
         </CardFooter>
       </Card>
     </form>

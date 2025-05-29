@@ -1,66 +1,83 @@
 'use client';
 import Link from 'next/link';
 import { useCart } from '@/hooks/use-cart';
+import { useEffect, useState } from 'react';
 
 export default function Checkout() {
   const { cart } = useCart();
+  const [checkedCoupon, setCheckedCoupon] = useState(null);
+  const totalProduct = cart?.CartProduct?.reduce((acc, product) => {
+    acc += product.price * product.quantity;
+    return acc;
+  }, 0);
+
+  const totalCourse = cart?.CartCourse?.reduce((acc, course) => {
+    acc += course.price;
+    return acc;
+  }, 0);
+
+  const totalGroup = cart?.CartGroup?.reduce((acc, group) => {
+    acc += group.price;
+    return acc;
+  }, 0);
+
+  // couponDiscount
+  let couponDiscount = 0;
+  let amount = 0;
+
+  if (checkedCoupon && checkedCoupon.type === '現金折扣') {
+    couponDiscount = checkedCoupon.amount;
+    amount = totalProduct + totalCourse + totalGroup - couponDiscount;
+  } else if (checkedCoupon && checkedCoupon.type === '百分比折扣') {
+    couponDiscount = Math.floor(
+      ((totalProduct + totalCourse) * checkedCoupon.amount) / 100
+    );
+  }
+
+  amount = totalProduct + totalCourse + totalGroup - couponDiscount;
+  useEffect(() => {
+    cart.CartCoupon?.forEach((coupon) => {
+      if (coupon.checked) {
+        setCheckedCoupon(coupon);
+      }
+    });
+  }, [cart]);
   return (
     <>
-      <div className=" w-[450] sm:w-[200] md:w-[250] lg:w-[350] xl:w-[450]  sticky top-30">
+      <div className="w-[200] sm:w-[200] md:w-[250] lg:w-[300] xl:w-[400]  sticky top-[100px]">
         <div className="border-b-5 border-secondary-500">
           <h6 className="text-h6-tw font-bold">結帳明細</h6>
         </div>
         <div>
           <div className="flex justify-between">
             <p className="text-p-tw">商品原價總金額</p>
-            <p className="text-p-tw">
-              $
-              {cart.CartProduct?.length != 0
-                ? cart.CartProduct?.reduce((acc, product) => {
-                    acc += product.quantity * product.price;
-                    return acc;
-                  }, 0).toLocaleString()
-                : 0}
-            </p>
+            <p className="text-p-tw">${totalProduct.toLocaleString()}</p>
           </div>
-          {/* FIXME等待課程完成 */}
-          {/* <div>
+
+          <div className="flex justify-between">
             <p className="text-p-tw">課程原價總金額</p>
-            <p className="text-p-tw">
-              {' '}
-              $
-              {cart?.cart?.CartCourse.length != 0
-                ? cart?.cart?.CartCourse.reduce((acc, course) => {
-                    acc += course.quantity * course.price;
-                    return acc;
-                  }, 0).toLocaleString()
-                : 0}
-            </p> */}
+            <p className="text-p-tw">${totalCourse.toLocaleString()}</p>
+          </div>
         </div>
         <div className="flex justify-between">
           <p className="text-p-tw">揪團總金額</p>
-          <p className="text-p-tw">
-            $
-            {cart.CartGroup?.length != 0
-              ? cart?.CartGroup?.reduce((acc, group) => {
-                  acc += group.price;
-                  return acc;
-                }, 0).toLocaleString()
-              : 0}
-          </p>
-        </div>
-        <div>
-          <div>
-            <p className="text-p-tw">折扣券</p>
-            {/* FIXME 待寫入金額 */}
-            <p className="text-p-tw"></p>
-          </div>
+          <p className="text-p-tw">${totalGroup.toLocaleString()}</p>
         </div>
 
-        <div>
-          <h6 className="text-h6-tw font-bold">結帳金額</h6>
+        <div className="flex justify-between">
+          <p className="text-p-tw">折扣金額(不含揪團)</p>
           {/* FIXME 待寫入金額 */}
-          <p className="text-p-tw"></p>
+          <p className="text-p-tw">
+            -
+            {checkedCoupon?.type === '百分比折扣'
+              ? `${checkedCoupon.amount}%($${couponDiscount})`
+              : `${couponDiscount}`}
+          </p>
+        </div>
+
+        <div className="flex justify-between">
+          <h6 className="text-h6-tw font-bold">結帳金額</h6>
+          <p className="text-p-tw">${amount.toLocaleString()}</p>
         </div>
         {/* FIXME 抓數量於"結帳"字後 */}
 

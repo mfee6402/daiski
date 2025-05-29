@@ -12,6 +12,7 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
+import Image from 'next/image';
 
 const STEPS_CONFIG = [
   { id: 'step1', name: '步驟 1', description: '基本資訊' },
@@ -41,7 +42,7 @@ const HorizontalStepper = ({ steps, currentStepId, setCurrentStep }) => {
   const currentStepIndex = steps.findIndex((s) => s.id === currentStepId);
   return (
     <nav aria-label="Progress" className="mb-10">
-      <ol role="list" className="flex items-start">
+      <ol className="flex items-start">
         {steps.map((step, stepIdx) => (
           <li
             key={step.name}
@@ -52,7 +53,7 @@ const HorizontalStepper = ({ steps, currentStepId, setCurrentStep }) => {
               onClick={() =>
                 stepIdx <= currentStepIndex && setCurrentStep(step.id)
               }
-              className={`flex flex-col items-center text-center group w-full ${stepIdx <= currentStepIndex ? 'cursor-pointer' : 'cursor-default'}`}
+              className={`flex flex-col items-center text-center group w-full ${stepIdx <= currentStepIndex ? 'cursor-none' : 'cursor-default'}`}
               disabled={stepIdx > currentStepIndex}
             >
               <span
@@ -150,7 +151,9 @@ const LivePreviewCard = ({
       </CardHeader>
       <CardContent>
         {coverPreview ? (
-          <img
+          <Image
+            width={1024} // 你預估的一個寬
+            height={960} // 依比例算出高
             src={coverPreview}
             alt="封面預覽"
             className="w-full h-48 object-cover rounded-md mb-4 bg-muted dark:bg-muted-dark border border-border dark:border-border-dark"

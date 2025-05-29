@@ -663,7 +663,7 @@ export default function ProductPage() {
         params.delete('search');
       }
       params.set('page', '1');
-      router.push(`?${params.toString()}`, undefined, { shallow: true });
+      router.push(`?${params.toString()}`, { scroll: false });
     }
   }, [debouncedSearch, router, searchParams]);
 
@@ -686,7 +686,7 @@ export default function ProductPage() {
     const params = new URLSearchParams(Array.from(searchParams.entries()));
     params.set('search', item.name);
     params.set('page', '1');
-    router.push(`?${params.toString()}`);
+    router.push(`?${params.toString()}`, { scroll: false });
   };
 
   // --- 篩選條件相關 State 管理 ---
@@ -907,7 +907,7 @@ export default function ProductPage() {
     const p = new URLSearchParams(Array.from(searchParams.entries()));
     p.set('page', '1'); // 改變分類時重置頁碼
     p.set('category_id', String(cid));
-    router.push(`?${p.toString()}`);
+    router.push(`?${p.toString()}`, { scroll: false });
   };
 
   // 4. **切換分類展開/收起狀態**
@@ -928,7 +928,7 @@ export default function ProductPage() {
     p.set('page', '1'); // 改變品牌時重置頁碼
     if (next.length) p.set('brand_id', next.join(','));
     else p.delete('brand_id');
-    router.push(`?${p.toString()}`);
+    router.push(`?${p.toString()}`, { scroll: false });
     setSelectedBrands(next); // 立即更新 UI
   };
 
@@ -937,7 +937,7 @@ export default function ProductPage() {
     const p = new URLSearchParams(Array.from(searchParams.entries()));
     p.delete('brand_id');
     p.set('page', '1');
-    router.push(`?${p.toString()}`, undefined, { shallow: true });
+    router.push(`?${p.toString()}`, { scroll: false });
     setSelectedBrands([]); // 立即清空 UI
   };
 
@@ -951,7 +951,7 @@ export default function ProductPage() {
       params.delete('sort');
     }
     params.set('page', '1'); // 變更排序時，重置到第一頁
-    router.push(`?${params.toString()}`, undefined, { shallow: true });
+    router.push(`?${params.toString()}`, { scroll: false });
     // sortOption state 將通過 useEffect 因 searchParams 改變而更新
   };
 
@@ -1002,7 +1002,7 @@ export default function ProductPage() {
     p.set('page', '1'); // 改變尺寸時重置頁碼
     if (next.length) p.set('size_id', next.join(','));
     else p.delete('size_id');
-    router.push(`?${p.toString()}`);
+    router.push(`?${p.toString()}`, { scroll: false });
     setSelectedSizes(next); // 立即更新 UI
   };
 
@@ -1011,7 +1011,7 @@ export default function ProductPage() {
     const p = new URLSearchParams(Array.from(searchParams.entries()));
     p.delete('size_id');
     p.set('page', '1');
-    router.push(`?${p.toString()}`, undefined, { shallow: true });
+    router.push(`?${p.toString()}`, { scroll: false });
     setSelectedSizes([]); // 立即清空 UI
   };
 
@@ -1037,7 +1037,7 @@ export default function ProductPage() {
     else p.delete('min_price');
     if (maxPrice) p.set('max_price', maxPrice);
     else p.delete('max_price');
-    router.push(`?${p.toString()}`, undefined, { shallow: true });
+    router.push(`?${p.toString()}`, { scroll: false });
   };
 
   // 2. **重置價格篩選**
@@ -1047,7 +1047,7 @@ export default function ProductPage() {
     p.delete('min_price');
     p.delete('max_price');
     p.set('page', '1');
-    router.push(`?${p.toString()}`, undefined, { shallow: true });
+    router.push(`?${p.toString()}`, { scroll: false });
     setMinPrice('');
     setMaxPrice('');
     setPriceError('');
@@ -1084,7 +1084,7 @@ export default function ProductPage() {
 
       <Container className="z-10 pt-4 md:pt-10 pb-20">
         {/* 顯示用戶歡迎訊息和 Email (如果用戶已登入) */}
-        <div>
+        <div className="hidden md:flex">
           {/* <h1>你好，{user?.name}！</h1>
           <p>你的 Email 是：{user.email}</p> */}
           <ProductSort
@@ -1141,7 +1141,7 @@ export default function ProductPage() {
           </div>
 
           {/* MD- 尺寸螢幕顯示篩選按鈕和 Sheet 彈出側邊欄 */}
-          <div className="flex md:hidden">
+          <div className="flex md:hidden justify-around">
             <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" className="m-4">
@@ -1192,6 +1192,11 @@ export default function ProductPage() {
                 />
               </SheetContent>
             </Sheet>
+
+            <ProductSort
+              currentSort={sortOption}
+              onSortChange={handleSortChange}
+            />
           </div>
 
           {/* 商品列表和分頁區域 */}
@@ -1202,6 +1207,7 @@ export default function ProductPage() {
               products={products}
               favIds={favIds}
               onToggleFavorite={toggleFavorite}
+              isAuth={isAuth}
             />
             {/* 如果載入商品時發生錯誤，顯示錯誤訊息 */}
             {productError && (
