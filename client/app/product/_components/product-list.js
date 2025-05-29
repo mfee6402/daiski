@@ -292,7 +292,7 @@ export default function ProductList({
                     {p.category} / {p.brand}
                   </CardDescription>
                   <p className="text-red-500 font-semibold text-base mt-2">
-                    ${p.price}
+                    NT${p.price.toLocaleString()}
                   </p>
                 </CardContent>
                 <CardFooter>
