@@ -24,13 +24,17 @@ export default function Checkout() {
   // couponDiscount
   let couponDiscount = 0;
   let amount = 0;
-  if (!checkedCoupon) {
-    amount = totalProduct + totalCourse + totalGroup;
-  } else if (checkedCoupon && checkedCoupon.type === '現金折扣') {
+
+  if (checkedCoupon && checkedCoupon.type === '現金折扣') {
+    couponDiscount = checkedCoupon.amount;
     amount = totalProduct + totalCourse + totalGroup - couponDiscount;
   } else if (checkedCoupon && checkedCoupon.type === '百分比折扣') {
-    amount = ((totalProduct + totalCourse) * couponDiscount) / 100 + totalGroup;
+    couponDiscount = Math.floor(
+      ((totalProduct + totalCourse) * checkedCoupon.amount) / 100
+    );
   }
+
+  amount = totalProduct + totalCourse + totalGroup - couponDiscount;
   useEffect(() => {
     cart.CartCoupon?.forEach((coupon) => {
       if (coupon.checked) {
@@ -63,7 +67,12 @@ export default function Checkout() {
         <div className="flex justify-between">
           <p className="text-p-tw">折扣金額(不含揪團)</p>
           {/* FIXME 待寫入金額 */}
-          <p className="text-p-tw">${couponDiscount}</p>
+          <p className="text-p-tw">
+            -
+            {checkedCoupon?.type === '百分比折扣'
+              ? `${checkedCoupon.amount}%($${couponDiscount})`
+              : `${couponDiscount}`}
+          </p>
         </div>
 
         <div className="flex justify-between">
