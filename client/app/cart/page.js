@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import Process from './_components/process';
 import Checkout from './_components/checkout';
 
-import { produce } from 'immer';
+import Coupon from './_components/coupon';
 
 import CartItemList from './_components/cartItemList';
 
@@ -69,6 +69,7 @@ export default function CartPage({ setProcess }) {
               key="CartProduct"
               category="CartProduct"
             ></CartItemList>
+            <CartItemList key="CartCourse" category="CartCourse"></CartItemList>
             <CartItemList key="CartGroup" category="CartGroup"></CartItemList>
           </div>
           <Checkout></Checkout>

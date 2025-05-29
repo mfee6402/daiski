@@ -1,11 +1,12 @@
-'use client'
+'use client';
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
+import Dino from './＿components/dino';
 
 export default function GamePage(props) {
   return (
     <>
-      <div>Game Page</div>
+      <Dino />
     </>
-  )
+  );
 }

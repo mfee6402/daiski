@@ -84,7 +84,7 @@ router.post('/', authenticate, async function (req, res, next) {
 // 查詢
 router.get('/', authenticate, async function (req, res, next) {
   try {
-    // const userId = +req.user.id;
+    const userId = +req.user.id;
 
     const data = await prisma.cart.findUnique({
       select: {
@@ -120,22 +120,18 @@ router.get('/', authenticate, async function (req, res, next) {
         },
         CartCourse: {
           select: {
-            courseVariant: true,
-          },
-        },
-
-        CartGroup: {
-          include: {
-            groupMember: {
+            courseVariant: {
               select: {
-                joinedAt: true,
-                group: {
+                id: true,
+                price: true,
+                duration: true,
+                start_at: true,
+                course: {
                   select: {
-                    title: true,
-                    price: true,
-                    images: {
+                    name: true,
+                    CourseImg: {
                       select: {
-                        imageUrl: true,
+                        img: true,
                       },
                     },
                   },
@@ -145,10 +141,9 @@ router.get('/', authenticate, async function (req, res, next) {
           },
         },
       },
-      // FIXME等待會員資料
-      // 查詢第1台購物車
+
       where: {
-        userId: 1,
+        userId: userId,
       },
     });
 
@@ -162,24 +157,38 @@ router.get('/', authenticate, async function (req, res, next) {
       size: item.productSku.product_size.name,
     }));
 
-    const CartGroup = data.CartGroup.map((item) => ({
-      id: item.id,
-      joinedAt: item.groupMember.joinedAt,
-      title: item.groupMember.group.title,
-      price: item.groupMember.group.price,
+    const CartCourse = data.CartCourse.map((item) => ({
+      id: item.courseVariant.id,
+      price: item.courseVariant.price,
+      name: item.courseVariant.course.name,
+      imageUrl: item.courseVariant.course.CourseImg[0].img,
+      time: item.courseVariant.start_at,
+      duration: item.courseVariant.duration,
+    }));
+
+    // 調用後端API
+    const url = `http://localhost:3005/api/group/user/${userId}`;
+
+    let resGroup = await fetch(url);
+    let CartGroup = (await resGroup.json()).memberships;
+
+    CartGroup = CartGroup.map((item) => ({
+      id: item.groupMemberId,
+      title: item.group.title,
+      time: item.group.time,
+      price: item.group.price,
       // NOTE若無照片則回傳預設
-      imageUrl: item.groupMember.group.images[0]?.imageUrl
-        ? item.groupMember.group.images[0].imageUrl
-        : '',
+      imageUrl: item.group.imageUrl ? item.group.imageUrl : '',
     }));
 
     const cart = {
       ...data,
       CartProduct,
+      CartCourse,
       CartGroup,
     };
 
-    res.status(200).json({ status: 'success', cart });
+    return res.status(200).json({ status: 'success', cart });
   } catch (e) {
     next(e);
   }

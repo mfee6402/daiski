@@ -46,6 +46,7 @@ export function CartProvider({ children }) {
       const res = await fetch(url, { credentials: 'include' });
       const json = await res.json();
       setCart(json.cart);
+      // console.log(json);
     } catch (err) {
       throw new Error(err);
     }

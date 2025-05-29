@@ -21,18 +21,20 @@ export default function CartItemList({ category = '' }) {
     CartCourse: '課程',
     CartGroup: '揪團',
   };
-
+  const formatDateTime = (d) => {
+    new Date(d.setHours(d.getHours() + 8));
+    const [date, time] = d.toISOString().split('T');
+    return `${date} ${time.split('.')[0]}`;
+  };
+  
   return (
     <>
-      {/* 商品 */}
-      {/* 課程 */}
-      {/* 揪團 */}
       <div className="border-b-5 border-secondary-500">
-        <h6 className="text-h6-tw">商品內容</h6>
+        <h6 className="text-h6-tw">{titleMap[category]}</h6>
       </div>
 
       <div className="mt-10 flex flex-col gap-4">
-        {cart?.[category].map((item, i) => {
+        {cart[category]?.map((item, i) => {
           return (
             <div key={category + item.id} className="flex justify-between">
               {/* 圖與名稱 */}
@@ -44,7 +46,7 @@ export default function CartItemList({ category = '' }) {
                         ? `http://localhost:3005${item.imageUrl}`
                         : ''
                     }
-                    alt="productImage"
+                    alt={item.imageUrl}
                     width={96}
                     height={96}
                     className="object-fill w-[96]"
@@ -54,10 +56,21 @@ export default function CartItemList({ category = '' }) {
                   <p>{item.name}</p>
                 </div>
               </div>
+              {/* 時間 */}
+
+              {category !== 'CartProduct' && (
+                <div className="w-full flex justify-center items-center ">
+                  <p className="text-h6-tw">{item?.time}</p>
+                </div>
+              )}
+
               {/* 尺寸 */}
-              <div className="w-full flex justify-center items-center ">
-                <p className="text-h6-tw">{item?.size}</p>
-              </div>
+              {category === 'CartProduct' && (
+                <div className="w-full flex justify-center items-center ">
+                  <p className="text-h6-tw">{item?.size}</p>
+                </div>
+              )}
+
               {/* 價格 */}
               <div className="w-full flex justify-center items-center ">
                 <p className="text-h6-tw">
@@ -69,11 +82,19 @@ export default function CartItemList({ category = '' }) {
               {/* 數量(只有商品有) */}
               {category === 'CartProduct' && (
                 <div className="flex justify-center w-full items-center">
-                  <QuantityButton item={item} type="minus"></QuantityButton>
+                  <QuantityButton
+                    item={item}
+                    category={category}
+                    type="minus"
+                  ></QuantityButton>
                   <div className="flex justify-center w-[50]">
                     <p className="text-h6-tw">{item.quantity}</p>
                   </div>
-                  <QuantityButton item={item} type="plus"></QuantityButton>
+                  <QuantityButton
+                    item={item}
+                    category={category}
+                    type="plus"
+                  ></QuantityButton>
                 </div>
               )}
               {/* FIXME */}
@@ -88,11 +109,14 @@ export default function CartItemList({ category = '' }) {
                 {/* FIXME 收藏按鈕 */}
                 {/* {category === 'CartProduct' && <Favorite data></Favorite>} */}
 
-                <Delete
-                  name={item.name}
-                  category={category}
-                  item={item}
-                ></Delete>
+                {/* 刪除只有商品有 */}
+                {category === 'CartProduct' && (
+                  <Delete
+                    name={item.name}
+                    category={category}
+                    item={item}
+                  ></Delete>
+                )}
               </div>
             </div>
           );

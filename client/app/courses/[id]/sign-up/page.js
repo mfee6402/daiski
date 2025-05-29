@@ -16,11 +16,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 // import { isDev } from '@/config';
 import { toast, ToastContainer } from 'react-toastify';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 // import { json } from 'stream/consumers';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function SignUpPage({ params }) {
+  const { user } = useAuth();
   const { id } = useParams();
+  const router = useRouter(); // 取得 router
   const [submitting, setSubmitting] = useState(false);
   const [course, setCourse] = useState();
   const [form, setForm] = useState({
@@ -74,7 +77,7 @@ export default function SignUpPage({ params }) {
             email: form.email,
             birthday: form.birthday,
             // user_id: 後端可從 session 拿，如果開發階段就先塞一個測試 id
-            user_id: 1,
+            user_id: user.id,
           }),
         }
       );
@@ -83,6 +86,9 @@ export default function SignUpPage({ params }) {
         throw new Error(json.message || '報名失敗');
       }
       toast.success('報名成功！');
+      setTimeout(() => {
+        router.push(`/courses/${id}`);
+      }, 1200);
       // 清空表單
       setForm({ name: '', phone: '', email: '', birthday: '', terms: false });
     } catch (err) {
