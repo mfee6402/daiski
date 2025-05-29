@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useCart } from '@/hooks/use-cart';
 import { CloudCog } from 'lucide-react';
 import Delete from './delete-button';
+import { Button } from '@/components/ui/button';
 export default function QuantityButton({
   item = {},
   category = '',
@@ -32,8 +33,9 @@ export default function QuantityButton({
 
   return (
     <>
-      <button
-        className="w-[50]  disabled:border-secondary-200 "
+      <Button
+        variant="outline"
+        className=" disabled:border-secondary-200 "
         // onClick={() => {
         //   console.log({ item });
         // }}
@@ -75,12 +77,10 @@ export default function QuantityButton({
       >
         {/* FIXME -號要加大*/}
         <div>
-          <p className="text-h6-tw ">{type === 'minus' && '-'}</p>
+          <p className="text-center text-h6-tw">{type === 'minus' && '-'}</p>
+          <p className="text-center">{type === 'plus' && '+'}</p>
         </div>
-        <div>
-          <p className="text-h6-tw">{type === 'plus' && '+'}</p>
-        </div>
-      </button>
+      </Button>
     </>
   );
 }
