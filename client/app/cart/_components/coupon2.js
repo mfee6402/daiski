@@ -36,7 +36,10 @@ export default function Coupon2(props) {
             const target = item.target;
             const canUse = item.canUse;
             return (
-              <CarouselItem className="basis-1/3" key={id}>
+              <CarouselItem
+                className={`basis-1/3 ${item.checked && 'bg-secondary-500 '}`}
+                key={id}
+              >
                 <div>
                   <p>名稱:{name}</p>
                   <p>對象:{target}</p>
