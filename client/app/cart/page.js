@@ -60,7 +60,7 @@ export default function CartPage({ setProcess }) {
     return (
       <>
         <Process step="1"></Process>
-        <div className="flex justify-between">
+        <div className="flex justify-between ">
           <div className="w-[400] sm:w-[450] md:w-[550] lg:w-[750] xl:w-[900] 2xl:w-full ">
             <CartItemList
               key="CartProduct"
@@ -70,7 +70,7 @@ export default function CartPage({ setProcess }) {
             <CartItemList key="CartGroup" category="CartGroup"></CartItemList>
             <Coupon2></Coupon2>
           </div>
-          <div>
+          <div className="">
             <Checkout></Checkout>
           </div>
         </div>
