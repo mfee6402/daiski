@@ -243,7 +243,7 @@ export default function ProductDetail() {
             </div>
 
             {/* 主圖區 */}
-            <div className="flex justify-center border w-full  max-w-[400px]  lg:max-w-[300px]  xl:max-w-[400px] aspect-square mx-auto rounded-md">
+            <div className="flex justify-center border w-full  max-w-[400px]  lg:max-w-[300px]  xl:max-w-[400px] aspect-square mx-auto rounded-md items-center">
               <Swiper
                 ref={mainSwiperRef}
                 modules={[Thumbs]}

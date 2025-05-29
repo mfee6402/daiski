@@ -1084,7 +1084,7 @@ export default function ProductPage() {
 
       <Container className="z-10 pt-4 md:pt-10 pb-20">
         {/* 顯示用戶歡迎訊息和 Email (如果用戶已登入) */}
-        <div>
+        <div className="hidden md:flex">
           {/* <h1>你好，{user?.name}！</h1>
           <p>你的 Email 是：{user.email}</p> */}
           <ProductSort
@@ -1141,7 +1141,7 @@ export default function ProductPage() {
           </div>
 
           {/* MD- 尺寸螢幕顯示篩選按鈕和 Sheet 彈出側邊欄 */}
-          <div className="flex md:hidden">
+          <div className="flex md:hidden justify-around">
             <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" className="m-4">
@@ -1192,6 +1192,11 @@ export default function ProductPage() {
                 />
               </SheetContent>
             </Sheet>
+
+            <ProductSort
+              currentSort={sortOption}
+              onSortChange={handleSortChange}
+            />
           </div>
 
           {/* 商品列表和分頁區域 */}
