@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 export default function CoachIdPage(props) {
   // state 宣告
   const [coach, setCoach] = useState(null); // 存放教練物件
@@ -94,12 +95,13 @@ export default function CoachIdPage(props) {
               <h2 className="text-lg mb-1 text-primary-600 font-semibold">
                 專業證照
               </h2>
-              {coach.license.map((l) => {
+              {coach.license.map((l, i) => {
                 return (
-                  <>
+                  <React.Fragment key={i}>
                     <p>{l}</p>
+
                     {/* <br /> */}
-                  </>
+                  </React.Fragment>
                 );
               })}
             </div>
@@ -137,7 +139,7 @@ export default function CoachIdPage(props) {
               </div>
               <div className="p-4">
                 <button className="m-8 px-4 py-2 bg-gray-800 text-white rounded-full hover:bg-gray-700">
-                  立即報名
+                  <Link href={`/courses/${c.id}`}>立即報名</Link>
                 </button>
               </div>
             </div>
