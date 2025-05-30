@@ -90,13 +90,14 @@ export default function GroupsPage() {
           <div className="mt-6 flex justify-center gap-4">
             <Button
               onClick={() => router.push('/groups/create')}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="px-8 py-5  bg-blue-600 hover:bg-blue-700 text-white"
             >
               立即開團
             </Button>
             <Button
               variant="outline"
               onClick={() => router.push('/groups/list')}
+              className="px-8 py-5 "
             >
               查看揪團
             </Button>
