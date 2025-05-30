@@ -168,7 +168,7 @@ export default function ProfileWishlist() {
   }
 
   return (
-    <div className="container mx-0 xl:mx-auto py-10">
+    <div className="container mx-0 xl:mx-auto py-10 overflow-y-auto h-dvh ">
       <h1 className="text-2xl font-bold text-center mb-6">我的收藏</h1>
       {/* 1. 加上 table-fixed 讓欄位寬度依 w-xx 定義 */}
       <Table className="table-fixed w-full ">
