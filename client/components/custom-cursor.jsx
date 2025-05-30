@@ -317,7 +317,7 @@ const CustomCursor = () => {
           {isHoveringClickable ? (
             <Image
               priority
-              src="/riding.png"
+              src="/icons8-cursor-64.svg"
               alt=""
               width={32}
               height={32}

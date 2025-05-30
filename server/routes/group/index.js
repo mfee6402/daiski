@@ -94,8 +94,8 @@ router.get('/latest', async (req, res, next) => {
 
       let displayType = groupType; // 預設為 Enum Key
       if (groupType === ActivityType.MEAL)
-        displayType = '揪美食團YO'; // 根據圖片範例
-      else if (groupType === ActivityType.SKI) displayType = '揪滑雪團YO'; // 假設的滑雪團顯示文字
+        displayType = '美食團'; // 根據圖片範例
+      else if (groupType === ActivityType.SKI) displayType = '滑雪團'; // 假設的滑雪團顯示文字
       // 你可以根據需要擴展其他 ActivityType 的顯示名稱
 
       return {

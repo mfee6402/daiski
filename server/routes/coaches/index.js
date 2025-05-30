@@ -101,6 +101,7 @@ router.get('/:id', async (req, res) => {
             start_at: true,
             course: {
               select: {
+                id: true,
                 name: true,
                 CourseImg: {
                   take: 1,
@@ -126,6 +127,7 @@ router.get('/:id', async (req, res) => {
       license: coach.LicenseCoach.map((cl) => cl.license.name),
       courses: coach.CourseVariant.map((cv) => ({
         name: cv.course.name,
+        id: cv.course.id,
         date: new Date(cv.start_at).toLocaleDateString('zh-TW', {
           year: 'numeric',
           month: '2-digit',

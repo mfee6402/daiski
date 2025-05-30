@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useShip711StoreOpener } from '../../../_hooks/use-ship-711-store';
+import { Button } from '@/components/ui/button';
 
 export default function StorePickup({ shippingSelected }) {
   const { store711, openWindow } = useShip711StoreOpener(
@@ -11,20 +12,21 @@ export default function StorePickup({ shippingSelected }) {
   return (
     <>
       {shippingSelected === 'storePickup' && (
-        <div className=" w-full">
-          <button
+        <div className="flex flex-col gap-4 w-full">
+          {/* FIXME改顏色 */}
+          <Button
             type="button"
-            className="bg-secondary-500 px-6 py-2.5 text-h6-tw"
+            className=" px-6 py-2.5 max-w-24"
             onClick={() => {
               openWindow();
             }}
           >
             選擇門市
-          </button>
+          </Button>
 
-          <div>
+          <div className="flex flex-col gap-4">
             <div>
-              門市名稱:
+              <span className="whitespace-nowrap">門市名稱 : </span>
               <input
                 type="text"
                 className="w-auto"
@@ -32,8 +34,8 @@ export default function StorePickup({ shippingSelected }) {
                 disabled
               />
             </div>
-            <div>
-              門市地址:
+            <div className="">
+              <span className="whitespace-nowrap">門市地址 : </span>
               <input
                 type="text"
                 className="w-full"
