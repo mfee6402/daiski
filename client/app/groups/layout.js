@@ -4,7 +4,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth'; // << --- 確保這是您 use-auth.js 的正確路徑
 import { ChatBubble } from './_components/chat-bubble'; // << --- 確保這是您 chat-bubble.js 的正確路徑
-
 export default function GroupsLayout({ children }) {
   const { user: currentUser, isAuth, isLoading: isAuthLoading } = useAuth();
   const [isChatBubbleOpen, setIsChatBubbleOpen] = useState(false);
