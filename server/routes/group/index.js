@@ -94,8 +94,8 @@ router.get('/latest', async (req, res, next) => {
 
       let displayType = groupType; // 預設為 Enum Key
       if (groupType === ActivityType.MEAL)
-        displayType = '揪美食團YO'; // 根據圖片範例
-      else if (groupType === ActivityType.SKI) displayType = '揪滑雪團YO'; // 假設的滑雪團顯示文字
+        displayType = '美食團'; // 根據圖片範例
+      else if (groupType === ActivityType.SKI) displayType = '滑雪團'; // 假設的滑雪團顯示文字
       // 你可以根據需要擴展其他 ActivityType 的顯示名稱
 
       return {
@@ -489,7 +489,7 @@ router.get('/:groupId', async (req, res, next) => {
     const group = await prisma.group.findUnique({
       where: { id },
       include: {
-        user: { select: { name: true, avatar: true } },
+        user: { select: { id: true, name: true, avatar: true } },
         images: { orderBy: { sortOrder: 'asc' } },
         location: true,
         _count: { select: { members: true } },
@@ -966,6 +966,79 @@ router.delete('/:groupId', async (req, res, next) => {
       });
     }
     return res.status(500).json({ error: '伺服器內部錯誤，刪除揪團失敗。' });
+  }
+});
+// 新增：DELETE /api/group/members/:groupMemberId
+router.delete('/members/:groupMemberId', authenticate, async (req, res, next) => {
+  try {
+    const groupMemberId = parseInt(req.params.groupMemberId, 10);
+    const currentUserId = req.user?.id; // 從 authenticate 中介軟體獲取
+
+    if (isNaN(groupMemberId)) {
+      return res.status(400).json({ error: '無效的參與記錄 ID (groupMemberId)。' });
+    }
+
+    if (!currentUserId) {
+      // 理論上 authenticate 會處理，但多一層防護
+      return res.status(401).json({ error: '未授權操作，無法識別用戶。' });
+    }
+
+    // 1. 查找 GroupMember 記錄
+    const groupMemberEntry = await prisma.groupMember.findUnique({
+      where: { id: groupMemberId },
+      include: { // 同時獲取關聯的 group 資訊，以便檢查開團者
+        group: {
+          select: { organizerId: true }
+        }
+      }
+    });
+
+    if (!groupMemberEntry) {
+      return res.status(404).json({ error: '找不到指定的參與記錄。' });
+    }
+
+    // 2. 權限驗證：
+    // 允許的情況：
+    // a) 是該 GroupMember 記錄的擁有者 (userId)
+    // b) 是該揪團的開團者 (organizerId)
+    const isOwner = groupMemberEntry.userId === currentUserId;
+    const isOrganizer = groupMemberEntry.group?.organizerId === currentUserId;
+
+    if (!isOwner && !isOrganizer) {
+      return res.status(403).json({ error: '您沒有權限移除此參與記錄。' });
+    }
+    
+    // 3. 檢查 paid_at 狀態 (根據你的業務邏輯決定如何處理已付款的項目)
+    // 如果是開團者移除成員，可能也需要考慮退款。
+    // 如果是成員自己退出已付款的團，也需要考慮退款政策。
+    if (groupMemberEntry.paid_at !== null) {
+      // 範例：如果是已付款的，且不是開團者操作，則不允許直接刪除 (讓使用者走特定退款流程)
+      if (isOwner && !isOrganizer) { // 成員自己想退出已付款的團
+         // 這裡可以根據你的業務邏輯決定是否允許，或提示需要聯繫客服等
+        console.warn(`使用者 ${currentUserId} 嘗試刪除已付款的參與記錄 ${groupMemberId}。需要進一步處理退款事宜。`);
+        // return res.status(400).json({ 
+        //   error: '此項目已付款，若要退出請聯繫客服或發起退款申請。',
+        //   needsRefund: true // 可以給前端一個標記
+        // });
+        // 目前暫時允許刪除，但實際應用中應有更完整的退款/取消策略
+      }
+      // 如果是開團者移除已付款成員，也應該有相應的退款/通知機制
+      console.log(`操作者 (ID: ${currentUserId}, ${isOrganizer ? '開團者' : '成員本人'}) 正在移除已付款的參與記錄 (ID: ${groupMemberId})。`);
+    }
+
+    // 4. 執行刪除
+    await prisma.groupMember.delete({
+      where: { id: groupMemberId },
+    });
+
+    res.status(200).json({ message: '參與記錄已成功移除。' });
+
+  } catch (error) {
+    console.error(`刪除 GroupMember ID ${req.params.groupMemberId} 時發生錯誤:`, error);
+    if (error.code === 'P2025') { // Prisma "Record to delete not found."
+      return res.status(404).json({ error: '找不到要刪除的參與記錄 (可能已被刪除)。' });
+    }
+    next(error);
   }
 });
 export default router;

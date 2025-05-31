@@ -82,7 +82,7 @@ router.post('/', authenticate, async function (req, res, next) {
 });
 
 // 查詢
-router.get('/', authenticate, async function (req, res, next) {
+router.get('/', authenticate, async function (req, res) {
   try {
     const userId = +req.user.id;
 
@@ -147,7 +147,7 @@ router.get('/', authenticate, async function (req, res, next) {
       },
     });
 
-    // id用於react的迴圈key值;
+    // 商品、課程攤平
     const CartProduct = data.CartProduct.map((item) => ({
       id: item.productSku.id,
       quantity: item.quantity,
@@ -157,16 +157,33 @@ router.get('/', authenticate, async function (req, res, next) {
       size: item.productSku.product_size.name,
     }));
 
-    const CartCourse = data.CartCourse.map((item) => ({
-      id: item.courseVariant.id,
-      price: item.courseVariant.price,
-      name: item.courseVariant.course.name,
-      imageUrl: item.courseVariant.course.CourseImg[0].img,
-      time: item.courseVariant.start_at,
-      duration: item.courseVariant.duration,
-    }));
+    const CartCourse = data.CartCourse.map((item) => {
+      const start_at = item.courseVariant.start_at;
+      const duration = item.courseVariant.duration;
+      const date = new Date(start_at);
+      date.setHours(date.getHours() + duration);
+      const end_at = date.toISOString();
+      return {
+        id: item.courseVariant.id,
+        price: item.courseVariant.price,
+        name: item.courseVariant.course.name,
+        imageUrl: item.courseVariant.course.CourseImg[0].img,
+        startAt: start_at,
+        endAt: end_at,
+        duration: duration,
+      };
+    });
 
-    // 調用後端API
+    const totalCartProduct = CartProduct.reduce((acc, product) => {
+      acc += product.price * product.quantity;
+      return acc;
+    }, 0);
+    const totalCartCourse = CartCourse.reduce((acc, course) => {
+      acc += course.price;
+      return acc;
+    }, 0);
+
+    // 調用後端API獲得Group資料
     const url = `http://localhost:3005/api/group/user/${userId}`;
 
     let resGroup = await fetch(url);
@@ -174,29 +191,99 @@ router.get('/', authenticate, async function (req, res, next) {
 
     CartGroup = CartGroup.map((item) => ({
       id: item.groupMemberId,
-      title: item.group.title,
-      time: item.group.time,
+      name: item.group.title,
+      startAt: item.group.time.split(' —')[0],
+      endAt: item.group.time.split('— ')[1],
       price: item.group.price,
-      // NOTE若無照片則回傳預設
+      // FIXME若無照片則回傳預設
       imageUrl: item.group.imageUrl ? item.group.imageUrl : '',
     }));
+
+    // 優惠券
+    const couponData = await prisma.userCoupon.findMany({
+      select: {
+        couponId: true,
+        coupon: {
+          select: {
+            minPurchase: true,
+            endAt: true,
+            name: true,
+            couponTarget: {
+              select: {
+                target: true,
+              },
+            },
+            couponType: {
+              select: {
+                amount: true,
+                type: true,
+              },
+            },
+          },
+        },
+      },
+      where: {
+        userId: userId,
+      },
+    });
+
+    // FIXME 要判斷過期跟已使用(問+1要不要做)
+    const CartCoupon = couponData.map((item) => {
+      const id = item.couponId;
+      const name = item.coupon.name;
+      const target = item.coupon.couponTarget.target;
+      const amount = item.coupon.couponType.amount;
+      const type = item.coupon.couponType.type;
+      const endAt = item.coupon.endAt;
+      const minPurchase = item.coupon.minPurchase;
+      let canUse = false;
+      const checked = false;
+      // totalCartCourse
+      // totalCartProduct
+      if (target === '全站') {
+        if (totalCartProduct + totalCartCourse >= minPurchase) {
+          canUse = true;
+        }
+      } else if (target === '商品') {
+        if (totalCartProduct >= minPurchase) {
+          canUse = true;
+        }
+      } else if (target === '課程') {
+        if (totalCartCourse >= minPurchase) {
+          canUse = true;
+        }
+      }
+      return {
+        id,
+        name,
+        target,
+        amount,
+        type,
+        endAt,
+        minPurchase,
+        canUse,
+        checked,
+      };
+    });
 
     const cart = {
       ...data,
       CartProduct,
       CartCourse,
       CartGroup,
+      CartCoupon,
     };
 
     return res.status(200).json({ status: 'success', cart });
-  } catch (e) {
-    next(e);
+  } catch (error) {
+    return res
+      .status(200)
+      .json({ status: 'fail', message: `查詢失敗:${error}` });
   }
 });
 
 // 更新(只有商品有數量，課程跟揪團票券固定只有1)
 router.put('/:itemId', authenticate, async function (req, res) {
-  console.log(+req.params.itemId);
   const category = req.body.category;
   // 檢查分類
   const cartModel = cartCreateMap[category];
@@ -207,6 +294,8 @@ router.put('/:itemId', authenticate, async function (req, res) {
   }
 
   const userId = +req.user.id;
+  const nextItem = req.body.item;
+
   // 查詢使用者對應的購物車
   const userCart = await prisma.cart.findFirst({
     where: { userId },
@@ -218,9 +307,7 @@ router.put('/:itemId', authenticate, async function (req, res) {
         [foreignKeyName]: +req.params.itemId,
       },
       data: {
-        quantity: {
-          increment: 1,
-        },
+        quantity: nextItem.quantity,
       },
     });
 
@@ -262,5 +349,21 @@ router.delete('/:itemId', authenticate, async function (req, res) {
       .json({ status: 'fail', message: '刪除失敗', error: { error } });
   }
 });
+
+// router.get('/coupon', authenticate, async function (req, res) {
+//   try {
+//     const userId = +req.user.id;
+//     const data = await prisma.userCoupon.findMany({
+//       where: {
+//         userId: userId,
+//       },
+//     });
+//     return res.status(200).json({ status: 'success', data: data });
+//   } catch (error) {
+//     res
+//       .status(200)
+//       .json({ status: 'fail', message: '優惠券選擇失敗:', error: { error } });
+//   }
+// });
 
 export default router;

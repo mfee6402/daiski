@@ -4,13 +4,14 @@ import { useEffect } from 'react';
 import { useCart } from '@/hooks/use-cart';
 import { CloudCog } from 'lucide-react';
 import Delete from './delete-button';
+import { Button } from '@/components/ui/button';
 export default function QuantityButton({
   item = {},
   category = '',
   type = '',
 }) {
   const url = `http://localhost:3005/api/cart/${item.id}`;
-  const { cart, setCart, onAdd } = useCart();
+  const { cart, setCart, onIncrease, onDecrease } = useCart();
 
   // FIXME 使用useCart鉤子，避免程式碼重複
   // 將更新傳回後端
@@ -32,8 +33,9 @@ export default function QuantityButton({
 
   return (
     <>
-      <button
-        className="w-[50]  disabled:border-secondary-200 "
+      <Button
+        variant="outline"
+        className=" disabled:border-secondary-200 "
         // onClick={() => {
         //   console.log({ item });
         // }}
@@ -42,17 +44,21 @@ export default function QuantityButton({
             draft.CartProduct.map((product) => {
               if (product.id === item.id) {
                 if (type === 'minus') {
-                  // FIXME 增加刪除功能
-                  return product.quantity === 1
-                    ? product.quantity
-                    : product.quantity--;
+                  if (product.quantity === 1) {
+                    return product.quantity;
+                  } else {
+                    onDecrease('CartProduct', item);
+                    return product.quantity--;
+                  }
                 } else if (type === 'plus') {
+                  onIncrease('CartProduct', item);
                   return product.quantity++;
                 }
               }
             });
           });
           setCart(nextCart);
+
           // const updatedItem = nextCart.CartProduct.find(
           //   (item) => item.id === itemId
           // );
@@ -71,12 +77,10 @@ export default function QuantityButton({
       >
         {/* FIXME -號要加大*/}
         <div>
-          <p className="text-h6-tw ">{type === 'minus' && '-'}</p>
+          <p className="text-center text-h6-tw">{type === 'minus' && '-'}</p>
+          <p className="text-center">{type === 'plus' && '+'}</p>
         </div>
-        <div>
-          <p className="text-h6-tw">{type === 'plus' && '+'}</p>
-        </div>
-      </button>
+      </Button>
     </>
   );
 }
