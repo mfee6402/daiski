@@ -1,8 +1,138 @@
 import express from 'express';
 const router = express.Router();
+import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
+
+// ---- Multer 設定（memory 儲存，後面自行存檔） ----
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    files: 10, // 最多 10 張
+    fileSize: 5 * 1024 * 1024, // 單檔最大 5MB
+  },
+});
+
+// ---- POST /api/products：建立商品 + SKU + 多圖 ----
+router.post('/', upload.array('images'), async (req, res, next) => {
+  const {
+    name,
+    category_id,
+    brand_id,
+    introduction,
+    spec,
+    skus: skusJson = '[]',
+  } = req.body;
+
+  // 1. 解析前端傳來的 SKU 陣列（JSON 字串）
+  let skus;
+  try {
+    skus = JSON.parse(skusJson);
+    if (!Array.isArray(skus) || skus.length === 0) {
+      throw new Error('skus 必須是一個非空陣列');
+    }
+  } catch (err) {
+    return res.status(400).json({ message: 'skus 格式錯誤：請傳入 JSON 陣列' });
+  }
+
+  // 2. 計算 min_price
+  const prices = skus
+    .map((s) => Number(s.price))
+    .filter((p) => !Number.isNaN(p));
+  if (prices.length === 0) {
+    return res.status(400).json({ message: '請提供至少一個有效 price' });
+  }
+  const min_price = Math.min(...prices);
+
+  // 3. 透過 transaction 建立 product 與所有 sku
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const now = new Date();
+      // 3-1. 建立 Product
+      const product = await tx.product.create({
+        data: {
+          name,
+          category_id: category_id ? Number(category_id) : null,
+          brand_id: brand_id ? Number(brand_id) : null,
+          introduction,
+          spec,
+          min_price,
+          publish_at: now,
+        },
+      });
+
+      // 3-2. 建立所有 SKU
+      const createdSkus = await Promise.all(
+        skus.map((s) =>
+          tx.productSku.create({
+            data: {
+              product_id: product.id,
+              size_id: s.size_id ? Number(s.size_id) : null,
+              sku_code: s.sku_code,
+              price: Number(s.price),
+              stock: Number(s.stock || 0),
+            },
+          })
+        )
+      );
+
+      return { product, createdSkus };
+    });
+
+    const { product } = result;
+
+    // 4. 處理上傳的圖片：存檔 & 建立 product_image
+    const images = req.files; // multer 處理後的 Buffer 陣列
+    const savedImages = [];
+
+    if (images && images.length > 0) {
+      // 確保資料夾存在
+      const uploadDir = path.join(
+        process.cwd(),
+        'public',
+        'productImages',
+        `${product.id}`
+      );
+      await fs.promises.mkdir(uploadDir, { recursive: true });
+
+      for (let i = 0; i < images.length; i++) {
+        const file = images[i];
+        // 自訂檔名：timestamp-index-原始名稱
+        const filename = `${Date.now()}-${i}-${file.originalname}`;
+        const filepath = path.join(uploadDir, filename);
+
+        // 將 Buffer 寫入檔案
+        await fs.promises.writeFile(filepath, file.buffer);
+
+        // 建立資料庫紀錄
+        const url = `/productImages/${product.id}/${filename}`;
+        const imgRecord = await prisma.productImage.create({
+          data: {
+            product_id: product.id,
+            url,
+            sort_order: i, // 依上傳順序排序
+          },
+        });
+        savedImages.push(imgRecord);
+      }
+    }
+
+    // 5. 回傳結果
+    return res.status(201).json({
+      product: {
+        ...product,
+        images: savedImages,
+      },
+      skus: result.createdSkus,
+    });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
 
 // GET /api/products — 支援 include=card、page、limit、category_id、size_id、min_price、max_price 參數
 router.get('/', async (req, res, next) => {
