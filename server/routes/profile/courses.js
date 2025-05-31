@@ -1,81 +1,60 @@
+// routes/profile/courses.js
 import express from 'express';
-import { PrismaClient } from '@prisma/client'; // 調整成你的路徑
+import { PrismaClient } from '@prisma/client';
 
-const router = express.Router();
 const prisma = new PrismaClient();
+const router = express.Router();
 
-router.get('/', async (req, res, next) => {
+/* 取得「某會員」已報名課程 */
+router.get('/:userId/courses', async (req, res, next) => {
   try {
-    // 撈出課程關聯資料
-    const course = await prisma.course.findUnique({
-      where: { id: courseId },
+    const userId = Number(req.params.userId);
+    if (!userId) return res.status(400).json({ msg: '無效 userId' });
+
+    // 1. 找出這個會員在 CourseVariantUser 表的紀錄
+    const rows = await prisma.courseVariantUser.findMany({
+      where: { user_id: userId },
       select: {
         id: true,
-        name: true,
-        description: true,
-        content: true,
-        start_at: true,
-        end_at: true,
-        CourseImg: { select: { id: true, img: true } },
-        CourseVariant: {
+        course_variant: {
           select: {
-            id: true,
-            difficulty: true,
-            price: true,
-            duration: true,
-            coach_id: true,
+            course: {
+              select: {
+                name: true,
+                start_at: true,
+                end_at: true,
+                CourseImg: {
+                  select: { img: true },
+                  orderBy: { id: 'asc' },
+                  take: 1,
+                },
+              },
+            },
+            location: { select: { name: true } },
           },
         },
-        // location: {
-        //   select: {
-        //     id: true,
-        //     name: true,
-        //     country: true,
-        //     city: true,
-        //     address: true,
-        //   },
-        // },
       },
+      orderBy: { joined_at: 'desc' },
     });
-    // 若找不到資料則回傳 404
-    if (!course) {
-      return res.status(404).json({ error: '找不到該課程' });
-    }
 
-    // 格式化日期為 YYYY/MM/DD
-    const fmt = (dt) =>
-      new Date(dt).toLocaleDateString('zh-TW', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      });
+    // 2. 整形給前端
+    const courses = rows.map((row) => {
+      const cv = row.course_variant;
+      const c = cv.course;
+      return {
+        id: row.id,
+        name: c.name,
+        startAt: c.start_at,
+        endAt: c.end_at,
+        location: cv.location?.name ?? '',
+        image: c.CourseImg[0]?.img ?? '/deadicon.png',
+      };
+    });
 
-    // 組成前端易讀的 courseinfo
-    const courseinfo = {
-      id: course.id,
-      name: course.name,
-      description: course.description,
-      content: course.content,
-      period: `${fmt(course.start_at)} ~ ${fmt(course.end_at)}`,
-      images: course.CourseImg.map((i) => i.img),
-      variants: course.CourseVariant.map((v) => ({
-        id: v.id,
-        difficulty: v.difficulty,
-        price: v.price,
-        duration: v.duration,
-        max_people: v.max_people,
-        start_at: fmt(v.start_at),
-        image: v.courseImg?.img || null,
-        coach_id: v.coach_id,
-        location_id: v.location_id,
-      })),
-    };
-
-    // 回傳 JSON
-    res.json(courseinfo);
-  } catch (error) {
-    console.error('取得課程資訊失敗:', error);
-    res.status(500).json({ message: '伺服器錯誤' });
+    res.json({ courses });
+  } catch (err) {
+    next(err);
   }
 });
+
 export default router;

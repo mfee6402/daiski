@@ -207,17 +207,15 @@ export default function MemberPage() {
               <CardFooter></CardFooter>
             </Card>
           </TabsContent>
-          <TabsContent
-            value="courses"
-            className="max-h-[580px] overflow-y-auto"
-          >
+          {/* 課程頁引入 */}
+          <TabsContent value="courses" className="overflow-y-auto">
             <ProfileCourses />
           </TabsContent>
-
+          {/* 揪團頁引入 */}
           <TabsContent value="groups" className="overflow-y-auto">
             <ProfileGroups />
           </TabsContent>
-
+          {/* 訂單紀錄頁引入 */}
           <TabsContent value="orders">
             <Card>
               <CardHeader>
@@ -229,13 +227,13 @@ export default function MemberPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
+          {/* 收藏頁引入 */}
           <TabsContent value="favorites">
             <Card className="p-4">
               <ProfileWishlist />
             </Card>
           </TabsContent>
-
+          {/* 優惠卷引入 */}
           <TabsContent value="coupons" className="">
             <Card>
               <ProfileCoupons />
