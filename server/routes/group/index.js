@@ -489,7 +489,7 @@ router.get('/:groupId', async (req, res, next) => {
     const group = await prisma.group.findUnique({
       where: { id },
       include: {
-        user: { select: { name: true, avatar: true } },
+        user: { select: { id: true, name: true, avatar: true } },
         images: { orderBy: { sortOrder: 'asc' } },
         location: true,
         _count: { select: { members: true } },
