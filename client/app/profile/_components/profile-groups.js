@@ -40,7 +40,7 @@ export default function ProfileGroups(props) {
           <CardDescription>共 {groups.length} 筆</CardDescription>
         </CardHeader>
 
-        <CardContent className="grid grid-cols-2 gap-3">
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {groups.length === 0 && (
             <p className="text-muted-foreground">目前沒有任何報名紀錄。</p>
           )}
@@ -48,7 +48,7 @@ export default function ProfileGroups(props) {
           {groups.map((g) => (
             <article
               key={g.groupMemberId}
-              className="flex gap-4 rounded-lg border p-4"
+              className="flex flex-col md:flex-row gap-4 rounded-lg border p-4 min-w-0 "
             >
               <div></div>
               <Image
@@ -61,7 +61,7 @@ export default function ProfileGroups(props) {
                 alt={g.group.title}
                 width={20}
                 height={20}
-                className="w-1/2 flex-shrink-0 rounded-md object-cover aspect-[4/3]"
+                className="w-full md:w-1/2 flex-shrink-0 rounded-md object-cover aspect-[4/3]"
               />
               <div className="flex flex-col justify-center items-start gap-3">
                 <div className="font-medium flex">
@@ -78,10 +78,15 @@ export default function ProfileGroups(props) {
                     ? g.customLocation
                     : g.group.location}
                 </div>
+                <Button
+                  asChild
+                  variant="outline"
+                  key={g.groupMemberId}
+                  className="self-end"
+                >
+                  <Link href={`/groups/${g.group.groupId}`}>查看</Link>
+                </Button>
               </div>
-              <Button asChild variant="outline" key={g.groupMemberId}>
-                <Link href={`/groups/${g.group.groupId}`}>查看</Link>
-              </Button>
             </article>
           ))}
         </CardContent>

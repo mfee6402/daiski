@@ -104,7 +104,7 @@ export default function RegisterPage() {
 
   return (
     <>
-      <div className="flex container justify-center  mx-auto  gap-1">
+      <div className="flex container justify-center  mx-auto  gap-1 min-h-screen">
         <div className="hidden sm:block w-1/2 flex-1 min-w-0">
           <Image
             src="/register.png"
@@ -114,8 +114,8 @@ export default function RegisterPage() {
             className="object-cover shadow-lg w-full"
           />
         </div>
-        <div className="relative w-full sm:w-1/2 py-12 left flex-1 min-w-0 bg-[url('/register.png')] bg-cover bg-center sm:bg-none px-4 sm:px-0">
-          <div className="absolute inset-0 bg-white/60 sm:hidden" />
+        <div className="relative w-full sm:w-1/2 py-12 left flex-1 min-w-0 bg-[url('/register.png')] bg-cover bg-center sm:bg-none px-4 sm:px-0 ">
+          <div className="absolute inset-0 bg-white/80 sm:hidden" />
           <div className="relative z-10">
             <div className="text-center ">
               <h1 className="text-h2-tw">會員註冊</h1>
@@ -135,7 +135,7 @@ export default function RegisterPage() {
                     name="name"
                     value={userInput.name}
                     onChange={handleFieldChange}
-                    className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                    className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
                   />
                 </label>
                 <label>
@@ -145,7 +145,7 @@ export default function RegisterPage() {
                     name="account"
                     value={userInput.account}
                     onChange={handleFieldChange}
-                    className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                    className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
                   />
                 </label>
                 <label>
@@ -155,7 +155,7 @@ export default function RegisterPage() {
                     name="password"
                     value={userInput.password}
                     onChange={handleFieldChange}
-                    className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                    className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
                   />
                 </label>
                 <label>
@@ -165,7 +165,7 @@ export default function RegisterPage() {
                     name="confirmPassword"
                     value={userInput.confirmPassword}
                     onChange={handleFieldChange}
-                    className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                    className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
                   />
                 </label>
                 <label>
@@ -175,7 +175,7 @@ export default function RegisterPage() {
                     name="email"
                     value={userInput.email}
                     onChange={handleFieldChange}
-                    className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                    className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
                   />
                 </label>
                 <label>
@@ -185,7 +185,7 @@ export default function RegisterPage() {
                     name="phone"
                     value={userInput.phone}
                     onChange={handleFieldChange}
-                    className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                    className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
                     required
                   />
                 </label>
