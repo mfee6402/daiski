@@ -51,10 +51,9 @@ function useIsMobile(breakpoint = 1024) {
   return isMobile;
 }
 
+const base = process.env.NEXT_PUBLIC_API_BASE || '';
 const fetcher = (url) =>
-  fetch(`http://localhost:3005${url}`, { credentials: 'include' }).then((r) =>
-    r.json()
-  );
+  fetch(`${base}${url}`, { credentials: 'include' }).then((r) => r.json());
 
 export default function ProductDetail() {
   const isMobile = useIsMobile();
@@ -128,12 +127,12 @@ export default function ProductDetail() {
       try {
         // 根據收藏狀態發送 API 請求
         if (isFav) {
-          await fetch(
-            `http://localhost:3005/api/profile/favorites/${productId}`,
-            { method: 'DELETE', credentials: 'include' }
-          );
+          await fetch(`${base}/api/profile/favorites/${productId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+          });
         } else {
-          await fetch('http://localhost:3005/api/profile/favorites', {
+          await fetch(`${base}/api/profile/favorites`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
