@@ -611,6 +611,7 @@ import ProductList from './_components/product-list';
 import ProductPagination from './_components/product-pagination';
 import ProductSidebar from './_components/product-sidebar';
 import ProductSort from './_components/product-sort';
+import ProductHighlightCard from './_components/product-highlight-card';
 
 // 引入自定義 Hook，用於管理用戶認證狀態
 import { useAuth } from '@/hooks/use-auth';
@@ -1083,6 +1084,7 @@ export default function ProductPage() {
       </section>
 
       <Container className="z-10 pt-4 md:pt-10 pb-20">
+        <ProductHighlightCard />
         {/* 顯示用戶歡迎訊息和 Email (如果用戶已登入) */}
         <div className="hidden md:flex">
           {/* <h1>你好，{user?.name}！</h1>

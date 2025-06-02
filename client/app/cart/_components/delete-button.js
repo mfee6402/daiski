@@ -21,7 +21,7 @@ export default function Delete({ category = '', item = {}, name = '' }) {
       <AlertDialog>
         <AlertDialogTrigger>
           <div className="flex">
-            <Trash2></Trash2>刪除
+            <Trash2></Trash2>
           </div>
         </AlertDialogTrigger>
         <AlertDialogContent>

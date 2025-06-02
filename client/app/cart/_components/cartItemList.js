@@ -44,20 +44,32 @@ export default function CartItemList({ category = '' }) {
     const date = new Date(utcString);
     date.setHours(date.getHours() + 8); // 加上 8 小時
     const [d, t] = date.toISOString().split('T');
-    return `${d} ${t.split('.')[0]}`; // 回傳 "YYYY-MM-DD HH:mm:ss"
+    return `${d} ${t.split('.')[0].slice(0, 5)}`;
   };
 
   return (
     <>
-      <Card className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark ">
+      <Card className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">
             {titleMap[category]}
           </CardTitle>
         </CardHeader>
+
         <CardContent>
-          <div className="mt-10 flex flex-col gap-4">
+          <div className=" ">
             <Table>
+              {/* FIXME hover拿掉 */}
+              <TableHeader>
+                <TableRow className="w-full">
+                  <TableHead>圖片</TableHead>
+                  <TableHead>名稱</TableHead>
+                  <TableHead className="text-center">{`${category === 'CartProduct' ? '尺寸' : '價格'}`}</TableHead>
+                  <TableHead className="text-center">{`${category === 'CartProduct' ? '總價' : '日期'}`}</TableHead>
+                  <TableHead className="text-center">{`${category === 'CartProduct' ? '數量' : ''}`}</TableHead>
+                  <TableHead className=""></TableHead>
+                </TableRow>
+              </TableHeader>
               <TableBody>
                 {cart[category]?.map((item) => {
                   const totalPrice = (
@@ -65,10 +77,7 @@ export default function CartItemList({ category = '' }) {
                   ).toLocaleString();
 
                   return (
-                    <TableRow
-                      key={item.id}
-                      className="flex flex-row justify-between items-center"
-                    >
+                    <TableRow key={item.id}>
                       {/* 圖片 */}
                       {item.imageUrl && (
                         <TableCell>
@@ -91,7 +100,7 @@ export default function CartItemList({ category = '' }) {
                       )}
                       {/* 品名 */}
                       <TableCell className="whitespace-normal break-words">
-                        <div className="w-[100px] sm:w-[150px] md:w-[175px] lg:w-[200px]">
+                        <div className="">
                           <p className="text-p-tw line-clamp-3">{item.name}</p>
                         </div>
                       </TableCell>
@@ -125,14 +134,14 @@ export default function CartItemList({ category = '' }) {
                       {/* 數量 */}
                       {category === 'CartProduct' && (
                         <TableCell>
-                          <div className="flex justify-center w-full items-center">
+                          <div className="flex justify-center w-full items-center gap-6">
                             <QuantityButton
                               item={item}
                               category={category}
                               type="minus"
                             ></QuantityButton>
-                            <div className="flex justify-center w-[50]">
-                              <p className="text-h6-tw">{item.quantity}</p>
+                            <div className="flex justify-center">
+                              <p className="">{item.quantity}</p>
                             </div>
                             <QuantityButton
                               item={item}
@@ -145,15 +154,7 @@ export default function CartItemList({ category = '' }) {
                       {/* 刪除 */}
                       <TableCell>
                         <div className="flex justify-center w-full gap-4">
-                          {/* <WishList
-                  wishList={wishList}
-                  index={i}
-                  setWishList={setWishList}
-                ></WishList> */}
-                          {/* FIXME 收藏按鈕 */}
-                          {/* {category === 'CartProduct' && <Favorite data></Favorite>} */}
-
-                          {/* 刪除只有商品有 */}
+                          {/* FIXME 課程跟揪團也要 */}
                           {category === 'CartProduct' && (
                             <Delete
                               name={item.name}

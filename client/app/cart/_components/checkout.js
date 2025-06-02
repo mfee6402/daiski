@@ -10,6 +10,8 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
+
+import { Button } from '@/components/ui/button';
 export default function Checkout() {
   const { cart } = useCart();
   const [checkedCoupon, setCheckedCoupon] = useState(null);
@@ -51,23 +53,25 @@ export default function Checkout() {
   }, [cart]);
   return (
     <>
-      <Card className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark sticky top-[100px]">
+      <Card
+        className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark   md:sticky md:top-[107px]
+    fixed bottom-0 left-0 right-0 z-50 w-full min-w-[350px] "
+      >
         <CardHeader>
           <CardTitle className="text-lg font-semibold">結帳明細</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="w-[200] sm:w-[200] md:w-[250] lg:w-[300] xl:w-[400]  ">
-            <div>
-              <div className="flex justify-between">
-                <p className="text-p-tw">商品原價總金額</p>
-                <p className="text-p-tw">${totalProduct.toLocaleString()}</p>
-              </div>
-
-              <div className="flex justify-between">
-                <p className="text-p-tw">課程原價總金額</p>
-                <p className="text-p-tw">${totalCourse.toLocaleString()}</p>
-              </div>
+          <div className="flex flex-col gap-3  ">
+            <div className="flex justify-between">
+              <p className="text-p-tw">商品原價總金額</p>
+              <p className="text-p-tw">${totalProduct.toLocaleString()}</p>
             </div>
+
+            <div className="flex justify-between">
+              <p className="text-p-tw">課程原價總金額</p>
+              <p className="text-p-tw">${totalCourse.toLocaleString()}</p>
+            </div>
+
             <div className="flex justify-between">
               <p className="text-p-tw">揪團總金額</p>
               <p className="text-p-tw">${totalGroup.toLocaleString()}</p>
@@ -86,7 +90,7 @@ export default function Checkout() {
 
             <div className="flex justify-between">
               <h6 className="text-h6-tw font-bold">結帳金額</h6>
-              <p className="text-p-tw">${amount.toLocaleString()}</p>
+              <p className="text-red">${amount.toLocaleString()}</p>
             </div>
             {/* FIXME 抓數量於"結帳"字後 */}
 
@@ -94,7 +98,9 @@ export default function Checkout() {
               href={'/cart/checkout'}
               className="text-p-tw text-secondary-200"
             >
-              <div className="flex justify-center bg-primary-600">結帳</div>
+              <Button className="flex justify-center bg-primary-600 w-full py-5">
+                結帳
+              </Button>
             </Link>
           </div>
         </CardContent>
