@@ -19,7 +19,7 @@ router.get('/', authenticate, async function (req, res) {
     const coupon = await prisma.coupon.findMany({
       where: {
         // 只撈 已開始 尚未過期
-        startAt: { lte: now },
+
         endAt: { gte: now },
         id: {
           not: 5,
