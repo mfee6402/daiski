@@ -429,6 +429,7 @@ model CourseVariant {
   location_id   Int
   coach_id      Int
   course_img_id Int
+  boardtype_id  Int
   created_at    DateTime @default(now()) @map("created_at")
   update_at     DateTime @updatedAt @map("update_at")
 
@@ -441,6 +442,7 @@ model CourseVariant {
   courseImg         CourseImg           @relation(fields: [course_img_id], references: [id])
   location          Location            @relation(fields: [location_id], references: [id])
   CourseVariantUser CourseVariantUser[]
+  boardtype         Boardtype           @relation(fields: [boardtype_id], references: [id])
 
   @@map("course_variant")
 }
@@ -467,6 +469,8 @@ model Boardtype {
   id             Int              @id @default(autoincrement())
   name           String
   BoardtypeCoach BoardtypeCoach[]
+
+  CourseVariant CourseVariant[] // ← 反向關聯
 
   @@map("boardtype")
 }

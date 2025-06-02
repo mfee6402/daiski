@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
 // import { fail } from 'assert';
-
+import authenticate from '../../middlewares/authenticate.js';
 const router = express.Router();
 
 // multer上傳設定
@@ -143,6 +143,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// 教練建立課程
 router.post(
   '/:id/create',
   upload.array('images', 5), // ① 先跑圖片上傳
@@ -315,7 +316,7 @@ router.post(
             max_people: Number(max_people),
             location_id: locId,
             coach_id: Number(coach_id),
-            // boardtype_id: Number(boardtype_id),
+            boardtype_id: Number(boardtype_id),
             course_img_id: coverImg.id,
             start_at: new Date(start_at),
           },
@@ -371,6 +372,9 @@ router.get('/:coachId/courses/:courseId/edit', async (req, res) => {
       },
       CourseImg: true,
       CourseTag: { include: { tag: true } },
+      // Boardtype:{
+
+      // }
     },
   });
   if (!course || !course.CourseVariant.length) {
@@ -388,7 +392,7 @@ router.get('/:coachId/courses/:courseId/edit', async (req, res) => {
     max_people: course.CourseVariant[0].max_people,
     location_id: course.CourseVariant[0].location_id,
     start_at: course.CourseVariant[0].start_at.toISOString().slice(0, 16),
-    end_at: course.CourseVariant[0].end_at.toISOString().slice(0, 16),
+    // end_at: course.CourseVariant[0].end_at.toISOString().slice(0, 16),
     tags: course.CourseTag.map((ct) => ct.tag.name).join(','),
     // 封面只傳第一張路徑，省得 FormData 再處理
     cover: course.CourseImg[0]?.img || '',
@@ -402,6 +406,7 @@ router.get('/:coachId/courses/:courseId/edit', async (req, res) => {
 // 更新（PUT）
 router.put(
   '/:coachId/courses/:courseId',
+  authenticate,
   upload.array('images'),
   async (req, res) => {
     const { coachId, courseId } = req.params;
@@ -424,6 +429,7 @@ router.put(
       boardtype_id,
       location_id,
       tagIds = [],
+      delete_ids = [],
     } = req.body;
     try {
       await prisma.$transaction(async (tx) => {
@@ -434,13 +440,14 @@ router.put(
             name,
             description,
             content,
+            start_at: new Date(start_at), // ← 新增
+            end_at: new Date(end_at), // ← 新增
           },
         });
         await tx.courseVariant.updateMany({
           where: { course_id: +courseId, coach_id: +coachId },
           data: {
             start_at: new Date(start_at),
-            end_at: new Date(end_at),
             difficulty,
             price: +price,
             duration: +duration,
@@ -450,17 +457,38 @@ router.put(
           },
         });
 
-        // 2) 處理新上傳圖片（可先刪再增，或比對差異）
-        if (req.files.length) {
-          await tx.courseImg.deleteMany({ where: { course_id: +courseId } });
+        /* 2) 先刪除使用者勾掉的舊圖（若有） */
+        const idsToDel = Array.isArray(delete_ids)
+          ? delete_ids.map(Number).filter(Boolean)
+          : [];
+        if (idsToDel.length) {
+          await tx.courseImg.deleteMany({
+            where: { id: { in: idsToDel }, course_id: +courseId },
+          });
+        }
+
+        /* 3) 再新增這次上傳的檔案（若有） */
+        if (req.files?.length) {
           await Promise.all(
             req.files.map((f) =>
               tx.courseImg.create({
-                data: { course_id: +courseId, img: f.buffer },
+                data: { course_id: +courseId, img: f.buffer }, // 建議改存 URL
               })
             )
           );
         }
+
+        // 2) 處理新上傳圖片（可先刪再增，或比對差異）
+        // if (req.files.length) {
+        //   await tx.courseImg.deleteMany({ where: { course_id: +courseId } });
+        //   await Promise.all(
+        //     req.files.map((f) =>
+        //       tx.courseImg.create({
+        //         data: { course_id: +courseId, img: f.buffer },
+        //       })
+        //     )
+        //   );
+        // }
 
         // 3) 標籤 upsert
         if (Array.isArray(tagIds)) {

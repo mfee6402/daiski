@@ -219,9 +219,13 @@ router.get('/:id', async (req, res) => {
             difficulty: true,
             price: true,
             duration: true,
+            // boardtype_id: true,
             // location_id: true,
             coach: {
               select: { id: true, name: true, profilephoto: true },
+            },
+            boardtype: {
+              select: { id: true, name: true },
             },
             courseImg: {
               select: { img: true },
@@ -269,6 +273,7 @@ router.get('/:id', async (req, res) => {
       // 多張圖片
       images: course.CourseImg.map((i) => i.img),
       difficulty: course.CourseVariant[0].difficulty,
+      // boardtype: course.CourseVariant[0].boardtype_id,
       price: course.CourseVariant[0].price,
       duration: course.CourseVariant[0].duration,
       variants: course.CourseVariant.map((v) => ({
@@ -281,6 +286,10 @@ router.get('/:id', async (req, res) => {
           id: v.coach.id,
           name: v.coach.name,
           photo: v.coach.profilephoto,
+        },
+        boardtype: {
+          id: v.boardtype.id,
+          name: v.boardtype.name,
         },
         photo: v.courseImg?.img ?? null,
         location: {
