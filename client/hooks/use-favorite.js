@@ -1,8 +1,8 @@
 'use client';
 
 import useSWR from 'swr';
-
-const API_BASE = 'http://localhost:3005/api/profile/favorites';
+const base = process.env.NEXT_PUBLIC_API_BASE || '';
+const API_BASE = `${base}/api/profile/favorites`;
 const TEST_USER_ID = 1;
 
 // 單純用來 GET 收藏列表
