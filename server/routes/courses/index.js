@@ -1,12 +1,52 @@
 import express from 'express';
 import prisma from '../../lib/prisma.js';
+// import { orderBy } from 'lodash';
+import { Prisma } from '@prisma/client';
 
 const router = express.Router();
 
 // 抓課程列表
 router.get('/', async function (req, res) {
+  const { boardtype, location, difficulty, keyword } = req.query;
+
+  const where = {
+    ...(keyword && {
+      OR: [
+        { name: { contains: keyword } },
+        { description: { contains: keyword } },
+      ],
+    }),
+    ...(boardtype && {
+      CourseVariant: {
+        some: {
+          coach: {
+            BoardtypeCoach: {
+              some: {
+                boardtype: { name: boardtype },
+              },
+            },
+          },
+        },
+      },
+    }),
+    // 依位置篩
+    ...(location && {
+      CourseVariant: {
+        some: { location: { name: location } },
+      },
+    }),
+
+    // 依難度篩
+    ...(difficulty && {
+      CourseVariant: {
+        some: { difficulty },
+      },
+    }),
+  };
+
   try {
-    const course = await prisma.course.findMany({
+    const courses = await prisma.course.findMany({
+      where,
       orderBy: { start_at: 'asc' },
       select: {
         id: true,
@@ -25,7 +65,7 @@ router.get('/', async function (req, res) {
         },
       },
     });
-    const result = course.map((c) => {
+    const result = courses.map((c) => {
       const fmt = (date) =>
         new Date(date).toLocaleDateString('zh-TW', {
           year: 'numeric',
@@ -47,6 +87,28 @@ router.get('/', async function (req, res) {
   } catch (error) {
     console.error('取得課程列表失敗：', error);
     res.status(500).json({ message: '伺服器錯誤，無法讀取課程列表' });
+  }
+});
+
+// 篩選項目
+// GET /api/courses/filters
+router.get('/filters', async (_, res) => {
+  try {
+    const [boardTypes, locations, difficulties] = await Promise.all([
+      prisma.boardtype.findMany({ select: { name: true } }),
+      prisma.location.findMany({ select: { name: true } }),
+      prisma.courseVariant.findMany({
+        distinct: ['difficulty'],
+        select: { difficulty: true },
+      }),
+    ]);
+    res.json({
+      boardTypes: boardTypes.map((b) => b.name),
+      locations: locations.map((l) => l.name),
+      difficulties: difficulties.map((d) => d.difficulty),
+    });
+  } catch (e) {
+    res.status(500).send('篩選清單錯誤');
   }
 });
 

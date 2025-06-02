@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { PiPersonSimpleSki } from 'react-icons/pi';
 import { MapPinned } from 'lucide-react';
 import { InputWithButton } from './_component/input';
@@ -18,31 +18,69 @@ import { Snowflake } from 'lucide-react';
 import Image from 'next/image';
 
 export default function CoursesPage(props) {
+  // 篩選
   const [filters, setFilters] = useState({
+    loaction: '',
+    difficulty: '',
     keyword: '',
-    boardType: '', // '' | '單板' | '雙板'
-    language: '', // '' | '中文' | '日文' | '英文'
+    boardtype: '', // '' | '單板' | '雙板'
+  });
+
+  /* -------- 2. 下拉選單的選項 -------- */
+  const [options, setOptions] = useState({
+    boardTypes: [],
+    locations: [],
+    difficulties: [],
   });
 
   const [course, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // useEffect(() => {
+  //   fetch('http://localhost:3005/api/courses')
+  //     .then(async (res) => {
+  //       if (!res.ok) {
+  //         const text = await res.text();
+  //         throw new Error(`錯誤`);
+  //       }
+  //       return res.json();
+  //     })
+  //     .then((data) => {
+  //       setCourses(data);
+  //     })
+  //     .catch((err) => setError(err.message))
+  //     .finally(() => setLoading(false));
+  // }, []);
+  /* === A. 第一次載入先抓「可選條件」 === */
   useEffect(() => {
-    fetch('http://localhost:3005/api/courses')
-      .then(async (res) => {
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(`錯誤`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setCourses(data);
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+    fetch('http://localhost:3005/api/courses/filters')
+      .then((res) => res.json())
+      .then(setOptions)
+      .catch(() => setError('載入篩選清單失敗'));
   }, []);
+
+  useEffect(() => {
+    setLoading(true);
+
+    const params = new URLSearchParams(
+      Object.entries(filters).filter((_, v) => v) // 去掉空值
+    );
+
+    fetch(`http://localhost:3005/api/courses?{params.toString()}`)
+      .then((res) => res.json())
+      .then(setCourses)
+      .catch(() => setError('載入課程失敗'))
+      .finally(() => setLoading(false));
+  }, [filters]);
+  /* -------- 4. 寫回 filters 的通用函式 -------- */
+  const handle = (field) => (value) =>
+    setFilters((p) => ({ ...p, [field]: value }));
+
+  const handleSearch = useCallback(
+    (kw) => setFilters((p) => ({ ...p, keyword: kw })),
+    []
+  );
 
   if (loading) {
     return <p className="text-center p-8">載入中…</p>;
@@ -57,14 +95,28 @@ export default function CoursesPage(props) {
       <div className=" mx-auto p-8">
         <div className="flex items-center justify-center  gap-2 mb-4 relative">
           <div className="flex flex-wrap items-center gap-4">
-            <Select>
-              <SelectTrigger className="w-[180px]"></SelectTrigger>
+            {/* <Select>
+              <SelectTrigger className="w-[180px]">單/雙板</SelectTrigger>
               <SelectContent>
                 <SelectItem value="單板">單板</SelectItem>
-                <SelectItem value="雙板">雙板</SelectItem>
+              </SelectContent>
+            </Select> */}
+
+            {/* 板型（動態產生） */}
+            <Select onValueChange={handle('boardtype')}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="單 / 雙板" />
+              </SelectTrigger>
+              <SelectContent>
+                {options.boardTypes.map((b) => (
+                  <SelectItem key={b} value={b}>
+                    {b}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <Select>
+
+            {/* <Select>
               <SelectTrigger className="w-[180px]">
                 <MapPinned />
                 <SelectValue placeholder="雪場" />
@@ -73,22 +125,40 @@ export default function CoursesPage(props) {
                 <SelectItem value="二世谷">二世谷</SelectItem>
                 <SelectItem value="野澤">野澤</SelectItem>
               </SelectContent>
-            </Select>
-            <Select>
+            </Select> */}
+            {/* 雪場（動態產生） */}
+            <Select onValueChange={handle('location')}>
               <SelectTrigger className="w-[180px]">
-                <Snowflake />
-                <SelectValue placeholder="難易度" />
+                <MapPinned className="mr-1" />
+                <SelectValue placeholder="雪場" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="初級">初級</SelectItem>
-                <SelectItem value="中級">中級</SelectItem>
-                <SelectItem value="高級">高級</SelectItem>
+                {options.locations.map((l) => (
+                  <SelectItem key={l} value={l}>
+                    {l}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {/* 難度（動態產生） */}
+            <Select onValueChange={handle('difficulty')}>
+              <SelectTrigger className="w-[180px]">
+                <Snowflake className="mr-1" />
+                <SelectValue placeholder="難度" />
+              </SelectTrigger>
+              <SelectContent>
+                {options.difficulties.map((d) => (
+                  <SelectItem key={d} value={d}>
+                    {d}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <DatePickerWithRange />
             {/* 關鍵字 */}
+            {/* 關鍵字 */}
             <div className="flex w-100 max-w-sm items-center space-x-2">
-              <InputWithButton />
+              <InputWithButton onSearch={handleSearch} />
             </div>
             {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"></div> */}
           </div>
