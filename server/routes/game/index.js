@@ -23,7 +23,7 @@ router.post('/', authenticate, async function (req, res) {
     if (!game.rewardCouponId || score < game.scoreRequirement) {
       return res
         .status(400)
-        .json({ status: 'error', message: '分數未達 1200，無法領取' });
+        .json({ status: 'error', message: '分數未達 1000，無法領取' });
     }
 
     // 3. 防止重複領取
