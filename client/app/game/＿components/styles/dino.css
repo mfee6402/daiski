@@ -35,7 +35,7 @@
 
 @keyframes move {
   from {
-    left: 580px;
+    left: 1000px;
   }
   to {
     left: -50px;

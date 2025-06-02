@@ -31,7 +31,7 @@ export default function ProfileGroups(props) {
   if (error) return <p className="text-sm text-destructive">讀取失敗</p>;
 
   const groups = data?.memberships ?? [];
-
+  console.log(groups);
   return (
     <>
       <Card className="w-full ">
@@ -79,8 +79,8 @@ export default function ProfileGroups(props) {
                     : g.group.location}
                 </div>
               </div>
-              <Button asChild variant="outline">
-                <Link href={`/groups/${g.groupMemberId}`}>查看</Link>
+              <Button asChild variant="outline" key={g.groupMemberId}>
+                <Link href={`/groups/${g.group.groupId}`}>查看</Link>
               </Button>
             </article>
           ))}

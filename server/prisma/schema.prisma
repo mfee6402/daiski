@@ -521,6 +521,7 @@ model Coupon {
   couponType   CouponType   @relation(fields: [typeId], references: [id])
   couponTarget CouponTarget @relation(fields: [couponTargetId], references: [id])
   UserCoupon   UserCoupon[]
+  Game         Game[]
 
   @@map("coupon")
 }
@@ -548,7 +549,10 @@ model CouponTarget {
 model Game {
   id               Int         @id @default(autoincrement())
   scoreRequirement Int         @map("score_requirement")
+  rewardCouponId   Int         @map("reward_coupon_id")
   GameScore        GameScore[]
+
+  rewardCoupon Coupon @relation(fields: [rewardCouponId], references: [id])
 
   @@map("game")
 }

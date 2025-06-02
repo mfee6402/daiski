@@ -5,15 +5,27 @@ import Process from '../_components/process';
 import ShippingMethod from './_components/shippingMethod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
+
+import PaymentOption from './_components/paymentOption';
 
 export default function CheckoutPage(props) {
+  const [selectedPayment, setSelectedPayment] = useState('cashOnDelivery');
+  const [selectedShipping, setSelectedShipping] = useState('homeDelivery');
+
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const form = new FormData(e.target);
     const payment = form.get('payment');
-    console.log(payment);
     if (payment === 'paypal') {
       router.push('/cart/checkout/paypal');
     } else if (payment === 'ecpay') {
@@ -23,97 +35,66 @@ export default function CheckoutPage(props) {
       // 假設是貨到付款或信用卡，這裡可以寫訂單建立邏輯
       // 然後跳轉
       // await fetch('/api/order', { method: 'POST', body: form });
-      // router.push('/cart/summary');
+      router.push('/cart/summary');
     }
   };
 
   return (
     <>
       <Process step="2"></Process>
-      {/* 要使用form標記的原因 */}
-      {/* 1. 用FormData */}
-      {/* 2. 要用HTML5(瀏覽器內建)的表單驗証功能 */}
-      {/* <form onSubmit={}> */}
+      <Card className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark">
+        <form onSubmit={handleSubmit}>
+          {/* 寄送方式 */}
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">寄送方式</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col w-full p-12 gap-5  ">
+              <ShippingMethod
+                selectedShipping={selectedShipping}
+                setSelectedShipping={setSelectedShipping}
+              ></ShippingMethod>
+            </div>
+          </CardContent>
+          {/* 付款方式 */}
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">付款方式</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col w-full p-12 gap-5  ">
+              {/* 貨到付款 */}
+              <PaymentOption
+                optionName="貨到付款"
+                radioValue="cashOnDelivery"
+                checked={selectedPayment === 'cashOnDelivery'}
+                onChange={() => setSelectedPayment('cashOnDelivery')}
+              ></PaymentOption>
 
-      <form onSubmit={handleSubmit}>
-        {/* 寄送方式 */}
-        <div className="border-b-5 border-secondary-500">
-          <h6 className="text-h6-tw">寄送方式</h6>
-        </div>
-        <div className="flex flex-col w-full p-12 gap-5  ">
-          <ShippingMethod></ShippingMethod>
-        </div>
+              {/* Paypal */}
+              <PaymentOption
+                optionName="PayPal"
+                radioValue="paypal"
+                checked={selectedPayment === 'paypal'}
+                onChange={() => setSelectedPayment('paypal')}
+              ></PaymentOption>
 
-        {/* 付款方式 */}
-        <div className="border-b-5 border-secondary-500">
-          <h6 className="text-h6-tw">付款方式</h6>
-        </div>
-        <div className="flex flex-col w-full p-12 gap-5  ">
-          {/* 貨到付款 */}
-          <label className="inline-flex items-center space-x-2 relative">
-            <input
-              type="radio"
-              name="payment"
-              className="peer appearance-none w-6 h-6 rounded-full border-2 border-primary-600   checked:border-primary-600"
-            />
-            <span className="pointer-events-none w-3  h-3 rounded-full bg-primary-600 absolute left-1.5  my-auto  opacity-0 peer-checked:opacity-100" />
-
-            <h6 className=" text-h6-tw">貨到付款</h6>
-          </label>
-          {/* 信用卡 */}
-          <label className="inline-flex items-center space-x-2 relative">
-            <input
-              type="radio"
-              name="payment"
-              className="peer appearance-none w-6 h-6 rounded-full border-2 border-primary-600   checked:border-primary-600"
-            />
-            <span className="pointer-events-none w-3  h-3 rounded-full bg-primary-600 absolute left-1.5 my-auto  opacity-0 peer-checked:opacity-100" />
-
-            <h6 className=" text-h6-tw">信用卡</h6>
-          </label>
-          {/* Paypal */}
-          <label className="inline-flex items-center space-x-2 relative">
-            <input
-              type="radio"
-              name="payment"
-              value="paypal"
-              className="peer appearance-none w-6 h-6 rounded-full border-2 border-primary-600   checked:border-primary-600"
-            />
-            <span className="pointer-events-none w-3  h-3 rounded-full bg-primary-600 absolute left-1.5 my-auto opacity-0 peer-checked:opacity-100" />
-            <h6 className=" text-h6-tw">Paypal</h6>
-            {/* FIXME 按下確認付款後在用router.push轉到指定付款方式 */}
-            <Link href="http://localhost:3000/cart/checkout/paypal">
-              PayPal
-            </Link>
-          </label>
-
-          {/* 綠界 */}
-          <label className="inline-flex items-center space-x-2 relative">
-            <input
-              type="radio"
-              name="payment"
-              value="ecpay"
-              className="peer appearance-none w-6 h-6 rounded-full border-2 border-primary-600   checked:border-primary-600"
-            />
-            <span className="pointer-events-none w-3  h-3 rounded-full bg-primary-600 absolute left-1.5 my-auto opacity-0 peer-checked:opacity-100" />
-
-            <h6 className=" text-h6-tw">綠界</h6>
-            {/* FIXME 按下確認付款後在用router.push轉到指定付款方式 */}
-            <Link href="http://localhost:3005/api/cart/ecpay-test-only?amount=2500">
-              綠界按鈕
-            </Link>
-          </label>
-        </div>
-
-        <div className="flex justify-end ">
-          <button
-            type="submit"
-            className="bg-secondary-500 px-6 py-2.5 text-h6-tw"
-          >
-            確認付款
-          </button>
-        </div>
-      </form>
+              {/* 綠界 */}
+              <PaymentOption
+                optionName="綠界"
+                radioValue="ecpay"
+                checked={selectedPayment === 'ecpay'}
+                onChange={() => setSelectedPayment('ecpay')}
+              ></PaymentOption>
+            </div>
+            {/* FIXME改顏色 */}
+            <div className="flex justify-end ">
+              <Button type="submit" className="px-6 py-2.5 ">
+                確認付款
+              </Button>
+            </div>
+          </CardContent>
+        </form>
+      </Card>
     </>
   );
 }
