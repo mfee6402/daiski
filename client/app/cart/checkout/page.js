@@ -39,10 +39,6 @@ export default function CheckoutPage(props) {
   return (
     <>
       <Process step="2"></Process>
-      {/* 要使用form標記的原因 */}
-      {/* 1. 用FormData */}
-      {/* 2. 要用HTML5(瀏覽器內建)的表單驗証功能 */}
-      {/* <form onSubmit={}> */}
       <Card className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark">
         <form onSubmit={handleSubmit}>
           {/* 寄送方式 */}

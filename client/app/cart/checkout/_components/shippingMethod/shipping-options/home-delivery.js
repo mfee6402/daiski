@@ -1,5 +1,5 @@
 'use client';
-
+import './style.css';
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import {
@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+
 import {
   Popover,
   PopoverContent,
@@ -31,10 +32,36 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 
 export default function HomeDelivery({ shippingSelected }) {
+  const twAddress = {
+    台北市: {
+      中正區: '100',
+      大安區: '106',
+      信義區: '110',
+    },
+    新北市: {
+      板橋區: '220',
+      新莊區: '242',
+      三重區: '241',
+    },
+  };
+  const [city, setCity] = useState('');
+  const [district, setDistrict] = useState('');
+  const [zipCode, setZipCode] = useState('');
+
+  const handleCityChange = (value) => {
+    setCity(value);
+    setDistrict('');
+    setZipCode('');
+  };
+
+  const handleDistrictChange = (value) => {
+    setDistrict(value);
+    setZipCode(twAddress[city][value]);
+  };
   return (
     <>
       {shippingSelected === 'homeDelivery' && (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 ">
           <div className="flex gap-10">
             <div className=" w-full max-w-64">
               <label className="flex flex-col  gap-3 w-full max-w-64">
@@ -72,8 +99,60 @@ export default function HomeDelivery({ shippingSelected }) {
             >
               地址
             </Label>
+            <div>
+              <div className="flex flex-col gap-4 max-w-md">
+                {/* 選擇縣市 */}
+                <div>
+                  <label className="block mb-1 text-sm font-medium">縣市</label>
+                  <Select onValueChange={handleCityChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="請選擇縣市" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {Object.keys(twAddress).map((cityName) => (
+                          <SelectItem key={cityName} value={cityName}>
+                            {cityName}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* 選擇區域 */}
+                <div>
+                  <label className="block mb-1 text-sm font-medium">區域</label>
+                  <Select onValueChange={handleDistrictChange} disabled={!city}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="請選擇區域" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {city &&
+                          Object.keys(twAddress[city]).map((districtName) => (
+                            <SelectItem key={districtName} value={districtName}>
+                              {districtName}
+                            </SelectItem>
+                          ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* 顯示郵遞區號 */}
+                <div>
+                  <label className="block mb-1 text-sm font-medium">
+                    郵遞區號
+                  </label>
+                  <div className="border px-3 py-2 rounded-md bg-slate-100 text-slate-700">
+                    {zipCode || '請先選擇區域'}
+                  </div>
+                </div>
+              </div>
+            </div>
             <Select>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger>
                 <SelectValue placeholder="Select a fruit" />
               </SelectTrigger>
               <SelectContent>
