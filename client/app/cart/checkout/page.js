@@ -17,6 +17,9 @@ import {
 import PaymentOption from './_components/paymentOption';
 
 export default function CheckoutPage(props) {
+  const [selectedPayment, setSelectedPayment] = useState('cashOnDelivery');
+  const [selectedShipping, setSelectedShipping] = useState('homeDelivery');
+
   const router = useRouter();
 
   const handleSubmit = async (e) => {
@@ -47,7 +50,10 @@ export default function CheckoutPage(props) {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col w-full p-12 gap-5  ">
-              <ShippingMethod></ShippingMethod>
+              <ShippingMethod
+                selectedShipping={selectedShipping}
+                setSelectedShipping={setSelectedShipping}
+              ></ShippingMethod>
             </div>
           </CardContent>
           {/* 付款方式 */}
@@ -60,18 +66,24 @@ export default function CheckoutPage(props) {
               <PaymentOption
                 optionName="貨到付款"
                 radioValue="cashOnDelivery"
+                checked={selectedPayment === 'cashOnDelivery'}
+                onChange={() => setSelectedPayment('cashOnDelivery')}
               ></PaymentOption>
 
               {/* Paypal */}
               <PaymentOption
                 optionName="PayPal"
                 radioValue="paypal"
+                checked={selectedPayment === 'paypal'}
+                onChange={() => setSelectedPayment('paypal')}
               ></PaymentOption>
 
               {/* 綠界 */}
               <PaymentOption
                 optionName="綠界"
                 radioValue="ecpay"
+                checked={selectedPayment === 'ecpay'}
+                onChange={() => setSelectedPayment('ecpay')}
               ></PaymentOption>
             </div>
             {/* FIXME改顏色 */}

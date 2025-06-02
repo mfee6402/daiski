@@ -76,6 +76,6 @@ export default function CartPage({ setProcess }) {
       </>
     );
   } else {
-    return <>請先登入</>;
+    return <></>;
   }
 }
