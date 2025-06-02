@@ -53,28 +53,27 @@ export default function ProfileCourses(props) {
                   : `http://localhost:3005${c.image}`
               }
               alt={c.name}
-              width={160}
-              height={120}
-              className="w-full md:w-1/2 aspect-[4/3] rounded-md object-cover flex-shrink-0  "
+              width={20}
+              height={20}
+              className="w-full md:w-1/2 flex-shrink-0  aspect-[4/3] rounded-md object-cover  "
             />
 
             {/* 文字資訊 */}
-            <div className="flex flex-col justify-center items-start gap-3">
-              <div className="font-medium flex">
+            <div className="flex flex-col justify-center items-start gap-3  ">
+              <div className="font-medium flex gap-2 items-center">
                 <GiArtificialHive /> {c.name}
               </div>
-              <div className="text-sm text-muted-foreground flex">
-                <HiCalendarDateRange /> {c.startAt.slice(0, 10)} ~{' '}
-                {c.endAt.slice(0, 10)}
+              <div className="text-sm text-muted-foreground flex gap-2 items-center ">
+                <HiCalendarDateRange className="size-4" />
+                {c.startAt.slice(0, 10)} ~ {c.endAt.slice(0, 10)}
               </div>
-              <div className="text-sm flex">
+              <div className="text-sm flex gap-2 items-center ">
                 <IoLocationOutline /> {c.location}
               </div>
-              {/* 查看按鈕 (假設有課程詳頁) */}
-              <Button asChild variant="outline" className="self-end">
-                <Link href={`/courses/${c.id}`}>查看</Link>
-              </Button>
             </div>
+            <Button asChild variant="outline" className="self-end">
+              <Link href={`/courses/${c.id}`}>查看</Link>
+            </Button>
           </article>
         ))}
       </CardContent>
