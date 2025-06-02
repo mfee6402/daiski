@@ -83,7 +83,7 @@ export default function MemberPage() {
   ); // 當前顯示的頭像 URL
   console.log(src);
   return (
-    <div className="min-h-screen max-h-270 pt-8 bg-[url('/home-images/layer2.png')]  bg-no-repeat ">
+    <div className="min-h-screen w-full bg-fixed bg-cover pt-8 bg-[url('/home-images/layer2.png')]  bg-no-repeat ">
       <Container className="">
         {/* Header */}
         <header className="flex flex-col items-center gap-4">
@@ -101,13 +101,18 @@ export default function MemberPage() {
         {/* Tabs */}
         <Tabs defaultValue="info" className="w-full">
           {/* Tabs Navigation */}
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 mb-10 sm:mb-0">
-            <TabsTrigger value="info">會員資訊</TabsTrigger>
-            <TabsTrigger value="courses">課程</TabsTrigger>
-            <TabsTrigger value="groups">揪團</TabsTrigger>
-            <TabsTrigger value="favorites">我的收藏</TabsTrigger>
-            <TabsTrigger value="orders">訂單紀錄</TabsTrigger>
-            <TabsTrigger value="coupons">優惠卷</TabsTrigger>
+          <TabsList className="flex flex-col md:flex-row w-full h-full">
+            <div className="grid w-full grid-cols-3">
+              <TabsTrigger value="info">會員資訊</TabsTrigger>
+              <TabsTrigger value="courses">課程</TabsTrigger>
+              <TabsTrigger value="groups">揪團</TabsTrigger>
+            </div>
+
+            <div className="grid w-full grid-cols-3">
+              <TabsTrigger value="favorites">我的收藏</TabsTrigger>
+              <TabsTrigger value="orders">訂單紀錄</TabsTrigger>
+              <TabsTrigger value="coupons">優惠卷</TabsTrigger>
+            </div>
           </TabsList>
           {/* Tabs Content */}
           <TabsContent
@@ -115,7 +120,7 @@ export default function MemberPage() {
             className="space-y-6 max-h-[580px] overflow-y-auto"
           >
             {/* Example Card inside a tab */}
-            <Card>
+            <Card className="">
               <CardHeader>
                 <CardTitle>基本資料</CardTitle>
                 <CardDescription>
@@ -131,7 +136,7 @@ export default function MemberPage() {
                       onSubmit={form.handleSubmit(onSubmit)}
                       className="space-y-6"
                     >
-                      <div className="grid gap-4 md:grid-cols-2">
+                      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                         <FormField
                           control={form.control}
                           name="name"
