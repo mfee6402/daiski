@@ -94,9 +94,9 @@ export default function UserPage() {
 
   return (
     <>
-      <div className="flex container justify-center  mx-auto  gap-1">
-        <div className="relative w-full sm:w-1/2 py-12 left flex-1 min-w-0 bg-[url('/login.png')] bg-cover bg-center sm:bg-none px-4 sm:px-0">
-          <div className="absolute inset-0 bg-white/60 sm:hidden" />
+      <div className="flex container justify-center  mx-auto  gap-1 min-h-screen">
+        <div className="relative w-full sm:w-1/2 py-12 left flex-1 min-w-0 bg-[url('/login.png')] bg-fixed bg-cover bg-center sm:bg-none px-4 sm:px-0 ">
+          <div className="absolute inset-0 bg-white/80  sm:hidden" />
           <div className="relative z-10">
             <div className="text-center ">
               <h1 className="text-h2-tw">登入</h1>
@@ -115,7 +115,7 @@ export default function UserPage() {
                   name="account"
                   value={userInput.account}
                   onChange={handleFieldChange}
-                  className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                  className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
                 />
               </label>
               <label className="">
@@ -125,7 +125,7 @@ export default function UserPage() {
                   name="password"
                   value={userInput.password}
                   onChange={handleFieldChange}
-                  className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                  className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
                 />
               </label>
 
