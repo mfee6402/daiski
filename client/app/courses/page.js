@@ -143,7 +143,6 @@ export default function CoursesPage(props) {
             <div className="flex w-100 max-w-sm items-center space-x-2">
               <InputWithButton onSearch={handleSearch} />
             </div>
-            {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"></div> */}
           </div>
         </div>
       </div>

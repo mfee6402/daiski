@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Card,
@@ -15,7 +15,88 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
-import RichEditor from './ckeditor';
+// import RichEditor from './ckeditor';
+// ---------- 「插入圖片 / contenteditable」相關函式 ----------
+/**
+ * 把 <img src="url"> 插到游標位置，若游標不在 editor 內，就 append 到最後
+ */
+
+// 放在檔案頂端（import 之後）
+
+// uploadImage 回傳時就附上 host
+function getCkImageUrl(path) {
+  // 假設後端跑在 3005 埠
+  return `http://localhost:3005${path}`;
+}
+
+async function uploadImage(file) {
+  const fd = new FormData();
+  fd.append('image', file);
+
+  const res = await fetch(
+    'http://localhost:3005/api/coaches/uploads/ckeditor',
+    {
+      method: 'POST',
+      body: fd,
+      credentials: 'include',
+    }
+  );
+  if (!res.ok) throw new Error('上傳失敗');
+  const data = await res.json(); // 假設後端回 { url: '...' }
+  return getCkImageUrl(data.url);
+}
+
+function insertImageAtCursor(editorEl, imageUrl) {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) {
+    // 沒游標就直接 append 到最末
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.style.maxWidth = '100%';
+    editorEl.appendChild(img);
+    return;
+  }
+
+  let range = selection.getRangeAt(0);
+  // 檢查游標是否在 editorEl 裡
+  let node = range.commonAncestorContainer;
+  let inside = false;
+  while (node) {
+    if (node === editorEl) {
+      inside = true;
+      break;
+    }
+    node = node.parentNode;
+  }
+
+  if (!inside) {
+    // 如果游標原本不在 editor 區塊，就先 focus 並 collapse 到尾巴
+    editorEl.focus();
+    selection.removeAllRanges();
+    const newRange = document.createRange();
+    newRange.selectNodeContents(editorEl);
+    newRange.collapse(false);
+    selection.addRange(newRange);
+  }
+
+  // 建立 img node
+  const img = document.createElement('img');
+  img.src = imageUrl;
+  img.alt = 'uploaded image';
+  img.style.maxWidth = '100%';
+
+  // 刪除範圍內的文字（若有）
+  range.deleteContents();
+  // 插入 img
+  range.insertNode(img);
+
+  // 把游標置於 <img> 之後
+  range.setStartAfter(img);
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
+  editorEl.focus();
+}
 /* -------- 建立時才需要的 Stepper -------- */
 const STEPS = [
   { id: 'basic', name: '步驟 1', description: '填寫課程' },
@@ -153,9 +234,6 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
   /* ---------------- 基本 hooks ---------------- */
   const router = useRouter();
   const { coachId, courseId } = useParams();
-  //   const params = useParams();
-  //   const coachId = params.coachId || params.id; // 兼容舊 [id]
-  //   const courseId = params.courseId;
   const { user, isAuth } = useAuth();
 
   /* ---------------- 狀態 ---------------- */
@@ -197,7 +275,13 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
     if (initialData) setForm(initialData);
   }, [initialData]);
 
-  /* ---------------- 取得雪場 ---------------- */
+  const editorRef = useRef(null);
+  // ref：隱藏的 <input type="file">
+  const fileInputRef = useRef(null);
+  // 控制上傳狀態
+  const [uploading, setUploading] = useState(false);
+
+  // 取得雪場清單
   useEffect(() => {
     fetch('http://localhost:3005/api/location')
       .then((r) => r.json())
@@ -205,22 +289,60 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
       .catch(console.error);
   }, []);
 
-  /* ---------------- onChange ---------------- */
-  //   const onChange = (e) => {
-  //     const { name, value, type, files } = e.target;
-  //     if (type === 'file') {
-  //       const arr = Array.from(files || []);
-  //       setForm((p) => ({ ...p, course_imgs: arr }));
-  //       if (arr.length) setCoverPreview(URL.createObjectURL(arr[0]));
-  //       return;
-  //     }
-  //     if (name.startsWith('newLoc.')) {
-  //       const k = name.split('.')[1];
-  //       setForm((p) => ({ ...p, newLoc: { ...p.newLoc, [k]: value } }));
-  //       return;
-  //     }
-  //     setForm((p) => ({ ...p, [name]: value }));
-  //   };
+  // 如果是 edit 模式，載入後把 initialData 塞入
+  useEffect(() => {
+    if (initialData) {
+      setForm(initialData);
+    }
+  }, [initialData]);
+
+  // ---------- 處理 contenteditable 內文字變動 ----------
+  // const handleInput = useCallback(() => {
+  //   if (!editorRef.current) return;
+  //   // 把 innerHTML 存回 form.content
+  //   setForm(function (prev) {
+  //     return Object.assign({}, prev, { content: editorRef.current.innerHTML });
+  //   });
+  // }, []);
+  const handleInput = () => {
+    setForm((prev) => ({
+      ...prev,
+      content: editorRef.current.innerHTML,
+    }));
+  };
+  // ---------- 處理「點按插入圖片」按鈕 ----------
+  const handleClickInsertImage = useCallback(() => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  }, []);
+  // ---------- 處理 <input type="file"> 的 onChange，並插圖 ----------
+  const handleFileChange = useCallback(async function (e) {
+    let files = e.target.files;
+    if (!files || files.length === 0) return;
+    let file = files[0];
+    if (!editorRef.current) return;
+
+    setUploading(true);
+    try {
+      let imageUrl = await uploadImage(file);
+      insertImageAtCursor(editorRef.current, imageUrl);
+      // 同步一次最新內容
+      setForm(function (prev) {
+        return Object.assign({}, prev, {
+          content: editorRef.current.innerHTML,
+        });
+      });
+    } catch (err) {
+      console.error(err);
+      alert('圖片上傳或插入失敗');
+    } finally {
+      setUploading(false);
+      // 清空 input
+      e.target.value = '';
+    }
+  }, []);
+
   const onChange = (e) => {
     const { name, value, type, files } = e.target;
     console.log('欄位變更', name, value);
@@ -283,19 +405,19 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
     // 文字欄位
     fd.append('name', form.name.trim());
     fd.append('description', form.description.trim());
-    fd.append('content', form.content.trim());
+    fd.append('content', form.content);
     fd.append('start_at', form.start_at); // '2025-06-01T09:00'
     fd.append('end_at', form.end_at);
     fd.append('difficulty', form.difficulty);
-
-    [
-      // 數字欄位
-      'price',
-      'duration',
-      'max_people',
-      'boardtype_id',
-      'location_id',
-    ].forEach((k) => fd.append(k, Number(form[k]) || 0));
+    fd.append('content', form.content.trim()),
+      [
+        // 數字欄位
+        'price',
+        'duration',
+        'max_people',
+        'boardtype_id',
+        'location_id',
+      ].forEach((k) => fd.append(k, Number(form[k]) || 0));
     fd.append('coach_id', +user.id);
     console.log(fd.get('price'));
     if (form.location_id === 'other') {
@@ -416,7 +538,8 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                   </div>
                   {/* <div>
                     <Label htmlFor="content">詳細內容</Label>
-                    <Textarea
+                    <div
+                      contentEditable="true"
                       id="content"
                       name="content"
                       value={form.content}
@@ -424,13 +547,45 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                       rows={4}
                     />
                   </div> */}
-                  <label className="block mb-2 font-medium">詳細內容</label>
-                  <RichEditor
-                    value={form.content}
-                    onChange={(html) =>
-                      setForm((p) => ({ ...p, content: html }))
-                    }
-                  />
+                  <div>
+                    <Label htmlFor="content">詳細內容</Label>
+                    {/* 插入圖片 按鈕 */}
+                    <div className="flex items-center gap-2 mb-2">
+                      <Button
+                        type="button"
+                        onClick={handleClickInsertImage}
+                        disabled={uploading}
+                        size="sm"
+                      >
+                        {uploading ? '圖片上傳中…' : '插入圖片'}
+                      </Button>
+                      {/* 你也可以加一個說明文字 */}
+                      <p className="text-sm text-gray-500">
+                        ※ 圖片會自動上傳到伺服器，並插入到游標位置
+                      </p>
+                    </div>
+                    {/* 隱藏的 file input */}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                    />
+
+                    {/* 這才是真正的 contenteditable 區塊 */}
+                    <div
+                      ref={editorRef}
+                      contentEditable
+                      onInput={handleInput}
+                      className="min-h-[200px] w-full border p-2 rounded focus:outline-none"
+                      style={{ whiteSpace: 'pre-wrap' }}
+                      // 下面這屬性只是讓 React 不再警告
+                      suppressContentEditableWarning
+                      // 初次 render 時放進 innerHTML
+                      dangerouslySetInnerHTML={{ __html: form.content }}
+                    />
+                  </div>
                   {/* 日期 */}
                   <div className="grid sm:grid-cols-2 gap-6">
                     <div>
