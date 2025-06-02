@@ -18,6 +18,7 @@ import {
   Minus,
   Plus,
 } from 'lucide-react';
+import { FaStar } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -282,6 +283,22 @@ export default function ProductDetail() {
             <p className="text-xl font-bold text-red-500 mb-6">
               NT$ {price.toLocaleString()}
             </p>
+
+            {product.totalRatings > 0 ? (
+              <div className="flex items-center mb-4">
+                <FaStar className="text-yellow-500 mr-1" />
+                <span className="text-lg font-semibold">
+                  {product.averageRating}
+                </span>
+                <span className="text-gray-500 dark:text-white ml-1">
+                  ({product.totalRatings})
+                </span>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-white mb-4">
+                尚無評價
+              </p>
+            )}
 
             {/* 尺寸選擇（僅在有尺寸時顯示） */}
             {skus.some((s) => s.sizeId !== null) && (
