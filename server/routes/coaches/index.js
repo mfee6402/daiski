@@ -4,7 +4,6 @@ import { body, validationResult } from 'express-validator';
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
-// import { fail } from 'assert';
 import authenticate from '../../middlewares/authenticate.js';
 const router = express.Router();
 
@@ -26,6 +25,21 @@ const storage = multer.diskStorage({
 //   limits: { fileSize: 5 * 1024 * 1024 },
 // });
 const upload = multer({ storage: multer.memoryStorage() });
+
+// ckditor
+/* --- 貼在檔尾任何路由之前 (避免與 /:id 衝突)，或乾脆放最上方 --- */
+router.post('/uploads/ckeditor', upload.single('image'), async (req, res) => {
+  try {
+    const dir = 'public/ckeditor';
+    fs.mkdirSync(dir, { recursive: true });
+    const fileName = `${Date.now()}-${req.file.originalname}`;
+    fs.writeFileSync(path.join(dir, fileName), req.file.buffer);
+    res.json({ url: `/ckeditor/${fileName}` });
+  } catch (err) {
+    console.error('CKEditor Upload Error:', err);
+    res.status(500).json({ message: '上傳失敗' });
+  }
+});
 
 // 抓教練列表
 router.get('/', async function (req, res) {
@@ -221,7 +235,6 @@ router.post(
       tags,
     } = req.body;
     console.log(req.body);
-    console.log('fnfkws');
 
     /* ---------- ⑤ 處理圖片 ---------- */
     const files = req.files || [];
@@ -387,6 +400,7 @@ router.get('/:coachId/courses/:courseId/edit', async (req, res) => {
     ...course,
     boardtype_id: course.CourseVariant[0].boardtype_id,
     difficulty: course.CourseVariant[0].difficulty,
+    content: course.content,
     price: course.CourseVariant[0].price,
     duration: course.CourseVariant[0].duration,
     max_people: course.CourseVariant[0].max_people,
@@ -439,7 +453,6 @@ router.put(
           data: {
             name,
             description,
-            content,
             start_at: new Date(start_at), // ← 新增
             end_at: new Date(end_at), // ← 新增
           },
