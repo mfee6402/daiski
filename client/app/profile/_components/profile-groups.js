@@ -50,7 +50,6 @@ export default function ProfileGroups(props) {
               key={g.groupMemberId}
               className="flex flex-col md:flex-row gap-4 rounded-lg border p-4 min-w-0 "
             >
-              <div></div>
               <Image
                 src={
                   g.group.imageUrl
@@ -63,30 +62,32 @@ export default function ProfileGroups(props) {
                 height={20}
                 className="w-full md:w-1/2 flex-shrink-0 rounded-md object-cover aspect-[4/3]"
               />
-              <div className="flex flex-col justify-center items-start gap-3">
-                <div className="font-medium flex">
-                  <GiArtificialHive />
+              <div className="flex flex-col justify-center items-start gap-3 ">
+                <div className="font-medium flex items-center gap-2">
+                  <GiArtificialHive className="" />
                   {g.group.title}
                 </div>
-                <div className="flex text-sm text-muted-foreground ">
-                  <HiCalendarDateRange className="size-10" />
-                  {g.group.time}
+                <div className="flex text-sm text-muted-foreground items-center gap-2">
+                  <HiCalendarDateRange className="size-4" />
+                  {/* {toUTC8(item?.startAt)} ～ {toUTC8(item?.endAt)} */}
+                  {g.group.time.slice(0, 10)} {'~'}
+                  {g.group.time.slice(26, 37)}
                 </div>
-                <div className="text-sm flex">
+                <div className="text-sm flex items-center gap-2">
                   <IoLocationOutline />
                   {g.group.location === 'null'
                     ? g.customLocation
                     : g.group.location}
                 </div>
-                <Button
-                  asChild
-                  variant="outline"
-                  key={g.groupMemberId}
-                  className="self-end"
-                >
-                  <Link href={`/groups/${g.group.groupId}`}>查看</Link>
-                </Button>
               </div>
+              <Button
+                asChild
+                variant="outline"
+                key={g.groupMemberId}
+                className="self-end"
+              >
+                <Link href={`/groups/${g.group.groupId}`}>查看</Link>
+              </Button>
             </article>
           ))}
         </CardContent>
