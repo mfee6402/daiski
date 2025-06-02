@@ -155,6 +155,7 @@ export default function CartItemList({ category = '' }) {
                       <TableCell>
                         <div className="flex justify-center w-full gap-4">
                           {/* FIXME 課程跟揪團也要 */}
+                          {/* FIXME 揪團刪除路由localhost:3005/api/group/members/${groupMemberId} */}
                           {category === 'CartProduct' && (
                             <Delete
                               name={item.name}

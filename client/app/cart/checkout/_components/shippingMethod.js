@@ -2,25 +2,33 @@
 
 import React, { useState, useEffect } from 'react';
 
-import ShippingOptions from './shippingMethod/shipping-options';
+import ShippingOptions from './shipping-method/shipping-options';
 
-export default function ShippingMethod() {
-  const [shippingSelected, setShippingSelected] = useState('homeDelivery');
+import HomeDelivery from './shipping-method/shipping-options/home-delivery';
+import StorePickup from './shipping-method/shipping-options/storePickup';
+
+export default function ShippingMethod({
+  selectedShipping = '',
+  setSelectedShipping = () => {},
+}) {
   return (
     <>
       <ShippingOptions
-        shippingSelected={shippingSelected}
-        setShippingSelected={setShippingSelected}
         name="宅配"
-        method="homeDelivery"
+        radioValue="homeDelivery"
+        checked={selectedShipping === 'homeDelivery'}
+        onChange={() => setSelectedShipping('homeDelivery')}
       ></ShippingOptions>
+      {selectedShipping === 'homeDelivery' && <HomeDelivery></HomeDelivery>}
 
       <ShippingOptions
-        shippingSelected={shippingSelected}
-        setShippingSelected={setShippingSelected}
         name="超商取貨"
-        method="storePickup"
+        radioValue="storePickup"
+        checked={selectedShipping === 'storePickup'}
+        onChange={() => setSelectedShipping('storePickup')}
       ></ShippingOptions>
+      {/* 每個選項只負責自己的擴展內容 */}
+      {selectedShipping === 'storePickup' && <StorePickup></StorePickup>}
     </>
   );
 }
