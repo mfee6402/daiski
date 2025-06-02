@@ -199,6 +199,7 @@ router.get('/', authenticate, async function (req, res) {
       imageUrl: item.group.imageUrl ? item.group.imageUrl : '',
     }));
 
+    // FIXME 使用優惠券給的API
     // 優惠券
     const couponData = await prisma.userCoupon.findMany({
       select: {
