@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
-
+import RichEditor from './ckeditor';
 /* -------- 建立時才需要的 Stepper -------- */
 const STEPS = [
   { id: 'basic', name: '步驟 1', description: '填寫課程' },
@@ -186,7 +186,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
   const todayLocal = (() => {
     const d = new Date();
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); // to local ISO
-    return d.toISOString().slice(0, 16);
+    return d.toISOString().slice(0, 10);
   })();
 
   /* ---------------- 載入初始資料 (edit) ---------------- */
@@ -414,7 +414,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                       rows={2}
                     />
                   </div>
-                  <div>
+                  {/* <div>
                     <Label htmlFor="content">詳細內容</Label>
                     <Textarea
                       id="content"
@@ -423,7 +423,14 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                       onChange={onChange}
                       rows={4}
                     />
-                  </div>
+                  </div> */}
+                  <label className="block mb-2 font-medium">詳細內容</label>
+                  <RichEditor
+                    value={form.content}
+                    onChange={(html) =>
+                      setForm((p) => ({ ...p, content: html }))
+                    }
+                  />
                   {/* 日期 */}
                   <div className="grid sm:grid-cols-2 gap-6">
                     <div>
@@ -431,7 +438,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                       <Input
                         id="start_at"
                         name="start_at"
-                        type="datetime-local"
+                        type="date"
                         value={form.start_at}
                         onChange={onChange}
                       />
@@ -441,7 +448,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                       <Input
                         id="end_at"
                         name="end_at"
-                        type="datetime-local"
+                        type="date"
                         value={form.end_at}
                         onChange={onChange}
                       />
@@ -552,7 +559,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                     </div>
                   )}
                   <div>
-                    <Label htmlFor="course_imgs">課程圖片</Label>
+                    <Label htmlFor="course_imgs">封面圖片</Label>
                     <Input
                       id="course_imgs"
                       name="course_imgs"
@@ -603,7 +610,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                 <CardHeader>
                   <CardTitle>確認課程資訊</CardTitle>
                   <CardDescription>
-                    請檢查以下內容，確認無誤後發佈
+                    請檢查以下內容，確認無誤後儲存
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
@@ -641,7 +648,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                     disabled={isSubmitting}
                     onClick={handleSubmit}
                   >
-                    {isSubmitting ? '發佈中...' : '確認發佈'}
+                    {isSubmitting ? '儲存中...' : '確認儲存'}
                   </Button>
                 </CardFooter>
               </Card>
@@ -661,7 +668,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                   </CardHeader>
                   <CardContent className="text-sm space-y-1 text-red-700">
                     <p>• 請確認課程資訊真實、準確。</p>
-                    <p>• 發佈後可在「我的課程」頁面管理。</p>
+                    <p>• 儲存後可在「我的課程」頁面管理。</p>
                   </CardContent>
                 </Card>
               )}

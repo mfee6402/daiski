@@ -23,8 +23,8 @@ export default function EditCoursePage() {
         /* 轉成 CourseForm 需要的格式 ↓↓↓ */
         setData({
           ...json,
-          start_at: json.start_at.slice(0, 16), // to datetime-local
-          end_at: json.end_at.slice(0, 16),
+          start_at: json.start_at.slice(0, 10), // to datetime-local
+          end_at: json.end_at.slice(0, 10),
           tags: json.CourseTag?.map((t) => t.tag.name).join(',') || '',
           course_imgs: [], // 先清空，新上傳才送
         });
