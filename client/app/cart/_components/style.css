@@ -1,3 +1,4 @@
-/* * {
-  border: 1px solid rgb(58, 37, 67);
-} */
+html body[data-scroll-locked] {
+  overflow-y: scroll !important;
+  margin-right: 0px !important;
+}
