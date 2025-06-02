@@ -155,7 +155,7 @@ model ProductImage {
 model ProductRating {
   id          Int       @id @default(autoincrement())
   user_id     Int
-  order_id    Int       @unique(map: "ux_order_rating")
+  order_id    Int
   product_id  Int
   rating      Decimal   @db.Decimal(2, 1)
   review_text String?   @db.Text
@@ -163,6 +163,7 @@ model ProductRating {
   updated_at  DateTime  @default(now()) @db.DateTime(0)
   deleted_at  DateTime? @db.DateTime(0)
 
+  @@unique([order_id, product_id], map: "ux_order_product_rating")
   @@map("product_rating")
 }
 
@@ -429,6 +430,7 @@ model CourseVariant {
   location_id   Int
   coach_id      Int
   course_img_id Int
+  boardtype_id  Int
   created_at    DateTime @default(now()) @map("created_at")
   update_at     DateTime @updatedAt @map("update_at")
 
@@ -441,6 +443,7 @@ model CourseVariant {
   courseImg         CourseImg           @relation(fields: [course_img_id], references: [id])
   location          Location            @relation(fields: [location_id], references: [id])
   CourseVariantUser CourseVariantUser[]
+  boardtype         Boardtype           @relation(fields: [boardtype_id], references: [id])
 
   @@map("course_variant")
 }
@@ -467,6 +470,8 @@ model Boardtype {
   id             Int              @id @default(autoincrement())
   name           String
   BoardtypeCoach BoardtypeCoach[]
+
+  CourseVariant CourseVariant[] // ← 反向關聯
 
   @@map("boardtype")
 }
