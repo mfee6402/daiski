@@ -107,7 +107,7 @@ export default function UserPage() {
                 </Link>
               </p>
             </div>
-            <div className="max-w-md mx-auto mt-6 flex flex-col gap-2">
+            <div className="max-w-md mx-auto mt-30 flex flex-col gap-2">
               <label>
                 帳號:
                 <input
@@ -138,7 +138,7 @@ export default function UserPage() {
             </div>
 
             <div className="mt-16">
-              <button
+              {/* <button
                 onClick={() => {
                   // 測試帳號 harry/11111
                   setUserInput({ account: 'harry', password: '11111' });
@@ -146,23 +146,23 @@ export default function UserPage() {
               >
                 一鍵輸入範例
               </button>
-              <hr />
+              <hr /> */}
               {/* <h1>會員登入認証&授權測試(JWT)</h1> */}
-              <p>會員狀態:{isAuth ? '已登入' : '未登入'}</p>
+              {/* <p>會員狀態:{isAuth ? '已登入' : '未登入'}</p>
               <hr />
               <button onClick={handleLogout}>登出(logout)</button>
               <hr />
               <button onClick={handleCheckAuth}>
                 檢查登入狀況(check login)
               </button>
-              <hr />
+              <hr /> */}
 
               {/* <p>
             以下連結為測試會員隱私資料頁，如果未登入完成會跳轉回登入頁(本頁)，實作程式碼詳見useAuth勾子
           </p> */}
-              <p>
+              {/* <p>
                 <Link href="/auth/login/status">存取會員隱私資料</Link>
-              </p>
+              </p> */}
             </div>
           </div>
         </div>
