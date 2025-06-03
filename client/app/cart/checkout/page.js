@@ -87,7 +87,7 @@ export default function CheckoutPage(props) {
     });
     const amount = await response.json();
 
-    console.log(amount);
+    console.log('測試' + amount);
 
     if (data.payment === 'paypal') {
       router.push('/cart/checkout/paypal');
@@ -103,7 +103,6 @@ export default function CheckoutPage(props) {
     }
   };
   console.log(cart);
-
   return (
     <>
       <FormProvider {...methods}>
