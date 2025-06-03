@@ -1,13 +1,17 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
+import { useFormContext } from 'react-hook-form';
 
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import TwAddressSelector from './home-delivery/twAddressSelector';
 
 export default function HomeDelivery() {
-  const [addressDetail, setAddressDetail] = useState('');
+  const {
+    register,
+    formState: { errors },
+  } = useFormContext();
   return (
     <>
       {
@@ -16,16 +20,12 @@ export default function HomeDelivery() {
             <div className=" w-full max-w-64">
               <label className="flex flex-col  gap-3 w-full max-w-64">
                 <h6 className="text-p-tw">收貨人</h6>
+                {/* FIXME 待完成 */}
 
-                <Input
-                  className="border-1 border-primary-600 w-full max-w-64  "
-                  type="text"
-                  name="name"
-                  value={addressDetail}
-                  onChange={(e) => {
-                    setAddressDetail(e.target.value);
-                  }}
-                />
+                <Input {...register('name', { required: '姓名必填' })} />
+                {errors.name && (
+                  <p className="text-red">{errors.name.message}</p>
+                )}
               </label>
             </div>
             {/* <span className={styles['error']}>{errors.name}</span> */}
@@ -33,14 +33,18 @@ export default function HomeDelivery() {
               <label className="flex flex-col  gap-3  w-full max-w-64">
                 <h6 className="text-p-tw">手機</h6>
                 <Input
-                  className="border-1 border-primary-600 w-full  max-w-64 "
-                  type="text"
-                  name="phone"
-                  // value={user.email}
-                  // onChange={}
+                  {...register('phone', {
+                    required: '手機號碼必填',
+                    pattern: {
+                      value: /^09\d{8}$/,
+                      message: '格式錯誤',
+                    },
+                  })}
                 />
+                {errors.phone && (
+                  <p className="text-red">{errors.phone.message}</p>
+                )}
               </label>
-              {/* <span className={styles['error']}>{errors.email}</span> */}
             </div>
           </div>
 
