@@ -15,13 +15,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
-// import RichEditor from './ckeditor';
-// ---------- 「插入圖片 / contenteditable」相關函式 ----------
-/**
- * 把 <img src="url"> 插到游標位置，若游標不在 editor 內，就 append 到最後
- */
-
-// 放在檔案頂端（import 之後）
 
 // uploadImage 回傳時就附上 host
 function getCkImageUrl(path) {
@@ -29,22 +22,22 @@ function getCkImageUrl(path) {
   return `http://localhost:3005${path}`;
 }
 
-async function uploadImage(file) {
-  const fd = new FormData();
-  fd.append('image', file);
+// async function uploadImage(file) {
+//   const fd = new FormData();
+//   // fd.append('images', file);
 
-  const res = await fetch(
-    'http://localhost:3005/api/coaches/uploads/ckeditor',
-    {
-      method: 'POST',
-      body: fd,
-      credentials: 'include',
-    }
-  );
-  if (!res.ok) throw new Error('上傳失敗');
-  const data = await res.json(); // 假設後端回 { url: '...' }
-  return getCkImageUrl(data.url);
-}
+//   const res = await fetch(
+//     'http://localhost:3005/api/coaches/uploads/ckeditor',
+//     {
+//       method: 'POST',
+//       body: fd,
+//       credentials: 'include',
+//     }
+//   );
+//   if (!res.ok) throw new Error('上傳失敗');
+//   const data = await res.json();
+//   return getCkImageUrl(data.url);
+// }
 
 function insertImageAtCursor(editorEl, imageUrl) {
   const selection = window.getSelection();
@@ -314,41 +307,44 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
     }));
   };
   // ---------- 處理「點按插入圖片」按鈕 ----------
-  const handleClickInsertImage = useCallback(() => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  }, []);
+  // const handleClickInsertImage = useCallback(() => {
+  //   if (fileInputRef.current) {
+  //     fileInputRef.current.click();
+  //   }
+  // }, []);
   // ---------- 處理 <input type="file"> 的 onChange，並插圖 ----------
-  const handleFileChange = useCallback(async function (e) {
-    let files = e.target.files;
-    if (!files || files.length === 0) return;
-    let file = files[0];
-    if (!editorRef.current) return;
+  // const handleFileChange = useCallback(async function (e) {
+  //   let files = e.target.files;
+  //   if (!files || files.length === 0) return;
+  //   let file = files[0];
+  //   if (!editorRef.current) return;
 
-    setUploading(true);
-    try {
-      let imageUrl = await uploadImage(file);
-      insertImageAtCursor(editorRef.current, imageUrl);
-      // 同步一次最新內容
-      setForm(function (prev) {
-        return Object.assign({}, prev, {
-          content: editorRef.current.innerHTML,
-        });
-      });
-    } catch (err) {
-      console.error(err);
-      alert('圖片上傳或插入失敗');
-    } finally {
-      setUploading(false);
-      // 清空 input
-      e.target.value = '';
-    }
-  }, []);
+  //   setUploading(true);
+  //   try {
+  //     let imageUrl = await uploadImage(file);
+  //     insertImageAtCursor(editorRef.current, imageUrl);
+  //     // 同步一次最新內容
+  //     setForm(function (prev) {
+  //       return Object.assign({}, prev, {
+  //         content: editorRef.current.innerHTML,
+  //       });
+  //     });
+  //   } catch (err) {
+  //     console.error(err);
+  //     alert('圖片上傳或插入失敗');
+  //   } finally {
+  //     setUploading(false);
+  //     // 清空 input
+  //     e.target.value = '';
+  //   }
+  // }, []);
   // 新的 onChangeCover:
   const onChangeCover = (e) => {
     const file = e.target.files[0];
     if (file) {
+      const { files } = e.target;
+      const f = files[0];
+      setForm((p) => ({ ...p, course_imgs: f }));
       setCoverFile(file);
       setCoverPreview(URL.createObjectURL(file)); // 用於右側預覽
     } else {
@@ -360,6 +356,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
   const onChange = (e) => {
     const { name, value, type, files } = e.target;
     console.log('欄位變更', name, value);
+    console.log(type);
     if (type === 'file') {
       const f = files[0];
       setForm((p) => ({ ...p, course_imgs: f }));
@@ -415,11 +412,21 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
     //   .filter(Boolean) // 避免 null
     //   .forEach((file) => fd.append('images', file));
     // console.log([...fd.entries()]);
-
-    if (coverFile) {
-      // 把這個 File 直接 append 成 'cover'
-      fd.append('cover', coverFile);
+    console.log('-------' + coverFile);
+    if (Array.isArray(form.course_imgs)) {
+      form.course_imgs.forEach((file) => fd.append('images', file));
     }
+    // else if (form.course_imgs) {
+    //   fd.append('images', form.course_imgs);
+    // }
+    else if (coverFile) {
+      fd.append('images', coverFile);
+    }
+
+    // if (coverFile) {
+    //   // 把這個 File 直接 append 成 'cover'
+    //   fd.append('cover', coverFile);
+    // }
 
     // 文字欄位
     fd.append('name', form.name.trim());
@@ -478,13 +485,16 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
       const url = isCreate
         ? `http://localhost:3005/api/coaches/${targetCoachId}/create`
         : `http://localhost:3005/api/coaches/${targetCoachId}/courses/${courseId}`;
+      console.log(url);
       const res = await fetch(url, {
         method: isCreate ? 'POST' : 'PUT',
         body: fd,
         credentials: 'include',
       });
+
       // 確定拿到 JSON
       const payload = await res.json();
+      console.log('okay');
       if (!res.ok) {
         console.error('🛑 後端錯誤明細：', payload);
         throw new Error(payload.message || '伺服器錯誤');
@@ -714,7 +724,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                     <Label htmlFor="course_imgs">封面圖片</Label>
                     <Input
                       id="cover"
-                      name="cover"
+                      name="images"
                       type="file"
                       accept="image/*"
                       onChange={onChangeCover}

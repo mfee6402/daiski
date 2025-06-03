@@ -9,7 +9,7 @@ export default function CoachIdPage(props) {
   const [coach, setCoach] = useState(null); // 存放教練物件
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const coachesId = useParams().id;
+  const coachesId = useParams().coachId;
   console.log(coachesId);
   console.log(coach);
   useEffect(() => {

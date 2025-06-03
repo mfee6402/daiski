@@ -10,7 +10,7 @@ const router = express.Router();
 
 const storageCover = multer.diskStorage({
   destination: (req, file, cb) => {
-    // 取出courseId
+    //     // 取出courseId
     const courseId = req.params.courseId;
     // 封面圖放到 public/courseImages/{courseId}/
     const uploadDir = path.join(
@@ -28,19 +28,20 @@ const storageCover = multer.diskStorage({
   },
 });
 const uploadCover = multer({ storage: storageCover });
+
 // multer上傳設定
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     const dir = 'public/courseImages';
-//     fs.mkdirSync(dir, { recursive: true });
-//     cb(null, dir);
-//   },
-// 檔名加時間戳避免重複
-//   filename(req, file, cb) {
-//     const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-//     cb(null, unique + path.extname(file.originalname));
-//   },
-// });
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = 'public/courseImages';
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  // 檔名加時間戳避免重複
+  filename(req, file, cb) {
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, unique + path.extname(file.originalname));
+  },
+});
 // const upload = multer({
 //   storage,
 //   limits: { fileSize: 5 * 1024 * 1024 },
@@ -49,18 +50,18 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 // ckditor
 /* --- 貼在檔尾任何路由之前 (避免與 /:id 衝突)，或乾脆放最上方 --- */
-router.post('/uploads/ckeditor', upload.single('image'), async (req, res) => {
-  try {
-    const dir = 'public/ckeditor';
-    fs.mkdirSync(dir, { recursive: true });
-    const fileName = `${Date.now()}-${req.file.originalname}`;
-    fs.writeFileSync(path.join(dir, fileName), req.file.buffer);
-    res.json({ url: `/ckeditor/${fileName}` });
-  } catch (err) {
-    console.error('CKEditor Upload Error:', err);
-    res.status(500).json({ message: '上傳失敗' });
-  }
-});
+// router.post('/uploads/ckeditor', upload.single('image'), async (req, res) => {
+//   try {
+//     const dir = 'public/ckeditor';
+//     fs.mkdirSync(dir, { recursive: true });
+//     const fileName = `${Date.now()}-${req.file.originalname}`;
+//     fs.writeFileSync(path.join(dir, fileName), req.file.buffer);
+//     res.json({ url: `/ckeditor/${fileName}` });
+//   } catch (err) {
+//     console.error('CKEditor Upload Error:', err);
+//     res.status(500).json({ message: '上傳失敗' });
+//   }
+// });
 
 // 抓教練列表
 router.get('/', async function (req, res) {
@@ -181,7 +182,8 @@ router.get('/:id', async (req, res) => {
 // 教練建立課程
 router.post(
   '/:id/create',
-  upload.array('images', 5), // ① 先跑圖片上傳
+  upload.array('images', 5), //  先跑圖片上傳
+
   [
     /* ---------- ② express-validator 基本欄位檢查 ---------- */
     body('name').notEmpty().withMessage('課程名稱必填'),
@@ -207,6 +209,7 @@ router.post(
     body('end_at').isISO8601(),
   ],
   async (req, res) => {
+    console.log('進來 create 路由了');
     /* ---------- ③ 驗證失敗回 400 ---------- */
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -256,7 +259,6 @@ router.post(
       tags,
     } = req.body;
     console.log(req.body);
-
     /* ---------- ⑤ 處理圖片 ---------- */
     const files = req.files || [];
 
@@ -302,43 +304,41 @@ router.post(
         //
         const courseId = course.id;
 
-        /* ❷ 建圖片資料夾 & 寫檔 ------------------------------------------- */
+        // —— ② 建資料夾 & 寫檔 ——
+        // 圖片要放在 public/courseImages/{courseId}/
         const dir = path.join('public', 'courseImages', String(courseId));
         fs.mkdirSync(dir, { recursive: true });
 
-        /** 存檔並收集待 insert 的 course_img 資料 */
+        // 準備要批次寫到 CourseImg table 的資料
         const imgBulkData = [];
-        for (const [idx, file] of files.entries()) {
+        for (const file of files) {
+          //   // 自訂一個唯一檔名：用 timestamp + 原始副檔名
+          //   const filename = `${Date.now()}-${Math.round(
+          //     Math.random() * 1e6
+          //   )}${path.extname(file.originalname)}`;
+          //   const fullPath = path.join(destDir, filename);
           const filename = `${Date.now()}${path.extname(file.originalname)}`;
           const filepath = path.join(dir, filename);
 
-          fs.writeFileSync(filepath, file.buffer); // ← 真正寫入硬碟
+          // 把 buffer 寫到硬碟
+          fs.writeFileSync(filepath, file.buffer);
 
+          // 將這個檔案要存到 DB 的路徑 push 進去
           imgBulkData.push({
             course_id: courseId,
-            img: `/courseImages/${courseId}/${filename}`, // ⚠️ 不含 public/
-            // is_cover: idx === 0, // 第一張預設封面
-            // order: idx,
+            // 這裡存到 DB 時，只要存「/courseImages/{courseId}/{filename}」
+            img: `/courseImages/${courseId}/${filename}`,
           });
         }
-        /* ❸ 批次插入 course_img ------------------------------------------ */
+
+        // —— ③ 批次插入 course_img table ——
         await tx.courseImg.createMany({ data: imgBulkData });
 
-        /* 取得剛插入的封面圖 id（order=0） */
+        // 找第一張當作封面 (order=0 理論上是第一筆)
         const coverImg = await tx.courseImg.findFirst({
           where: { course_id: courseId },
           select: { id: true },
         });
-
-        // /* ② 批次插入圖片 */
-        // await tx.courseImg.createMany({
-        //   data: imgBulkData.map((d) => ({ ...d, course_id: course.id })),
-        // });
-
-        // /* ③ 找封面圖 id */
-        // const coverImg = await tx.courseImg.findFirst({
-        //   where: { course_id: course.id },
-        // });
 
         /* ④ 建 course_variant */
         await tx.courseVariant.create({
@@ -386,7 +386,7 @@ router.post(
         return course;
         // transaction 回傳
       });
-
+      console.log(created);
       return res.json({ status: 'success', data: created });
     } catch (err) {
       console.error('Create course error:', err);
@@ -445,8 +445,9 @@ router.get('/:coachId/courses/:courseId/edit', async (req, res) => {
 router.put(
   '/:coachId/courses/:courseId',
   authenticate,
-  uploadCover.single('cover'),
+  upload.single('images'),
   async (req, res) => {
+    console.log('okyo');
     console.log('>>> 後端 req.file =', req.file);
     const { coachId, courseId } = req.params;
     console.log({ coachId, courseId });
@@ -473,14 +474,36 @@ router.put(
       delete_ids = [],
     } = req.body;
 
-    console.log('>>> 收到的封面檔案：', req.file);
-    console.log('>>> 收到的 tagIds：', tagIds);
-
     // 如果前端有傳 cover，multer 會把它放到 req.file
     // 如果沒傳就跳過封面更新
-    const newCoverFile = req.file;
 
     try {
+      const file = req.file;
+      // console.log(newCoverFile);
+      // 準備要批次寫到 CourseImg table 的資料
+      const imgBulkData = [];
+      //   // 自訂一個唯一檔名：用 timestamp + 原始副檔名
+      //   const filename = `${Date.now()}-${Math.round(
+      //     Math.random() * 1e6
+      //   )}${path.extname(file.originalname)}`;
+      //   const fullPath = path.join(destDir, filename);
+      const dir = path.join('public', 'courseImages', String(courseId));
+      const filename = `${Date.now()}${path.extname(file.originalname)}`;
+      const filepath = path.join(dir, filename);
+
+      // 把 buffer 寫到硬碟
+      fs.writeFileSync(filepath, file.buffer);
+
+      // 將這個檔案要存到 DB 的路徑 push 進去
+      imgBulkData.push({
+        course_id: +courseId,
+        // 這裡存到 DB 時，只要存「/courseImages/{courseId}/{filename}」
+        img: `/courseImages/${courseId}/${filename}`,
+      });
+
+      // —— ③ 批次插入 course_img table ——
+      await prisma.courseImg.createMany({ data: imgBulkData });
+
       await prisma.$transaction(async (tx) => {
         // 1) 更新主表
         await tx.course.update({

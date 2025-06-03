@@ -81,7 +81,7 @@ export default function CoursesIdPage() {
               <Image
                 src={
                   course.images
-                    ? `http://localhost:3005${course.images[0]}`
+                    ? `http://localhost:3005${course.images[course.images.length - 1]}`
                     : ''
                 }
                 alt="{course.name}"
