@@ -255,6 +255,8 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
   };
   const [form, setForm] = useState(initialData || DEFAULT);
   const [locations, setLocations] = useState([]);
+  // 在 useState 那邊，加：
+  const [coverFile, setCoverFile] = useState(null);
   const [coverPreview, setCoverPreview] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -305,6 +307,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
   //   });
   // }, []);
   const handleInput = () => {
+    if (!editorRef.current) return;
     setForm((prev) => ({
       ...prev,
       content: editorRef.current.innerHTML,
@@ -342,6 +345,17 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
       e.target.value = '';
     }
   }, []);
+  // 新的 onChangeCover:
+  const onChangeCover = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setCoverFile(file);
+      setCoverPreview(URL.createObjectURL(file)); // 用於右側預覽
+    } else {
+      setCoverFile(null);
+      setCoverPreview('');
+    }
+  };
 
   const onChange = (e) => {
     const { name, value, type, files } = e.target;
@@ -397,34 +411,36 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
 
     // fd.append('images', form.course_imgs);
     // console.log(form.course_imgs);
-    (Array.isArray(form.course_imgs) ? form.course_imgs : [form.course_imgs])
-      .filter(Boolean) // 避免 null
-      .forEach((file) => fd.append('images', file));
-    console.log([...fd.entries()]);
+    // (Array.isArray(form.course_imgs) ? form.course_imgs : [form.course_imgs])
+    //   .filter(Boolean) // 避免 null
+    //   .forEach((file) => fd.append('images', file));
+    // console.log([...fd.entries()]);
+
+    if (coverFile) {
+      // 把這個 File 直接 append 成 'cover'
+      fd.append('cover', coverFile);
+    }
 
     // 文字欄位
     fd.append('name', form.name.trim());
     fd.append('description', form.description.trim());
-    fd.append('content', form.content);
     fd.append('start_at', form.start_at); // '2025-06-01T09:00'
     fd.append('end_at', form.end_at);
     fd.append('difficulty', form.difficulty);
-    fd.append('content', form.content.trim()),
-      [
-        // 數字欄位
-        'price',
-        'duration',
-        'max_people',
-        'boardtype_id',
-        'location_id',
-      ].forEach((k) => fd.append(k, Number(form[k]) || 0));
+    fd.append('content', form.content.trim());
+    [
+      // 數字欄位
+      'price',
+      'duration',
+      'max_people',
+      'boardtype_id',
+      'location_id',
+    ].forEach((k) => fd.append(k, Number(form[k]) || 0));
+
     fd.append('coach_id', +user.id);
+
     console.log(fd.get('price'));
     if (form.location_id === 'other') {
-      //   fd.append('new_location_name', form.newLoc.name);
-      //   fd.append('new_location_country', form.newLoc.country);
-      //   fd.append('new_location_city', form.newLoc.city);
-      //   fd.append('new_location_address', form.newLoc.address);
       fd.append('new_name', form.newLoc.name);
       fd.append('new_country', form.newLoc.country);
       fd.append('new_city', form.newLoc.city);
@@ -441,6 +457,11 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
         });
     }
 
+    // **印出 FormData 裡的所有 key、value （不包括檔案二進位，只列 key）**
+    console.log('>>> FormData keys:');
+    for (let pair of fd.entries()) {
+      console.log('    ', pair[0], pair[1]);
+    }
     setIsSubmitting(true);
 
     try {
@@ -538,7 +559,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                   </div>
                   {/* <div>
                     <Label htmlFor="content">詳細內容</Label>
-                    <div
+                    <Textarea
                       contentEditable="true"
                       id="content"
                       name="content"
@@ -549,30 +570,6 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                   </div> */}
                   <div>
                     <Label htmlFor="content">詳細內容</Label>
-                    {/* 插入圖片 按鈕 */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <Button
-                        type="button"
-                        onClick={handleClickInsertImage}
-                        disabled={uploading}
-                        size="sm"
-                      >
-                        {uploading ? '圖片上傳中…' : '插入圖片'}
-                      </Button>
-                      {/* 你也可以加一個說明文字 */}
-                      <p className="text-sm text-gray-500">
-                        ※ 圖片會自動上傳到伺服器，並插入到游標位置
-                      </p>
-                    </div>
-                    {/* 隱藏的 file input */}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      style={{ display: 'none' }}
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                    />
-
                     {/* 這才是真正的 contenteditable 區塊 */}
                     <div
                       ref={editorRef}
@@ -716,12 +713,11 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                   <div>
                     <Label htmlFor="course_imgs">封面圖片</Label>
                     <Input
-                      id="course_imgs"
-                      name="course_imgs"
+                      id="cover"
+                      name="cover"
                       type="file"
                       accept="image/*"
-                      multiple
-                      onChange={onChange}
+                      onChange={onChangeCover}
                     />
                     {coverPreview && (
                       <button

@@ -133,9 +133,6 @@ export default function CoachIdPage(props) {
                   })}
                 </p>
                 <h3>{c.name}</h3>
-                {/* <p className="mt-1 text-sm text-gray-600">
-                班尾高原全新雪場 搶先曝光
-              </p> */}
               </div>
               <div className="p-4">
                 <button className="m-8 px-4 py-2 bg-gray-800 text-white rounded-full hover:bg-gray-700">

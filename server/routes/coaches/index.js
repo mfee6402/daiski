@@ -5,21 +5,42 @@ import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
 import authenticate from '../../middlewares/authenticate.js';
+
 const router = express.Router();
 
-// multer上傳設定
-const storage = multer.diskStorage({
+const storageCover = multer.diskStorage({
   destination: (req, file, cb) => {
-    const dir = 'public/courseImages';
-    fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
+    // 取出courseId
+    const courseId = req.params.courseId;
+    // 封面圖放到 public/courseImages/{courseId}/
+    const uploadDir = path.join(
+      process.cwd(),
+      'public',
+      'courseImages',
+      String(courseId)
+    );
+    fs.mkdirSync(uploadDir, { recursive: true });
+    cb(null, uploadDir);
   },
-  // 檔名加時間戳避免重複
-  filename(req, file, cb) {
-    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, unique + path.extname(file.originalname));
+  filename: (req, file, cb) => {
+    const name = `${Date.now()}${path.extname(file.originalname)}`;
+    cb(null, name);
   },
 });
+const uploadCover = multer({ storage: storageCover });
+// multer上傳設定
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     const dir = 'public/courseImages';
+//     fs.mkdirSync(dir, { recursive: true });
+//     cb(null, dir);
+//   },
+// 檔名加時間戳避免重複
+//   filename(req, file, cb) {
+//     const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+//     cb(null, unique + path.extname(file.originalname));
+//   },
+// });
 // const upload = multer({
 //   storage,
 //   limits: { fileSize: 5 * 1024 * 1024 },
@@ -336,31 +357,34 @@ router.post(
         });
 
         /* ⑤ tag upsert + 關聯 */
-        for (const t of tagList) {
-          const existing = await prisma.tag.findFirst({
-            where: { name: t },
-          });
+        // for (const t of tagList) {
+        //   const existing = await prisma.tag.findFirst({
+        //     where: { name: t },
+        //   });
 
-          if (existing) {
+        //   if (existing) {
+        //     await tx.courseTag.create({
+        //       data: { course_id: course.id, tag_id: existing.id },
+        //     });
+        //   } else {
+        //     await tx.tag.create({
+        //       data: { name: t },
+        //     });
+        //   }
+        // }
+        if (Array.isArray(tagList) && tagList.length) {
+          for (const t of tagList) {
+            let tag = await tx.tag.findFirst({ where: { name: t } });
+            if (!tag) {
+              tag = await tx.tag.create({ data: { name: t } });
+            }
             await tx.courseTag.create({
-              data: { course_id: course.id, tag_id: existing.id },
-            });
-          } else {
-            await tx.tag.create({
-              data: { name: t },
+              data: { course_id: course.id, tag_id: tag.id },
             });
           }
-          // const tag = await tx.tag.upsert({
-          //   where: { name: t },
-          //   update: {},
-          //   create: { name: t },
-          // });
-          // await tx.courseTag.create({
-          //   data: { course_id: course.id, tag_id: tag.id },
-          // });
         }
-
-        return course; // transaction 回傳
+        return course;
+        // transaction 回傳
       });
 
       return res.json({ status: 'success', data: created });
@@ -421,14 +445,17 @@ router.get('/:coachId/courses/:courseId/edit', async (req, res) => {
 router.put(
   '/:coachId/courses/:courseId',
   authenticate,
-  upload.array('images'),
+  uploadCover.single('cover'),
   async (req, res) => {
+    console.log('>>> 後端 req.file =', req.file);
     const { coachId, courseId } = req.params;
     console.log({ coachId, courseId });
 
     // 權限檢查 – 可根據 session / jwt 驗證
     if (+req.user || +req.user.id !== +coachId)
-      return res.status(403).json({ message: '無權限' });
+      console.log('>>> 後端 req.body.tagIds =', req.body.tagIds);
+
+    // return res.status(403).json({ message: '無權限' });
 
     const {
       name,
@@ -445,6 +472,14 @@ router.put(
       tagIds = [],
       delete_ids = [],
     } = req.body;
+
+    console.log('>>> 收到的封面檔案：', req.file);
+    console.log('>>> 收到的 tagIds：', tagIds);
+
+    // 如果前端有傳 cover，multer 會把它放到 req.file
+    // 如果沒傳就跳過封面更新
+    const newCoverFile = req.file;
+
     try {
       await prisma.$transaction(async (tx) => {
         // 1) 更新主表
@@ -453,6 +488,7 @@ router.put(
           data: {
             name,
             description,
+            content,
             start_at: new Date(start_at), // ← 新增
             end_at: new Date(end_at), // ← 新增
           },
@@ -471,14 +507,14 @@ router.put(
         });
 
         /* 2) 先刪除使用者勾掉的舊圖（若有） */
-        const idsToDel = Array.isArray(delete_ids)
-          ? delete_ids.map(Number).filter(Boolean)
-          : [];
-        if (idsToDel.length) {
-          await tx.courseImg.deleteMany({
-            where: { id: { in: idsToDel }, course_id: +courseId },
-          });
-        }
+        // const idsToDel = Array.isArray(delete_ids)
+        //   ? delete_ids.map(Number).filter(Boolean)
+        //   : [];
+        // if (idsToDel.length) {
+        //   await tx.courseImg.deleteMany({
+        //     where: { id: { in: idsToDel }, course_id: +courseId },
+        //   });
+        // }
 
         /* 3) 再新增這次上傳的檔案（若有） */
         if (req.files?.length) {
@@ -502,21 +538,61 @@ router.put(
         //     )
         //   );
         // }
+        /* ------------------------ 2) 處理標籤：只刪掉使用者取消的，新增新的 ------------------------ */
 
-        // 3) 標籤 upsert
-        if (Array.isArray(tagIds)) {
-          // 先清光舊的
-          await tx.courseTag.deleteMany({ where: { course_id: +courseId } });
-          for (const t of tagIds) {
-            const tag = await tx.tag.upsert({
-              where: { name: t },
-              create: { name: t },
-              update: {},
-            });
-            await tx.courseTag.create({
-              data: { course_id: +courseId, tag_id: tag.id },
-            });
+        // 2.1 先拿出舊有的 CourseTag 關聯，以及對應的 Tag.name
+        const existingCourseTags = await tx.courseTag.findMany({
+          where: { course_id: +courseId },
+          select: {
+            id: true, // courseTag 的主鍵
+            tag_id: true,
+            tag: { select: { name: true } }, // 預設你在 CourseTag model 有 relation 到 Tag
+          },
+        });
+        // existingCourseTags 範例：
+        // [
+        //   { id: 101, tag_id: 5, tag: { name: "粉雪" } },
+        //   { id: 102, tag_id: 8, tag: { name: "北海道" } },
+        //   …
+        // ]
+
+        // 建立兩個映射：舊有 tagName[]、舊有 courseTagIdByTagName
+        const oldTagNames = existingCourseTags.map((ct) => ct.tag.name);
+        const courseTagIdByTagName = {};
+        existingCourseTags.forEach((ct) => {
+          courseTagIdByTagName[ct.tag.name] = ct.id;
+        });
+
+        // 2.2 算出要刪除的標籤名稱：oldTagNames 中有但 new tagIds 裡沒有的
+        const toDeleteNames = oldTagNames.filter(
+          (name) => !tagIds.includes(name)
+        );
+        // 2.3 算出要新增的標籤名稱：new tagIds 中有但 oldTagNames 裡沒有的
+        const toAddNames = tagIds.filter((name) => !oldTagNames.includes(name));
+
+        // 2.4 處理刪除：把 toDeleteNames 對應的 courseTag 紀錄刪除
+        if (toDeleteNames.length) {
+          // 先拿到要刪除的 courseTag id 清單
+          const idsToDel = toDeleteNames.map(
+            (name) => courseTagIdByTagName[name]
+          );
+          await tx.courseTag.deleteMany({
+            where: { id: { in: idsToDel } },
+          });
+        }
+
+        // 2.5 處理新增：對於每個 toAddNames
+        for (const t of toAddNames) {
+          // 先用 findFirst 查有沒有同名的 Tag
+          let tag = await tx.tag.findFirst({ where: { name: t } });
+          if (!tag) {
+            // 如果不存在，就 create 一筆新的 Tag
+            tag = await tx.tag.create({ data: { name: t } });
           }
+          // 然後再在 CourseTag 建立關聯
+          await tx.courseTag.create({
+            data: { course_id: +courseId, tag_id: tag.id },
+          });
         }
       });
 
