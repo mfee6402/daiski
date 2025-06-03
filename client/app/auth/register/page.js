@@ -9,7 +9,14 @@ import Link from 'next/link';
 import { Toaster } from 'sonner';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { format } from 'date-fns';
 // newUser資料範例(物件) 註: name改為在profile資料表中
 // {
 //     "username":"ginny",
@@ -127,7 +134,13 @@ export default function RegisterPage() {
               </p>
             </div>
             <div className="max-w-md mx-auto mt-6">
-              <form onSubmit={handleSubmit} noValidate method="post" action="/">
+              <form
+                onSubmit={handleSubmit}
+                noValidate
+                method="post"
+                action="/"
+                className="flex flex-col gap-2"
+              >
                 <label>
                   姓名:
                   <input
@@ -189,14 +202,14 @@ export default function RegisterPage() {
                     required
                   />
                 </label>
-                <label>
+                <label className="">
                   生日:
                   <input
                     type="date"
                     name="birthday"
                     value={userInput.birthday}
                     onChange={handleFieldChange}
-                    className=""
+                    className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
                     required
                   />
                 </label>
@@ -206,6 +219,7 @@ export default function RegisterPage() {
                     name="is_coach"
                     checked={userInput.is_coach}
                     onChange={handleFieldChange}
+                    className=""
                   />
                   我是教練
                 </label>
@@ -229,8 +243,8 @@ export default function RegisterPage() {
             name: '榮恩',
             email: 'ron@test.com',
             account: 'ron',
-            password: '99999',
-            confirmPassword: '99999',
+            password: '11111',
+            confirmPassword: '11111',
             phone: '0912345678',
             birthday: '1999-01-01',
             is_coach: 'true',
