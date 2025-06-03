@@ -134,7 +134,7 @@ export function CartProvider({ children }) {
   };
 
   // 處理新增
-  const onAdd = (category = '', item = {}) => {
+  const onAdd = (category = '', item = {}, quantity = 1) => {
     const categoryOptions = ['CartGroup', 'CartProduct', 'CartCourse'];
 
     //  如果沒有該類別要return

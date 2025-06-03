@@ -370,6 +370,7 @@ router.post('/order', authenticate, async function (req, res) {
     const orderInput = req.body;
 
     const {
+      shipping,
       payment,
       name,
       phone,
@@ -381,7 +382,7 @@ router.post('/order', authenticate, async function (req, res) {
       CartProduct,
     } = orderInput;
 
-    // console.log(orderInput);
+    console.log(orderInput);
 
     const orderResult = await prisma.order.create({
       data: {
@@ -393,8 +394,10 @@ router.post('/order', authenticate, async function (req, res) {
         address,
         phone,
         name,
+        shipping,
       },
     });
+    console.log(orderResult);
 
     const newOrderId = orderResult.id;
 
@@ -437,6 +440,48 @@ router.post('/order', authenticate, async function (req, res) {
     res
       .status(200)
       .json({ status: 'fail', message: '訂單失敗:', error: { error } });
+  }
+});
+
+// 訂單紀錄
+router.get('/orders', authenticate, async function (req, res) {
+  try {
+    const userId = +req.user.id;
+
+    const ordersResult = await prisma.order.findMany({
+      select: {
+        amount: true,
+        payment: true,
+        createdAt: true,
+      },
+      where: {
+        userId: userId,
+      },
+    });
+
+    const toUTC8 = (utcString) => {
+      const date = new Date(utcString);
+      date.setHours(date.getHours() + 8); // 加上 8 小時
+      const [d, t] = date.toISOString().split('T');
+      return `${d} ${t.split('.')[0].slice(0, 5)}`;
+    };
+
+    const orders = ordersResult.map((item) => {
+      const amount = item.amount;
+      const payment = item.payment;
+      const createdAt = toUTC8(item.createdAt);
+      return {
+        amount,
+        payment,
+        createdAt,
+      };
+    });
+
+    return res.status(200).json({ status: 'success', orders });
+  } catch (error) {
+    return res
+      .status(200)
+      .json({ status: 'fail', message: `查詢失敗:${error}` });
   }
 });
 
