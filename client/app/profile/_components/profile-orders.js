@@ -19,8 +19,8 @@ import Link from 'next/link';
 
 // API URL 常數
 const API_BASE_URL = 'http://localhost:3005/api';
-const FAVORITES_API_URL = `${API_BASE_URL}/profile/favorites`;
-const PRODUCT_API_URL = `${API_BASE_URL}/products`;
+const ORDERS_API_URL = `${API_BASE_URL}/cart/orders`;
+// const PRODUCT_API_URL = `${API_BASE_URL}/products`;
 
 // 通用的 fetcher 函數
 const fetcher = async (url) => {
@@ -31,7 +31,7 @@ const fetcher = async (url) => {
     const error = new Error('請求資料時發生錯誤。');
     try {
       error.info = await res.json();
-    } catch (e) {
+    } catch (error) {
       error.info = res.statusText;
     }
     error.status = res.status;
@@ -46,149 +46,38 @@ const MotionTableRow = motion(TableRow);
 
 export default function ProfileOrders() {
   const { isAuth, isLoading: isLoadingAuth } = useAuth();
-
   const {
-    data: favoriteIds = [],
-    error: favoritesError,
-    isLoading: isLoadingFavoritesInitial,
-    mutate: mutateFavoriteIds,
-  } = useSWR(isAuth ? FAVORITES_API_URL : null, fetcher);
-
-  const productDetailsKey =
-    isAuth && favoriteIds && favoriteIds.length > 0
-      ? ['productDetails', ...favoriteIds]
-      : null;
-
-  const {
-    data: favoriteProductsData,
-    error: productsError,
-    isLoading: isLoadingProducts,
-  } = useSWR(productDetailsKey, async ([_key, ...ids]) => {
-    if (!ids || ids.length === 0) {
-      return [];
-    }
-    const productDetailsPromises = ids.map(async (id) => {
-      const productResponse = await fetch(`${PRODUCT_API_URL}/${id}`, {
-        credentials: 'include',
-      });
-      if (!productResponse.ok) {
-        console.warn(
-          `無法獲取商品 ${id} 的詳細資訊: ${productResponse.statusText}`
-        );
-        return null;
-      }
-      const productData = await productResponse.json();
-      return {
-        id: productData.id,
-        name: productData.name,
-        price:
-          productData.skus && productData.skus.length > 0
-            ? productData.skus[0].price
-            : 0,
-        image:
-          productData.images && productData.images.length > 0
-            ? productData.images[0]
-            : undefined,
-        category: productData.category,
-        brand: productData.brand,
-      };
-    });
-    return (await Promise.all(productDetailsPromises)).filter(
-      (product) => product !== null
-    );
-  });
-
-  const favoriteProducts = favoriteProductsData || [];
-
-  const toggleFavorite = useCallback(
-    async (productId) => {
-      if (!isAuth) {
-        console.log('使用者未登入，無法切換收藏狀態');
-        return;
-      }
-      const isCurrentlyFav = favoriteIds.includes(productId);
-      const optimisticData = isCurrentlyFav
-        ? favoriteIds.filter((id) => id !== productId)
-        : [...favoriteIds, productId];
-      mutateFavoriteIds(optimisticData, false);
-      try {
-        if (isCurrentlyFav) {
-          await fetch(`${FAVORITES_API_URL}/${productId}`, {
-            method: 'DELETE',
-            credentials: 'include',
-          });
-        } else {
-          await fetch(FAVORITES_API_URL, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ productId: Number(productId) }),
-          });
-        }
-        mutateFavoriteIds();
-      } catch (error) {
-        console.error('切換收藏狀態失敗:', error);
-        mutateFavoriteIds();
-      }
-    },
-    [favoriteIds, mutateFavoriteIds, isAuth]
-  );
-
-  const isLoading =
-    isLoadingAuth ||
-    (isAuth && isLoadingFavoritesInitial) ||
-    (isAuth && favoriteIds.length > 0 && isLoadingProducts);
-
-  const error = favoritesError || productsError;
-
-  if (isLoading) {
-    return <p className="text-center py-10">載入收藏商品中...</p>;
-  }
-
-  if (!isAuth) {
-    return <p className="text-center py-10">請先登入以查看您的收藏清單。</p>;
-  }
-
-  if (error) {
-    let errorMessage = '載入收藏商品時發生錯誤。';
-    const primaryError = favoritesError || error;
-    if (primaryError.status === 401) {
-      errorMessage = '未授權，請先登入。';
-    } else if (
-      primaryError.info &&
-      typeof primaryError.info.message === 'string'
-    ) {
-      errorMessage = primaryError.info.message;
-    } else if (typeof primaryError.message === 'string') {
-      errorMessage = primaryError.message;
-    }
-    return (
-      <p className="text-center py-10 text-red-500">錯誤: {errorMessage}</p>
-    );
-  }
+    data: orders,
+    error,
+    isLoading: ordersLoading,
+  } = useSWR(isAuth ? ORDERS_API_URL : null, fetcher);
+  const url = 'http://localhost:3005/api/cart/orders';
+  console.log(orders);
 
   return (
     <div className="container mx-0 xl:mx-auto overflow-y-auto h-dvh ">
-      {/* 1. 加上 table-fixed 讓欄位寬度依 w-xx 定義 */}
       <Table className="table-fixed w-full ">
         <TableHeader>
           <TableRow className="">
-            {/* 2. 第一欄固定 64px，不允許縮放 */}
-            <TableHead className="w-16">序號</TableHead>
-            {/* 3. 名稱欄響應式寬度 */}
-            <TableHead className="w-1/3 sm:w-1/2 md:w-1/3 px-4">
-              訂單時間
+            <TableHead className="w-16">訂單編號</TableHead>
+            <TableHead className="w-1/5 sm:w-1/2 md:w-1/5 px-4">
+              課程
+            </TableHead><TableHead className="w-1/5 sm:w-1/2 md:w-1/5 px-4">
+              揪團活動
             </TableHead>
-            <TableHead className="text-right">金額</TableHead>
-            <TableHead className="text-center w-[120px]">付款方式</TableHead>
+            <TableHead className="w-1/5 sm:w-1/2 md:w-3/10 px-4">
+              商品
+            </TableHead>
+            <TableHead className="text-right w-[120px]">商品評分</TableHead>
+            <TableHead className="text-right">消費金額</TableHead>
           </TableRow>
         </TableHeader>
 
         <TableBody>
           <AnimatePresence>
-            {favoriteProducts.map((product) => (
-              <MotionTableRow
-                key={product.id}
+            {/* {orders.map((orders) => ( */}
+              {/* <MotionTableRow
+                key={orders.id}
                 layout
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -196,9 +85,8 @@ export default function ProfileOrders() {
                   opacity: 0,
                   transition: { opacity: { duration: 0.2, ease: 'easeOut' } },
                 }}
-              >
-                {/* 圖片欄：flex-none + 固定大小容器 */}
-                <TableCell className="p-2">
+              > */}
+              {/* <TableCell className="p-2">
                   <div className="flex-none h-16 w-16">
                     {product.image ? (
                       <Image
@@ -215,10 +103,8 @@ export default function ProfileOrders() {
                       </div>
                     )}
                   </div>
-                </TableCell>
-
-                {/* 名稱欄：允許換行 */}
-                <TableCell className="font-medium whitespace-normal break-words px-4">
+                </TableCell> */}
+                {/* <TableCell className="font-medium whitespace-normal break-words px-4">
                   <Link
                     href={`/product/${product.id}`}
                     className="hover:text-primary-500 cursor-none"
@@ -226,30 +112,29 @@ export default function ProfileOrders() {
                     <p className="line-clamp-3">{product.name}</p>
                   </Link>
                 </TableCell>
-
                 <TableCell className="text-right">
-                  ${product.price?.toLocaleString() ?? 'N/A'}
-                </TableCell>
+                  ${orders.amount?.toLocaleString() ?? 'N/A'}
+                </TableCell> */}
 
-                <TableCell className="text-center">
+                {/* <TableCell className="text-center">
                   <FavoriteButton
                     isFav={favoriteIds.includes(product.id)}
                     onToggle={() => toggleFavorite(product.id)}
                     isAuth={isAuth}
                     variant="circle"
                   />
-                </TableCell>
-              </MotionTableRow>
-            ))}
+                </TableCell> */}
+              {/* </MotionTableRow> */}
+            {/* ))} */}
           </AnimatePresence>
         </TableBody>
       </Table>
 
-      {isAuth && !isLoading && !error && favoriteProducts.length === 0 && (
+      {/* {isAuth && !isLoading && !error && favoriteProducts.length === 0 && (
         <p className="text-center mt-6 text-gray-500">
           您的訂單紀錄目前是空的。
         </p>
-      )}
+      )} */}
     </div>
   );
 }

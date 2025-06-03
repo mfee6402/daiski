@@ -200,7 +200,6 @@ router.get('/', authenticate, async function (req, res) {
       imageUrl: item.group.imageUrl ? item.group.imageUrl : '',
     }));
 
-    // FIXME 使用優惠券給的API
     // 優惠券
     const couponData = await prisma.userCoupon.findMany({
       select: {
@@ -230,7 +229,7 @@ router.get('/', authenticate, async function (req, res) {
     });
     let resCoupon = await fetch(`http://localhost:3005/api/coupons/cartcoupon`);
     let CartCoupon = await resCoupon.json();
-    // FIXME 要判斷過期跟已使用(問+1要不要做)
+
     CartCoupon = couponData.map((item) => {
       const id = item.couponId;
       const name = item.coupon.name;
@@ -382,8 +381,6 @@ router.post('/order', authenticate, async function (req, res) {
       CartProduct,
     } = orderInput;
 
-    console.log(orderInput);
-
     const orderResult = await prisma.order.create({
       data: {
         userId,
@@ -397,7 +394,6 @@ router.post('/order', authenticate, async function (req, res) {
         shipping,
       },
     });
-    console.log(orderResult);
 
     const newOrderId = orderResult.id;
 
@@ -418,7 +414,6 @@ router.post('/order', authenticate, async function (req, res) {
       orderId: newOrderId,
       courseId,
     }));
-    console.log(orderCourse);
 
     const orderCourseResult = await prisma.orderCourse.createMany({
       data: orderCourse,
@@ -430,7 +425,7 @@ router.post('/order', authenticate, async function (req, res) {
       productSkuId: product.id,
       quantity: product.quantity,
     }));
-    console.log(orderProduct);
+
     const orderProductResult = await prisma.orderProduct.createMany({
       data: orderProduct,
     });
@@ -450,9 +445,64 @@ router.get('/orders', authenticate, async function (req, res) {
 
     const ordersResult = await prisma.order.findMany({
       select: {
+        id: true,
         amount: true,
-        payment: true,
         createdAt: true,
+        orderProduct: {
+          select: {
+            quantity: true,
+            productSku: {
+              select: {
+                product: {
+                  select: {
+                    name: true,
+                    product_image: {
+                      select: {
+                        url: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderCourse: {
+          select: {
+            courseVariant: {
+              select: {
+                course: {
+                  select: {
+                    name: true,
+                    CourseImg: {
+                      select: {
+                        img: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderGroup: {
+          select: {
+            groupMember: {
+              select: {
+                group: {
+                  select: {
+                    title: true,
+                    images: {
+                      select: {
+                        imageUrl: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       where: {
         userId: userId,
@@ -466,14 +516,51 @@ router.get('/orders', authenticate, async function (req, res) {
       return `${d} ${t.split('.')[0].slice(0, 5)}`;
     };
 
-    const orders = ordersResult.map((item) => {
-      const amount = item.amount;
-      const payment = item.payment;
-      const createdAt = toUTC8(item.createdAt);
+    //  const CartCourse = data.CartCourse.map((item) => {
+    //     const start_at = item.courseVariant.start_at;
+    //     const duration = item.courseVariant.duration;
+    //     const date = new Date(start_at);
+    //     date.setHours(date.getHours() + duration);
+    //     const end_at = date.toISOString();
+    //     return {
+    //       id: item.courseVariant.id,
+    //       price: item.courseVariant.price,
+    //       name: item.courseVariant.course.name,
+    //       imageUrl: item.courseVariant.course.CourseImg[0].img,
+    //       startAt: start_at,
+    //       endAt: end_at,
+    //       duration: duration,
+    //     };
+    //   });
+
+    const orders = ordersResult.map((order) => {
       return {
-        amount,
-        payment,
-        createdAt,
+        id: order.id,
+        amount: order.amount,
+        createdAt: toUTC8(order.createdAt),
+
+        // 商品名稱陣列
+        OrderProduct: order.orderProduct.map((item) => {
+          return {
+            quantity: item.quantity,
+            name: item.productSku.product.name,
+            imageUrl: item.productSku.product.product_image[0].url,
+          };
+        }),
+
+        OrderCourse: order.orderCourse.map((item) => {
+          return {
+            name: item.courseVariant.course.name,
+            imageUrl: item.courseVariant.course.CourseImg[0]?.img,
+          };
+        }),
+
+        OrderGroup: order.orderGroup.map((item) => {
+          return {
+            name: item.groupMember.group.title,
+            imageUrl: item.groupMember.group.images[0].imageUrl,
+          };
+        }),
       };
     });
 
