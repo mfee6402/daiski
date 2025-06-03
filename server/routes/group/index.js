@@ -301,12 +301,14 @@ router.post(
         data.difficulty = null; // 非滑雪活動的 difficulty 應為 null
       }
 
-        // 1. 建立 Group 記錄
+      // 1. 建立 Group 記錄
       const newGroup = await prisma.group.create({ data }); // (Source 3) (變數名從 newGroup 修改)
 
       // 2. 如果有圖片，建立 GroupImage 記錄
-      if (imageUrl) { // (Source 3)
-        await prisma.groupImage.create({ // (Source 3)
+      if (imageUrl) {
+        // (Source 3)
+        await prisma.groupImage.create({
+          // (Source 3)
           data: {
             groupId: newGroup.id, // (Source 3)
             imageUrl, // (Source 3)
@@ -337,7 +339,8 @@ router.post(
       const groupToReturn = await prisma.group.findUnique({
         where: { id: newGroup.id },
         include: {
-          images: { // (Source 5)
+          images: {
+            // (Source 5)
             select: {
               imageUrl: true,
             },
@@ -352,8 +355,12 @@ router.post(
 
       if (!groupToReturn) {
         // 這種情況理論上不太可能發生
-        console.error(`[POST /group] 無法重新查詢剛建立的揪團 ID: ${newGroup.id}`);
-        return res.status(500).json({ error: '伺服器內部錯誤，無法獲取新建立揪團的完整資訊。' });
+        console.error(
+          `[POST /group] 無法重新查詢剛建立的揪團 ID: ${newGroup.id}`
+        );
+        return res
+          .status(500)
+          .json({ error: '伺服器內部錯誤，無法獲取新建立揪團的完整資訊。' });
       }
 
       // 5. 【修改】回傳給前端的物件中，加入 organizerMemberId
@@ -363,7 +370,6 @@ router.post(
       };
 
       res.status(201).json(responsePayload); // 回傳包含 organizerMemberId 和 images 的揪團物件
-
     } catch (err) {
       if (err instanceof multer.MulterError) {
         return res.status(400).json({ error: `圖片上傳錯誤: ${err.message}` });

@@ -136,10 +136,12 @@ export function CartProvider({ children }) {
   // 處理刪除
   const onRemove = (category, item) => {
     fetchData(category, item, 'DELETE');
+    console.log('刪除' + item.id);
+
     if (category === 'CartGroup') {
       async function fetchData() {
         try {
-          const url = `localhost:3005/api/group/members/${item.id}`;
+          const url = `http://localhost:3005/api/group/members/${item.id}`;
           const res = await fetch(url, {
             method: 'DELETE',
             credentials: 'include',
