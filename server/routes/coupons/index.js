@@ -135,7 +135,7 @@ router.get('/usercoupon', authenticate, async function (req, res) {
       },
     });
     // usercoupons.map((usecoupon) => usecoupon.coupon);
-    const usercoupon = usercoupons.map(({ coupon }) => ({
+    const usercoupon = usercoupons.map(({ coupon, usedAt }) => ({
       id: coupon.id,
       name: coupon.name,
       startAt: coupon.startAt,
@@ -145,6 +145,7 @@ router.get('/usercoupon', authenticate, async function (req, res) {
       type: coupon.couponType.type,
       amount: coupon.couponType.amount,
       target: coupon.couponTarget.target,
+      usedAt,
     }));
     res.status(200).json({ status: 'success', usercoupon });
   } catch (error) {
