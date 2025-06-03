@@ -14,14 +14,10 @@ export default function CouponCard({
   name,
   displayTime, // 已格式化好的「YYYY-MM-DD hh:mm:ss」
   timeLabel, // '開始' 或 '結束'
-
-  // 狀態相關
-  // statusClass, // 卡片底色 class
-  // buttonClass, // 按鈕 class
   buttonText, // 按鈕文字
-  // disabled, // 按鈕是否 disabled
   isUpcoming,
   isExpired,
+  isUsed,
 
   onUse, // 點擊「領取」時觸發
   // torn, // 這張券已被領（要撕票）
@@ -54,7 +50,7 @@ export default function CouponCard({
   };
 
   // 按鈕狀況判斷
-  const isDisabled = _used || isExpired || isUpcoming;
+  const isDisabled = _used || isExpired || isUpcoming || isUsed;
 
   // 背景圖片
   const getBgClass = (target) => {
@@ -73,10 +69,7 @@ export default function CouponCard({
   return (
     <>
       {/* 單一卡片 (item) */}
-      <div
-        className="relative flex rounded-md  group"
-        onMouseEnter={handleEnter}
-      >
+      <div className="relative flex group" onMouseEnter={handleEnter}>
         {/* 左側日期 (date) */}
         <div
           className={
@@ -104,7 +97,7 @@ export default function CouponCard({
           className={`relative w-2/3 md:w-3/4 sm:w-4/5 p-6 ${bgClass} bg-cover`}
         >
           {/* 半透明遮罩 (overlay) */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-black/0"></div>
+          <div className="absolute inset-0 sm:bg-black/0 sm:bg-gradient-to-r sm:from-black/60 sm:via-black/30 sm:to-black/0 bg-black/50 "></div>
 
           {/* 反光 */}
           <div
@@ -140,7 +133,7 @@ export default function CouponCard({
               <Button
                 data-tear
                 className={`
-                rounded px-4 py-1 text-white 
+                 text-white mt-2 
                 ${
                   isDisabled
                     ? 'bg-gray-400 opacity-60 cursor-default'

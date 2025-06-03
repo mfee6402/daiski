@@ -301,19 +301,75 @@ router.post(
         data.difficulty = null; // 非滑雪活動的 difficulty 應為 null
       }
 
-      const newGroup = await prisma.group.create({ data });
+      // 1. 建立 Group 記錄
+      const newGroup = await prisma.group.create({ data }); // (Source 3) (變數名從 newGroup 修改)
 
+      // 2. 如果有圖片，建立 GroupImage 記錄
       if (imageUrl) {
+        // (Source 3)
         await prisma.groupImage.create({
+          // (Source 3)
           data: {
-            groupId: newGroup.id,
-            imageUrl,
-            sortOrder: 0,
+            groupId: newGroup.id, // (Source 3)
+            imageUrl, // (Source 3)
+            sortOrder: 0, // (Source 3)
           },
         });
       }
 
-      res.status(201).json(newGroup);
+      // 3. 【新增】自動將開團者加入 GroupMember 表
+      const organizerGroupMember = await prisma.groupMember.create({
+        data: {
+          groupId: newGroup.id,
+          userId: organizerId, // 開團者 ID
+          joinedAt: new Date(),
+          // 關於 paidAt:
+          // 如果揪團價格為0，可以視為開團者已"支付"（免費加入）。
+          // 如果價格大於0，開團者是否需要支付或自動視為已支付取決於你的業務邏輯。
+          // 若開團者也需要透過購物車結帳，則此處應為 null。
+          // 這裡假設如果價格為0，則自動標記為已付款，否則為 null，等待結帳。
+          paidAt: newGroup.price === 0 ? new Date() : null,
+        },
+        select: {
+          id: true, // 我們需要這個 ID 給前端，用於加入購物車
+        },
+      });
+
+      // 4. 【修改】重新查詢剛建立的揪團，並包含其關聯的圖片資訊
+      const groupToReturn = await prisma.group.findUnique({
+        where: { id: newGroup.id },
+        include: {
+          images: {
+            // (Source 5)
+            select: {
+              imageUrl: true,
+            },
+            orderBy: {
+              sortOrder: 'asc',
+            },
+          },
+          // 你可以根據需要，選擇是否在此處也 include members 或 user(organizer) 等資訊
+          // user: { select: { id: true, name: true, avatar: true } },
+        },
+      });
+
+      if (!groupToReturn) {
+        // 這種情況理論上不太可能發生
+        console.error(
+          `[POST /group] 無法重新查詢剛建立的揪團 ID: ${newGroup.id}`
+        );
+        return res
+          .status(500)
+          .json({ error: '伺服器內部錯誤，無法獲取新建立揪團的完整資訊。' });
+      }
+
+      // 5. 【修改】回傳給前端的物件中，加入 organizerMemberId
+      const responsePayload = {
+        ...groupToReturn,
+        organizerMemberId: organizerGroupMember.id, // 將開團者在 group_member 中的記錄 ID 一併回傳
+      };
+
+      res.status(201).json(responsePayload); // 回傳包含 organizerMemberId 和 images 的揪團物件
     } catch (err) {
       if (err instanceof multer.MulterError) {
         return res.status(400).json({ error: `圖片上傳錯誤: ${err.message}` });
@@ -927,7 +983,7 @@ router.get('/user/:userId', async (req, res, next) => {
   }
 });
 // DELETE /api/group/:groupId (刪除揪團)
-router.delete('/:groupId', async (req, res, next) => {
+router.delete('/:groupId', authenticate, async (req, res, next) => {
   try {
     const groupId = Number(req.params.groupId);
     if (isNaN(groupId)) return res.status(400).json({ error: '無效的揪團 ID' });
@@ -974,8 +1030,7 @@ router.delete(
   authenticate,
   async (req, res, next) => {
     try {
-      const groupMemberId = +req.params.groupMemberId;
-      console.log(groupMemberId);
+      const groupMemberId = parseInt(req.params.groupMemberId, 10);
       const currentUserId = req.user?.id; // 從 authenticate 中介軟體獲取
 
       if (isNaN(groupMemberId)) {

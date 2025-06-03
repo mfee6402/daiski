@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
+import { useCart } from '@/hooks/use-cart';
 
 const STEPS_CONFIG = [
   { id: 'step1', name: '步驟 1', description: '基本資訊' },
@@ -239,7 +240,7 @@ export default function CreateGroupPageWithAuth() {
     isLoading: authIsLoading,
     didAuthMount,
   } = useAuth();
-
+  const { onAdd } = useCart();
   const [currentStep, setCurrentStep] = useState('step1');
   const [typeOptions, setTypeOptions] = useState([]);
   const [locationOptions, setLocationOptions] = useState([]);
@@ -408,6 +409,14 @@ export default function CreateGroupPageWithAuth() {
       }
       const newGroup = await res.json();
       if (newGroup && newGroup.id) {
+        onAdd('CartGroup', {
+          id: newGroup.id,
+          price: newGroup.price,
+          title: newGroup.title,
+          imageUrl: newGroup.images?.[0]?.imageUrl || '',
+          startDate: newGroup.startDate,
+          endDate: newGroup.endDate,
+        });
         alert('揪團建立成功！');
         router.push(`/groups/${newGroup.id}`);
       } else {
