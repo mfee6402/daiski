@@ -184,12 +184,11 @@ router.get('/', authenticate, async function (req, res) {
     }, 0);
 
     // 調用後端API獲得Group資料
-
     let resGroup = await fetch(
       `http://localhost:3005/api/group/user/${userId}`
     );
     let CartGroup = (await resGroup.json()).memberships;
-
+    console.log(CartGroup);
     CartGroup = CartGroup.map((item) => ({
       id: item.groupMemberId,
       name: item.group.title,
@@ -347,7 +346,7 @@ router.delete('/:itemId', authenticate, async function (req, res) {
     const userCart = await prisma.cart.findFirst({
       where: { userId },
     });
-
+    console.log(req.params.itemId);
     await cartModel.deleteMany({
       where: {
         cartId: +userCart.id,
@@ -453,6 +452,7 @@ router.get('/orders', authenticate, async function (req, res) {
             quantity: true,
             productSku: {
               select: {
+                id: true,
                 product: {
                   select: {
                     name: true,
@@ -542,6 +542,7 @@ router.get('/orders', authenticate, async function (req, res) {
         // 商品名稱陣列
         OrderProduct: order.orderProduct.map((item) => {
           return {
+            id: item.productSku.id,
             quantity: item.quantity,
             name: item.productSku.product.name,
             imageUrl: item.productSku.product.product_image[0].url,

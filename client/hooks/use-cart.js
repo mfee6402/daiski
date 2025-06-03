@@ -136,6 +136,29 @@ export function CartProvider({ children }) {
   // 處理刪除
   const onRemove = (category, item) => {
     fetchData(category, item, 'DELETE');
+    if (category === 'CartGroup') {
+      async function fetchData() {
+        try {
+          const url = `localhost:3005/api/group/members/${item.id}`;
+          const res = await fetch(url, {
+            method: 'DELETE',
+            credentials: 'include',
+          });
+        } catch (err) {
+          throw new Error(err);
+        }
+      }
+      fetchData();
+    }
+
+    //  const res = await fetch(url, {
+    //     method: method,
+    //     credentials: 'include',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify(data),
+    // });
   };
 
   // 處理新增
