@@ -27,6 +27,7 @@ export default function ProfileCourses(props) {
   if (error) return <p className="text-sm text-destructive">讀取失敗</p>;
 
   const courses = data?.courses ?? [];
+  console.log(courses);
 
   return (
     <Card className="w-full">
@@ -35,13 +36,16 @@ export default function ProfileCourses(props) {
         <CardDescription>共 {courses.length} 筆</CardDescription>
       </CardHeader>
 
-      <CardContent className="grid grid-cols-2 gap-3">
+      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {courses.length === 0 && (
           <p className="text-muted-foreground">目前沒有任何報名紀錄。</p>
         )}
 
         {courses.map((c) => (
-          <article key={c.id} className="flex gap-4 rounded-lg border p-4">
+          <article
+            key={c.id}
+            className="flex flex-col md:flex-row gap-4 rounded-lg border p-4 min-w-0"
+          >
             {/* 圖片 */}
             <Image
               src={
@@ -50,28 +54,26 @@ export default function ProfileCourses(props) {
                   : `http://localhost:3005${c.image}`
               }
               alt={c.name}
-              width={160}
-              height={120}
-              className="w-1/2 aspect-[4/3] rounded-md object-cover flex-shrink-0  "
+              width={20}
+              height={20}
+              className="w-full md:w-1/2 flex-shrink-0  aspect-[4/3] rounded-md object-cover  "
             />
 
             {/* 文字資訊 */}
-            <div className="flex-1 space-y-2">
-              <div className="font-medium flex items-center gap-1">
+            <div className="flex flex-col justify-center items-start gap-3  ">
+              <div className="font-medium flex gap-2 items-center">
                 <GiArtificialHive /> {c.name}
               </div>
-              <div className="text-sm text-muted-foreground flex items-center gap-1">
-                <HiCalendarDateRange /> {c.startAt.slice(0, 10)} ~{' '}
-                {c.endAt.slice(0, 10)}
+              <div className="text-sm text-muted-foreground flex gap-2 items-center ">
+                <HiCalendarDateRange className="size-4" />
+                {c.startAt.slice(0, 10)} ~ {c.endAt.slice(0, 10)}
               </div>
-              <div className="text-sm flex items-center gap-1">
+              <div className="text-sm flex gap-2 items-center ">
                 <IoLocationOutline /> {c.location}
               </div>
             </div>
-
-            {/* 查看按鈕 (假設有課程詳頁) */}
-            <Button asChild variant="outline">
-              <Link href={`/courses/${c.id}`}>查看</Link>
+            <Button asChild variant="outline" className="self-end">
+              <Link href={`/courses/${c.course_variant_id}`}>查看</Link>
             </Button>
           </article>
         ))}

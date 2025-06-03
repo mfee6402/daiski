@@ -40,6 +40,8 @@ import ProfileWishlist from './_components/profile-wishlist';
 import ProfileGroups from './_components/profile-groups';
 //課程頁引入
 import ProfileCourses from './_components/profile-courses';
+//訂單頁面引入
+import ProfileOrders from './_components/profile-orders';
 
 //會員資訊的驗證 schema  限制字數上限
 const FormSchema = z.object({
@@ -83,164 +85,174 @@ export default function MemberPage() {
   ); // 當前顯示的頭像 URL
   console.log(src);
   return (
-    <div className="min-h-screen max-h-270 pt-8 bg-[url('/home-images/layer2.png')]  bg-no-repeat ">
-      <Container className="">
-        {/* Header */}
-        <header className="flex flex-col items-center gap-4">
-          {/* Avatar */}
-          <EditableAvatar
-            userId={user.id}
-            src={src}
-            setSrc={setSrc}
-            className="mt-5"
-          />
-          <h1 className="text-h6-tw font-medium tracking-tight text-base pb-3">
-            會員中心
-          </h1>
-        </header>
-        {/* Tabs */}
-        <Tabs defaultValue="info" className="w-full">
-          {/* Tabs Navigation */}
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 mb-10 sm:mb-0">
-            <TabsTrigger value="info">會員資訊</TabsTrigger>
-            <TabsTrigger value="courses">課程</TabsTrigger>
-            <TabsTrigger value="groups">揪團</TabsTrigger>
-            <TabsTrigger value="favorites">我的收藏</TabsTrigger>
-            <TabsTrigger value="orders">訂單紀錄</TabsTrigger>
-            <TabsTrigger value="coupons">優惠卷</TabsTrigger>
-          </TabsList>
-          {/* Tabs Content */}
-          <TabsContent
-            value="info"
-            className="space-y-6 max-h-[580px] overflow-y-auto"
-          >
-            {/* Example Card inside a tab */}
-            <Card>
-              <CardHeader>
-                <CardTitle>基本資料</CardTitle>
-                <CardDescription>
-                  更新您的個人信息以保持資料最新。
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  {/* shadcn 的 Form 只是 Context Provider，不會輸出 <form> 標籤 */}
-                  <Form {...form}>
-                    {/* 這裡保留唯一的 <form>，負責整段提交 */}
-                    <form
-                      onSubmit={form.handleSubmit(onSubmit)}
-                      className="space-y-6"
-                    >
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <FormField
-                          control={form.control}
-                          name="name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Name</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Input your name"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Email</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="you@example.com"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>電話</FormLabel>
-                              <FormControl>
-                                <Input placeholder="09xx-xxx-xxx" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      {/* ---- React-Hook-Form 欄位 ---- */}
-                      <FormField
-                        control={form.control}
-                        name="bio"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>個人簡介</FormLabel>
-                            <FormControl>
-                              <Textarea
-                                placeholder="Tell us a little bit about yourself"
-                                className="resize-none  overflow-y-auto h-64 max-h-64 "
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      {/* 送出按鈕 */}
-                      <Button type="submit">更新</Button>
-                    </form>
-                  </Form>
-                </div>
-                {/* ------- */}
-              </CardContent>
+    <div className="min-h-screen w-full bg-fixed bg-cover pt-8 bg-[url('/home-images/layer2.png')]  dark: bg-no-repeat relative">
+      <div className="absolute inset-0  dark:bg-black/60 hidden dark:block" />
+      <div className="relative z-10">
+        <Container className="">
+          {/* Header */}
+          <header className="flex flex-col items-center gap-4">
+            {/* Avatar */}
+            <EditableAvatar
+              userId={user.id}
+              src={src}
+              setSrc={setSrc}
+              className="mt-5"
+            />
+            <h1 className="text-h6-tw font-medium tracking-tight text-base pb-3">
+              會員中心
+            </h1>
+          </header>
+          {/* Tabs */}
+          <Tabs defaultValue="info" className="w-full">
+            {/* Tabs Navigation */}
+            <TabsList className="flex flex-col md:flex-row w-full h-full">
+              <div className="grid w-full grid-cols-3">
+                <TabsTrigger value="info">會員資訊</TabsTrigger>
+                <TabsTrigger value="courses">課程</TabsTrigger>
+                <TabsTrigger value="groups">揪團</TabsTrigger>
+              </div>
 
-              <CardFooter></CardFooter>
-            </Card>
-          </TabsContent>
-          {/* 課程頁引入 */}
-          <TabsContent value="courses" className="overflow-y-auto">
-            <ProfileCourses />
-          </TabsContent>
-          {/* 揪團頁引入 */}
-          <TabsContent value="groups" className="overflow-y-auto">
-            <ProfileGroups />
-          </TabsContent>
-          {/* 訂單紀錄頁引入 */}
-          <TabsContent value="orders">
-            <Card>
-              <CardHeader>
-                <CardTitle>訂單紀錄</CardTitle>
-                <CardDescription>查看並管理您的歷史訂單。</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-500">目前沒有任何訂單紀錄。</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          {/* 收藏頁引入 */}
-          <TabsContent value="favorites">
-            <Card className="p-4">
-              <ProfileWishlist />
-            </Card>
-          </TabsContent>
-          {/* 優惠卷引入 */}
-          <TabsContent value="coupons" className="">
-            <Card>
-              <ProfileCoupons />
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </Container>
+              <div className="grid w-full grid-cols-3">
+                <TabsTrigger value="favorites">我的收藏</TabsTrigger>
+                <TabsTrigger value="orders">訂單紀錄</TabsTrigger>
+                <TabsTrigger value="coupons">優惠卷</TabsTrigger>
+              </div>
+            </TabsList>
+            {/* Tabs Content */}
+            <TabsContent
+              value="info"
+              className="space-y-6 max-h-[580px] overflow-y-auto"
+            >
+              {/* Example Card inside a tab */}
+              <Card className="">
+                <CardHeader>
+                  <CardTitle>基本資料</CardTitle>
+                  <CardDescription>
+                    更新您的個人信息以保持資料最新。
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    {/* shadcn 的 Form 只是 Context Provider，不會輸出 <form> 標籤 */}
+                    <Form {...form}>
+                      {/* 這裡保留唯一的 <form>，負責整段提交 */}
+                      <form
+                        onSubmit={form.handleSubmit(onSubmit)}
+                        className="space-y-6"
+                      >
+                        <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+                          <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Name</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Input your name"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="email"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Email</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="you@example.com"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="phone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>電話</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="09xx-xxx-xxx"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        {/* ---- React-Hook-Form 欄位 ---- */}
+                        <FormField
+                          control={form.control}
+                          name="bio"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>個人簡介</FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  placeholder="Tell us a little bit about yourself"
+                                  className="resize-none  overflow-y-auto h-64 max-h-64 "
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        {/* 送出按鈕 */}
+                        <Button type="submit">更新</Button>
+                      </form>
+                    </Form>
+                  </div>
+                  {/* ------- */}
+                </CardContent>
+
+                <CardFooter></CardFooter>
+              </Card>
+            </TabsContent>
+            {/* 課程頁引入 */}
+            <TabsContent value="courses" className="overflow-y-auto">
+              <ProfileCourses />
+            </TabsContent>
+            {/* 揪團頁引入 */}
+            <TabsContent value="groups" className="overflow-y-auto">
+              <ProfileGroups />
+            </TabsContent>
+            {/* 訂單紀錄頁引入 */}
+            <TabsContent value="orders">
+              <Card>
+                <CardHeader>
+                  <CardTitle>訂單紀錄</CardTitle>
+                </CardHeader>
+                <CardContent>
+                <ProfileOrders />
+                </CardContent>
+              </Card>
+            </TabsContent>
+            {/* 收藏頁引入 */}
+            <TabsContent value="favorites">
+              <Card className="p-4">
+                <ProfileWishlist />
+              </Card>
+            </TabsContent>
+            {/* 優惠卷引入 */}
+            <TabsContent value="coupons" className="">
+              <Card>
+                <ProfileCoupons />
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </Container>
+      </div>
     </div>
   );
 }

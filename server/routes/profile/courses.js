@@ -16,6 +16,7 @@ router.get('/:userId/courses', async (req, res, next) => {
       where: { user_id: userId },
       select: {
         id: true,
+        course_variant_id:true,
         course_variant: {
           select: {
             course: {
@@ -43,6 +44,7 @@ router.get('/:userId/courses', async (req, res, next) => {
       const c = cv.course;
       return {
         id: row.id,
+        course_variant_id:row.course_variant_id,
         name: c.name,
         startAt: c.start_at,
         endAt: c.end_at,
