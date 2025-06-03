@@ -162,7 +162,6 @@ export function CartProvider({ children }) {
   };
 
   // 使用陣列的迭代方法reduce(歸納, 累加)
-  // 稱為"衍生,派生"狀態(derived state)，意即是狀態的一部份，或是由狀態計算得來的值
   const totalQty = [
     { type: 'CartProduct', quantity: 0 },
     { type: 'CartGroup', quantity: 0 },
@@ -179,13 +178,20 @@ export function CartProvider({ children }) {
     }
   }
 
-  // const totalAmount = {
-  //   product: 0,
-  //   group: 0,
-  //   course: 0,
-  // };
-  // for (const key in cart) {
-  //   totalAmount[key] = cart[key].reduce((acc, v) => acc + v.count, 0);
+  // const totalAmount = [
+  //   { type: 'CartProduct', amount: 0 },
+  //   { type: 'CartGroup', amount: 0 },
+  //   { type: 'CartCourse', amount: 0 },
+  // ];
+
+  // for (const list of totalAmount) {
+  //   const key = list.type;
+  //   if (cart?.[key]) {
+  //     list.price = cart[key].reduce(
+  //       (acc, v) => acc + v.price * (v.quantity ? v.quantity : 1),
+  //       0
+  //     );
+  //   }
   // }
 
   // 第一次渲染完成後，從localStorage取出儲存購物車資料進行同步化
@@ -209,6 +215,7 @@ export function CartProvider({ children }) {
         // 如果傳出的值很多時，建議可以將數值/函式分組，然後依英文字母排序
         value={{
           cart,
+          // totalAmount,
           totalQty,
           setCart,
           onAdd,

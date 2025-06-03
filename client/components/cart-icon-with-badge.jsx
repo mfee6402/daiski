@@ -20,7 +20,7 @@ export function CartIconWithBadge({ href = '/cart' }) {
   }
 
   return (
-    <Link href={href} className=" rounded-full hover:bg-gray-100 transition">
+    <Link href={href} className=" rounded-full transition">
       {/* 包住 SVG 和徽章，確保 badge 定位正確 */}
       <div className="relative inline-block">
         <ShoppingCart className=" size-6" />
