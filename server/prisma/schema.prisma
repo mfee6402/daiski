@@ -626,19 +626,22 @@ model CartGroup {
 
 // order
 model Order {
-  id           Int            @id @default(autoincrement())
-  userId       Int            @map("user_id")
-  couponId     Int?           @map("coupon_id")
-  amount       Int
-  payment      String
-  address      String
-  phone        String
-  name         String
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  couponId  Int?     @map("coupon_id")
+  amount    Int
+  payment   String
+  address   String
+  phone     String
+  name      String
+  shipping  String
+  createdAt DateTime @default(now()) @map("created_at")
+
   orderProduct OrderProduct[]
   orderCourse  OrderCourse[]
   orderGroup   OrderGroup[]
 
-  @@map("order")
+  @@map("orders")
 }
 
 model OrderProduct {
