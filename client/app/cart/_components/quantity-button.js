@@ -1,64 +1,86 @@
 'use client';
 import { produce } from 'immer';
 import { useEffect } from 'react';
-
+import { useCart } from '@/hooks/use-cart';
+import { CloudCog } from 'lucide-react';
+import Delete from './delete-button';
+import { Button } from '@/components/ui/button';
 export default function QuantityButton({
-  productId = 0,
-  data = '',
-  setData = () => {},
+  item = {},
+  category = '',
   type = '',
 }) {
-  const url = `http://localhost:3005/api/cart/${productId}`;
+  const url = `http://localhost:3005/api/cart/${item.id}`;
+  const { cart, setCart, onIncrease, onDecrease } = useCart();
 
+  // FIXME 使用useCart鉤子，避免程式碼重複
   // 將更新傳回後端
-  async function fetchData(nextCart) {
-    try {
-      const res = await fetch(url, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          cart: nextCart.cart,
-        }),
-      });
-    } catch (err) {
-      console.log(err);
-    }
-  }
+  // async function fetchData(updateQuantity) {
+  //   try {
+  //     await fetch(url, {
+  //       method: 'PUT',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({
+  //         updateQuantity: updateQuantity,
+  //       }),
+  //     });
+  //   } catch (err) {
+  //     console.log(err);
+  //   }
+  // }
 
   return (
     <>
-      <button
-        className="w-[50]"
+      <Button
+        variant="outline"
+        className=" disabled:border-secondary-200 "
+        // onClick={() => {
+        //   console.log({ item });
+        // }}
         onClick={() => {
-          const nextCart = produce(data, (draft) => {
-            draft.cart.CartProduct.map((product) => {
-              if (productId === product.id) {
+          const nextCart = produce(cart, (draft) => {
+            draft.CartProduct.map((product) => {
+              if (product.id === item.id) {
                 if (type === 'minus') {
-                  // FIXME 增加刪除功能
-                  product.quantity === 1
-                    ? alert('確認刪除?(待做)')
-                    : product.quantity--;
+                  if (product.quantity === 1) {
+                    return product.quantity;
+                  } else {
+                    onDecrease('CartProduct', item);
+                    return product.quantity--;
+                  }
                 } else if (type === 'plus') {
-                  product.quantity++;
+                  onIncrease('CartProduct', item);
+                  return product.quantity++;
                 }
               }
             });
           });
+          setCart(nextCart);
 
-          setData(nextCart);
-          fetchData(nextCart);
+          // const updatedItem = nextCart.CartProduct.find(
+          //   (item) => item.id === itemId
+          // );
+          // if (updatedItem) {
+          //   fetchData(updatedItem.quantity);
+          //   onAdd('CartProduct', {
+          //     id: itemId,
+          //     quantity: updatedItem.quantity,
+          //     price: updatedItem.price,
+          //     name: updatedItem.name,
+          //     imageUrl: updatedItem.imageUrl,
+          //     size: updatedItem.size,
+          //   });
+          // }
         }}
       >
         {/* FIXME -號要加大*/}
         <div>
-          <p className="text-h6-tw ">{type === 'minus' && '-'}</p>
+          <p className="text-center text-h6-tw">{type === 'minus' && '-'}</p>
+          <p className="text-center">{type === 'plus' && '+'}</p>
         </div>
-        <div>
-          <p className="text-h6-tw">{type === 'plus' && '+'}</p>
-        </div>
-      </button>
+      </Button>
     </>
   );
 }
