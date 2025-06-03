@@ -18,6 +18,7 @@ import {
   Minus,
   Plus,
 } from 'lucide-react';
+import { FaStar } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -51,10 +52,9 @@ function useIsMobile(breakpoint = 1024) {
   return isMobile;
 }
 
+const base = process.env.NEXT_PUBLIC_API_BASE || '';
 const fetcher = (url) =>
-  fetch(`http://localhost:3005${url}`, { credentials: 'include' }).then((r) =>
-    r.json()
-  );
+  fetch(`${base}${url}`, { credentials: 'include' }).then((r) => r.json());
 
 export default function ProductDetail() {
   const isMobile = useIsMobile();
@@ -128,12 +128,12 @@ export default function ProductDetail() {
       try {
         // 根據收藏狀態發送 API 請求
         if (isFav) {
-          await fetch(
-            `http://localhost:3005/api/profile/favorites/${productId}`,
-            { method: 'DELETE', credentials: 'include' }
-          );
+          await fetch(`${base}/api/profile/favorites/${productId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+          });
         } else {
-          await fetch('http://localhost:3005/api/profile/favorites', {
+          await fetch(`${base}/api/profile/favorites`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -243,7 +243,7 @@ export default function ProductDetail() {
             </div>
 
             {/* 主圖區 */}
-            <div className="flex justify-center border w-full  max-w-[400px]  lg:max-w-[300px]  xl:max-w-[400px] aspect-square mx-auto rounded-md">
+            <div className="flex justify-center border w-full  max-w-[400px]  lg:max-w-[300px]  xl:max-w-[400px] aspect-square mx-auto rounded-md items-center">
               <Swiper
                 ref={mainSwiperRef}
                 modules={[Thumbs]}
@@ -280,7 +280,25 @@ export default function ProductDetail() {
             <h1 className="text-2xl font-medium text-black dark:text-white mb-4">
               {name}
             </h1>
-            <p className="text-xl font-bold text-red-500 mb-6">NT$ {price}</p>
+            <p className="text-xl font-bold text-red-500 mb-6">
+              NT$ {price.toLocaleString()}
+            </p>
+
+            {product.totalRatings > 0 ? (
+              <div className="flex items-center mb-4">
+                <FaStar className="text-yellow-500 mr-1" />
+                <span className="text-lg font-semibold">
+                  {product.averageRating}
+                </span>
+                <span className="text-gray-500 dark:text-white ml-1">
+                  ({product.totalRatings})
+                </span>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-white mb-4">
+                尚無評價
+              </p>
+            )}
 
             {/* 尺寸選擇（僅在有尺寸時顯示） */}
             {skus.some((s) => s.sizeId !== null) && (
@@ -435,7 +453,7 @@ export default function ProductDetail() {
                             {item.name}
                           </CardTitle>
                           <p className="text-sm font-semibold text-red-500 mt-1">
-                            NT$ {item.price}
+                            NT$ {item.price.toLocaleString()}
                           </p>
                         </CardContent>
 

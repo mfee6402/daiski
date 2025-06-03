@@ -17,6 +17,7 @@ import DarkMode from './dark-mode';
 
 export default function Header() {
   return (
+    // FIXME sticky可能與購物車第二部分的select衝突，改成fixed似乎能解決
     <header className="w-full mx-auto px-10 py-8 flex items-center justify-between sticky top-0 z-1000 shadow-md bg-white dark:bg-background">
       {/* 左側 Logo */}
       <div className="flex-shrink-0">

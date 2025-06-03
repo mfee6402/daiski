@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-
+import { useAuth } from './use-auth';
 // context套用第1步: 建立context
 // createContext的傳入參數defaultValue也有備援值(context套用失敗或錯誤出現的值)
 // 以下為jsdoc的註解，這個註解是用來描述這個context的值的結構
@@ -28,6 +28,7 @@ CartContext.displayName = 'CartContext';
 
 // 有共享狀態的CartProvider元件，用來包裹套嵌的元件
 export function CartProvider({ children }) {
+  const { isAuth } = useAuth();
   // 購物車中的項目 與商品的物件屬性會相差一個count屬性(數字類型，代表購買數量)
   // const [items, setItems] = useState([]);
   const [cart, setCart] = useState({
@@ -46,7 +47,6 @@ export function CartProvider({ children }) {
       const res = await fetch(url, { credentials: 'include' });
       const json = await res.json();
       setCart(json.cart);
-      // console.log(json);
     } catch (err) {
       throw new Error(err);
     }
@@ -61,12 +61,11 @@ export function CartProvider({ children }) {
       } else if (method === 'PUT' || method === 'DELETE') {
         url = `http://localhost:3005/api/cart/${item.id}`;
       }
-      console.log(url);
       let data = {};
       if (method === 'POST') {
         data = { itemId: item.id, category: category };
       } else if (method === 'PUT' || method === 'DELETE') {
-        data = { category };
+        data = { category, item };
       }
 
       const res = await fetch(url, {
@@ -87,15 +86,14 @@ export function CartProvider({ children }) {
     }
   }
 
-  // // 處理遞增
+  // 處理遞增
   const onIncrease = (category, item) => {
-    // 處理單一類別
+    let nextItem;
     const nextList = cart[category].map((v) => {
       if (v.id === item.id) {
-        // 如果比對出id=itemId的成員，則進行再拷貝物件，並且作修改`count: v.count+1`
+        nextItem = { ...v, quantity: v.quantity + 1 };
         return { ...v, quantity: v.quantity + 1 };
       } else {
-        // 否則回傳原本物件
         return v;
       }
     });
@@ -104,27 +102,32 @@ export function CartProvider({ children }) {
       ...cart,
       [category]: nextList,
     };
-    // 3 設定到狀態(不等待後端，樂觀更新)
     setCart(nextCart);
-
-    fetchData(category, item, 'PUT');
+    fetchData(category, nextItem, 'PUT');
   };
 
-  // // FIXME 處理遞減
-  // const onDecrease = (category, itemId) => {
-  //   const nextCart = cart[category].map((v) => {
-  //     if (v.id === itemId) {
-  //       // 如果比對出id=itemId的成員，則進行再拷貝物件，並且作修改`count: v.count-1`
-  //       return { ...v, count: v.count - 1 };
-  //     } else {
-  //       // 否則回傳原本物件
-  //       return v;
-  //     }
-  //   });
+  // FIXME 處理遞減
+  const onDecrease = (category, item) => {
+    let nextItem;
+    const nextList = cart[category].map((v) => {
+      if (v.id === item.id) {
+        nextItem = { ...v, quantity: v.quantity - 1 };
+        return { ...v, quantity: v.quantity - 1 };
+      } else {
+        return v;
+      }
+    });
+    const nextCart = {
+      ...cart,
+      [category]: nextList,
+    };
 
-  //   // 3 設定到狀態
-  //   setCart(...cart, nextCart);
-  // };
+    setCart(nextCart);
+    fetchData(category, nextItem, 'PUT');
+    //   // 3 設定到狀態
+    //   setCart(...cart, nextCart);
+  };
+
   // 處理刪除
   const onRemove = (category, item) => {
     fetchData(category, item, 'DELETE');
@@ -159,7 +162,6 @@ export function CartProvider({ children }) {
   };
 
   // 使用陣列的迭代方法reduce(歸納, 累加)
-  // 稱為"衍生,派生"狀態(derived state)，意即是狀態的一部份，或是由狀態計算得來的值
   const totalQty = [
     { type: 'CartProduct', quantity: 0 },
     { type: 'CartGroup', quantity: 0 },
@@ -176,25 +178,36 @@ export function CartProvider({ children }) {
     }
   }
 
-  // const totalAmount = {
-  //   product: 0,
-  //   group: 0,
-  //   course: 0,
-  // };
-  // for (const key in cart) {
-  //   totalAmount[key] = cart[key].reduce((acc, v) => acc + v.count, 0);
-  // }
+  // const totalAmount = [
+  //   { type: 'CartProduct', amount: 0 },
+  //   { type: 'CartGroup', amount: 0 },
+  //   { type: 'CartCourse', amount: 0 },
+  // ];
 
-  // FIXME要改成讀資料庫
+  // for (const list of totalAmount) {
+  //   const key = list.type;
+  //   if (cart?.[key]) {
+  //     list.price = cart[key].reduce(
+  //       (acc, v) => acc + v.price * (v.quantity ? v.quantity : 1),
+  //       0
+  //     );
+  //   }
+  // }
 
   // 第一次渲染完成後，從localStorage取出儲存購物車資料進行同步化
   useEffect(() => {
-    // 讀取資料庫資料，如果不存在(null)會使用預設值空陣列([])
-
+    // 與資料庫同步資料
     fetchSyncData();
     // 第一次渲染完成
     setDidMount(true);
   }, []);
+
+  // 登入後與資料庫同步同步
+  useEffect(() => {
+    if (didMount) {
+      fetchSyncData();
+    }
+  }, [isAuth]);
 
   return (
     <>
@@ -202,12 +215,12 @@ export function CartProvider({ children }) {
         // 如果傳出的值很多時，建議可以將數值/函式分組，然後依英文字母排序
         value={{
           cart,
-          setCart,
           // totalAmount,
           totalQty,
+          setCart,
           onAdd,
-          // onDecrease,
-          // onIncrease,
+          onDecrease,
+          onIncrease,
           onRemove,
         }}
       >

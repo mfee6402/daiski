@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
 // import { fail } from 'assert';
-
+import authenticate from '../../middlewares/authenticate.js';
 const router = express.Router();
 
 // multer上傳設定
@@ -101,6 +101,7 @@ router.get('/:id', async (req, res) => {
             start_at: true,
             course: {
               select: {
+                id: true,
                 name: true,
                 CourseImg: {
                   take: 1,
@@ -126,6 +127,7 @@ router.get('/:id', async (req, res) => {
       license: coach.LicenseCoach.map((cl) => cl.license.name),
       courses: coach.CourseVariant.map((cv) => ({
         name: cv.course.name,
+        id: cv.course.id,
         date: new Date(cv.start_at).toLocaleDateString('zh-TW', {
           year: 'numeric',
           month: '2-digit',
@@ -141,6 +143,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// 教練建立課程
 router.post(
   '/:id/create',
   upload.array('images', 5), // ① 先跑圖片上傳
@@ -311,9 +314,9 @@ router.post(
             price: Number(price), // 你若 Prisma schema 改 Decimal 就存 Number(price)
             duration: Number(duration),
             max_people: Number(max_people),
-            location_id: Number(location_id),
+            location_id: locId,
             coach_id: Number(coach_id),
-            // boardtype_id: Number(boardtype_id),
+            boardtype_id: Number(boardtype_id),
             course_img_id: coverImg.id,
             start_at: new Date(start_at),
           },
@@ -330,7 +333,7 @@ router.post(
               data: { course_id: course.id, tag_id: existing.id },
             });
           } else {
-            await prisma.tag.create({
+            await tx.tag.create({
               data: { name: t },
             });
           }
@@ -353,6 +356,161 @@ router.post(
       return res
         .status(500)
         .json({ status: 'fail', message: '伺服器錯誤，無法建立課程' });
+    }
+  }
+);
+
+// 取單一課程給編輯頁用的
+router.get('/:coachId/courses/:courseId/edit', async (req, res) => {
+  const { coachId, courseId } = req.params;
+  console.log(req.params);
+  const course = await prisma.course.findFirst({
+    where: { id: +courseId, deleted_at: null }, // ← 條件同 PUT
+    include: {
+      CourseVariant: {
+        where: { coach_id: +coachId },
+      },
+      CourseImg: true,
+      CourseTag: { include: { tag: true } },
+      // Boardtype:{
+
+      // }
+    },
+  });
+  if (!course || !course.CourseVariant.length) {
+    // console.log('DB 查不到：', { id: +courseId, coachId: +coachId });
+    return res.status(404).json({ message: 'not found' });
+  }
+
+  /* ↓ 把資料整理成前端需要的形狀（最少做到 tags & images） */
+  const initData = {
+    ...course,
+    boardtype_id: course.CourseVariant[0].boardtype_id,
+    difficulty: course.CourseVariant[0].difficulty,
+    price: course.CourseVariant[0].price,
+    duration: course.CourseVariant[0].duration,
+    max_people: course.CourseVariant[0].max_people,
+    location_id: course.CourseVariant[0].location_id,
+    start_at: course.CourseVariant[0].start_at.toISOString().slice(0, 16),
+    // end_at: course.CourseVariant[0].end_at.toISOString().slice(0, 16),
+    tags: course.CourseTag.map((ct) => ct.tag.name).join(','),
+    // 封面只傳第一張路徑，省得 FormData 再處理
+    cover: course.CourseImg[0]?.img || '',
+  };
+
+  return res.json(initData);
+  // return res.json(course); // ← 找到時一定要把資料丟回去
+});
+
+// update修改課程
+// 更新（PUT）
+router.put(
+  '/:coachId/courses/:courseId',
+  authenticate,
+  upload.array('images'),
+  async (req, res) => {
+    const { coachId, courseId } = req.params;
+    console.log({ coachId, courseId });
+
+    // 權限檢查 – 可根據 session / jwt 驗證
+    if (+req.user || +req.user.id !== +coachId)
+      return res.status(403).json({ message: '無權限' });
+
+    const {
+      name,
+      description,
+      content,
+      start_at,
+      end_at,
+      difficulty,
+      price = 0,
+      duration = 0,
+      max_people = 0,
+      boardtype_id,
+      location_id,
+      tagIds = [],
+      delete_ids = [],
+    } = req.body;
+    try {
+      await prisma.$transaction(async (tx) => {
+        // 1) 更新主表
+        await tx.course.update({
+          where: { id: +courseId },
+          data: {
+            name,
+            description,
+            content,
+            start_at: new Date(start_at), // ← 新增
+            end_at: new Date(end_at), // ← 新增
+          },
+        });
+        await tx.courseVariant.updateMany({
+          where: { course_id: +courseId, coach_id: +coachId },
+          data: {
+            start_at: new Date(start_at),
+            difficulty,
+            price: +price,
+            duration: +duration,
+            max_people: +max_people,
+            boardtype_id: +boardtype_id,
+            location_id: +location_id,
+          },
+        });
+
+        /* 2) 先刪除使用者勾掉的舊圖（若有） */
+        const idsToDel = Array.isArray(delete_ids)
+          ? delete_ids.map(Number).filter(Boolean)
+          : [];
+        if (idsToDel.length) {
+          await tx.courseImg.deleteMany({
+            where: { id: { in: idsToDel }, course_id: +courseId },
+          });
+        }
+
+        /* 3) 再新增這次上傳的檔案（若有） */
+        if (req.files?.length) {
+          await Promise.all(
+            req.files.map((f) =>
+              tx.courseImg.create({
+                data: { course_id: +courseId, img: f.buffer }, // 建議改存 URL
+              })
+            )
+          );
+        }
+
+        // 2) 處理新上傳圖片（可先刪再增，或比對差異）
+        // if (req.files.length) {
+        //   await tx.courseImg.deleteMany({ where: { course_id: +courseId } });
+        //   await Promise.all(
+        //     req.files.map((f) =>
+        //       tx.courseImg.create({
+        //         data: { course_id: +courseId, img: f.buffer },
+        //       })
+        //     )
+        //   );
+        // }
+
+        // 3) 標籤 upsert
+        if (Array.isArray(tagIds)) {
+          // 先清光舊的
+          await tx.courseTag.deleteMany({ where: { course_id: +courseId } });
+          for (const t of tagIds) {
+            const tag = await tx.tag.upsert({
+              where: { name: t },
+              create: { name: t },
+              update: {},
+            });
+            await tx.courseTag.create({
+              data: { course_id: +courseId, tag_id: tag.id },
+            });
+          }
+        }
+      });
+
+      res.json({ message: '更新成功' });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: '更新失敗' });
     }
   }
 );

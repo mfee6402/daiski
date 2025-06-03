@@ -8,6 +8,25 @@ import Favorite from './favorite';
 import { useCart } from '@/hooks/use-cart';
 import Image from 'next/image';
 
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
+
 export default function CartItemList({ category = '' }) {
   const { cart } = useCart();
   // NOTE 測試用，等待會員製作完收藏資料庫再修正，用於決定收藏的愛心狀態(實心、空心)
@@ -21,107 +40,138 @@ export default function CartItemList({ category = '' }) {
     CartCourse: '課程',
     CartGroup: '揪團',
   };
-  const formatDateTime = (d) => {
-    new Date(d.setHours(d.getHours() + 8));
-    const [date, time] = d.toISOString().split('T');
-    return `${date} ${time.split('.')[0]}`;
+  const toUTC8 = (utcString) => {
+    const date = new Date(utcString);
+    date.setHours(date.getHours() + 8); // 加上 8 小時
+    const [d, t] = date.toISOString().split('T');
+    return `${d} ${t.split('.')[0].slice(0, 5)}`;
   };
-  
+
   return (
     <>
-      <div className="border-b-5 border-secondary-500">
-        <h6 className="text-h6-tw">{titleMap[category]}</h6>
-      </div>
+      <Card className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold">
+            {titleMap[category]}
+          </CardTitle>
+        </CardHeader>
 
-      <div className="mt-10 flex flex-col gap-4">
-        {cart[category]?.map((item, i) => {
-          return (
-            <div key={category + item.id} className="flex justify-between">
-              {/* 圖與名稱 */}
-              <div className="flex  w-full ">
-                {item.imageUrl && (
-                  <Image
-                    src={
-                      item?.imageUrl
-                        ? `http://localhost:3005${item.imageUrl}`
-                        : ''
-                    }
-                    alt={item.imageUrl}
-                    width={96}
-                    height={96}
-                    className="object-fill w-[96]"
-                  ></Image>
-                )}
-                <div>
-                  <p>{item.name}</p>
-                </div>
-              </div>
-              {/* 時間 */}
-
-              {category !== 'CartProduct' && (
-                <div className="w-full flex justify-center items-center ">
-                  <p className="text-h6-tw">{item?.time}</p>
-                </div>
-              )}
-
-              {/* 尺寸 */}
-              {category === 'CartProduct' && (
-                <div className="w-full flex justify-center items-center ">
-                  <p className="text-h6-tw">{item?.size}</p>
-                </div>
-              )}
-
-              {/* 價格 */}
-              <div className="w-full flex justify-center items-center ">
-                <p className="text-h6-tw">
-                  {(
+        <CardContent>
+          <div className=" ">
+            <Table>
+              {/* FIXME hover拿掉 */}
+              <TableHeader>
+                <TableRow className="w-full">
+                  <TableHead>圖片</TableHead>
+                  <TableHead>名稱</TableHead>
+                  <TableHead className="text-center">{`${category === 'CartProduct' ? '尺寸' : '價格'}`}</TableHead>
+                  <TableHead className="text-center">{`${category === 'CartProduct' ? '總價' : '日期'}`}</TableHead>
+                  <TableHead className="text-center">{`${category === 'CartProduct' ? '數量' : ''}`}</TableHead>
+                  <TableHead className=""></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {cart[category]?.map((item) => {
+                  const totalPrice = (
                     item.price * (item.quantity ? item.quantity : 1)
-                  ).toLocaleString()}
-                </p>
-              </div>
-              {/* 數量(只有商品有) */}
-              {category === 'CartProduct' && (
-                <div className="flex justify-center w-full items-center">
-                  <QuantityButton
-                    item={item}
-                    category={category}
-                    type="minus"
-                  ></QuantityButton>
-                  <div className="flex justify-center w-[50]">
-                    <p className="text-h6-tw">{item.quantity}</p>
-                  </div>
-                  <QuantityButton
-                    item={item}
-                    category={category}
-                    type="plus"
-                  ></QuantityButton>
-                </div>
-              )}
-              {/* FIXME */}
-              {/* 活動日期(只有課程跟揪團有) */}
-              {/* 收藏、刪除 */}
-              <div className="flex justify-center w-full gap-4">
-                {/* <WishList
-                  wishList={wishList}
-                  index={i}
-                  setWishList={setWishList}
-                ></WishList> */}
-                {/* FIXME 收藏按鈕 */}
-                {/* {category === 'CartProduct' && <Favorite data></Favorite>} */}
+                  ).toLocaleString();
 
-                {/* 刪除只有商品有 */}
-                {category === 'CartProduct' && (
-                  <Delete
-                    name={item.name}
-                    category={category}
-                    item={item}
-                  ></Delete>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                  return (
+                    <TableRow key={item.id}>
+                      {/* 圖片 */}
+                      {item.imageUrl && (
+                        <TableCell>
+                          <div
+                            className={`relative ${category === 'CartProduct' ? 'h-[96px] w-[96px]' : 'h-[96px] w-[168px]'}`}
+                          >
+                            <Image
+                              // FIXME
+                              fill
+                              src={
+                                item?.imageUrl
+                                  ? `http://localhost:3005${item.imageUrl}`
+                                  : ''
+                              }
+                              alt={item.imageUrl}
+                              className=""
+                            ></Image>
+                          </div>
+                        </TableCell>
+                      )}
+                      {/* 品名 */}
+                      <TableCell className="whitespace-normal break-words">
+                        <div className="">
+                          <p className="text-p-tw line-clamp-3">{item.name}</p>
+                        </div>
+                      </TableCell>
+
+                      {/* 尺寸 */}
+                      {category === 'CartProduct' && (
+                        <TableCell>
+                          <div className="w-full flex justify-center items-center ">
+                            <p className="text-p-tw">{item?.size}</p>
+                          </div>
+                        </TableCell>
+                      )}
+                      {/* 價格 */}
+                      <TableCell>
+                        <div className="w-full flex justify-center items-center ">
+                          <p className="text-p-tw">${totalPrice}</p>
+                        </div>
+                      </TableCell>
+                      {/* 時間 */}
+                      {category !== 'CartProduct' && (
+                        <TableCell>
+                          <div className="w-full flex justify-center items-center flex-col ">
+                            <p className="flex flex-col">
+                              <span className="text-p-tw ">
+                                {toUTC8(item?.startAt)} ～ {toUTC8(item?.endAt)}
+                              </span>
+                            </p>
+                          </div>
+                        </TableCell>
+                      )}
+                      {/* 數量 */}
+                      {category === 'CartProduct' && (
+                        <TableCell>
+                          <div className="flex justify-center w-full items-center gap-6">
+                            <QuantityButton
+                              item={item}
+                              category={category}
+                              type="minus"
+                            ></QuantityButton>
+                            <div className="flex justify-center">
+                              <p className="">{item.quantity}</p>
+                            </div>
+                            <QuantityButton
+                              item={item}
+                              category={category}
+                              type="plus"
+                            ></QuantityButton>
+                          </div>
+                        </TableCell>
+                      )}
+                      {/* 刪除 */}
+                      <TableCell>
+                        <div className="flex justify-center w-full gap-4">
+                          {/* FIXME 課程跟揪團也要 */}
+                          {/* FIXME 揪團刪除路由localhost:3005/api/group/members/${groupMemberId} */}
+
+                          <Delete
+                            name={item.name}
+                            category={category}
+                            item={item}
+                          ></Delete>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </>
   );
 }

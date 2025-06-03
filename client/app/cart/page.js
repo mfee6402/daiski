@@ -13,10 +13,6 @@ import { useAuth } from '@/hooks/use-auth';
 import { useCart } from '@/hooks/use-cart';
 
 export default function CartPage({ setProcess }) {
-  const { cart, setCart } = useCart();
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const { user, isAuth, isLoading } = useAuth();
 
   // useEffect(() => {
@@ -36,7 +32,7 @@ export default function CartPage({ setProcess }) {
   // }, []);
 
   // const groups = data?.data.cart.CartGroup ? cart.CartGroup : [];
-
+  // FIXME收藏未做
   //   // 定義收藏用狀態
   // const [wishList, setWishList] = useState(false)
   // // 處理收藏布林值切換(toggle)
@@ -63,20 +59,23 @@ export default function CartPage({ setProcess }) {
     return (
       <>
         <Process step="1"></Process>
-        <div className="flex justify-between">
-          <div className="w-full">
+        <div className="flex justify-between md:gap-6  ">
+          <div className="flex flex-col w-full gap-6 min-w-0 justify-center item-center">
             <CartItemList
               key="CartProduct"
               category="CartProduct"
             ></CartItemList>
             <CartItemList key="CartCourse" category="CartCourse"></CartItemList>
             <CartItemList key="CartGroup" category="CartGroup"></CartItemList>
+            <Coupon></Coupon>
           </div>
-          <Checkout></Checkout>
+          <div className="">
+            <Checkout></Checkout>
+          </div>
         </div>
       </>
     );
   } else {
-    return <>請先登入</>;
+    return <></>;
   }
 }
