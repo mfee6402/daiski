@@ -155,13 +155,13 @@ export default function CartItemList({ category = '' }) {
                       <TableCell>
                         <div className="flex justify-center w-full gap-4">
                           {/* FIXME 課程跟揪團也要 */}
-                          {category === 'CartProduct' && (
-                            <Delete
-                              name={item.name}
-                              category={category}
-                              item={item}
-                            ></Delete>
-                          )}
+                          {/* FIXME 揪團刪除路由localhost:3005/api/group/members/${groupMemberId} */}
+
+                          <Delete
+                            name={item.name}
+                            category={category}
+                            item={item}
+                          ></Delete>
                         </div>
                       </TableCell>
                     </TableRow>

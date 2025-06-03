@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import {
   Card,
   CardHeader,
@@ -15,8 +15,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
-
-/* -------- Stepper（可共用） -------- */
+import RichEditor from './ckeditor';
+/* -------- 建立時才需要的 Stepper -------- */
 const STEPS = [
   { id: 'basic', name: '步驟 1', description: '填寫課程' },
   { id: 'preview', name: '步驟 2', description: '預覽與發佈' },
@@ -72,7 +72,6 @@ const HorizontalStepper = ({ steps, current, setCurrent }) => {
     </nav>
   );
 };
-
 /* -------- 即時預覽卡 -------- */
 const LivePreview = ({ data, coverPreview }) => {
   const diffMap = { 初級: '初級', 中級: '中級', 高級: '高級' };
@@ -150,36 +149,78 @@ const LivePreview = ({ data, coverPreview }) => {
   );
 };
 
-/* -------- 主頁面 -------- */
-export default function CreateCoursePage() {
+export default function CourseForm({ mode = 'create', initialData = null }) {
+  /* ---------------- 基本 hooks ---------------- */
   const router = useRouter();
-  const { isAuth } = useAuth();
-  const { user } = useAuth(); // user.id 是教練 ID
+  const { coachId, courseId } = useParams();
+  //   const params = useParams();
+  //   const coachId = params.coachId || params.id; // 兼容舊 [id]
+  //   const courseId = params.courseId;
+  const { user, isAuth } = useAuth();
 
-  /* ---- 狀態 ---- */
-  const [step, setStep] = useState('basic');
-  const [coverPreview, setCoverPreview] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [locations, setLocations] = useState([]); // 從 /api/location 撈既有雪場
-  const [form, setForm] = useState({
+  /* ---------------- 狀態 ---------------- */
+  const DEFAULT = {
     name: '',
     description: '',
     content: '',
     start_at: '',
     end_at: '',
     difficulty: '',
-    price: 0,
+    price: '',
     duration: '',
     max_people: '',
     location_id: '',
-    newLoc: { name: '', country: '', city: '', address: '', lat: '', lng: '' },
+    newLoc: { name: '', country: '', city: '', address: '' },
     course_imgs: [],
     boardtype_id: '',
     tags: '',
-  });
+  };
+  const [form, setForm] = useState(initialData || DEFAULT);
+  const [locations, setLocations] = useState([]);
+  const [coverPreview, setCoverPreview] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [step, setStep] = useState('basic');
 
-  /* ---- 表單變更 ---- */
+  /* ---------------- 今天 (local) => YYYY-MM-DDTHH:MM ---------------- */
+  const todayLocal = (() => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); // to local ISO
+    return d.toISOString().slice(0, 10);
+  })();
+
+  /* ---------------- 載入初始資料 (edit) ---------------- */
+  //   useEffect(() => {
+  //     if (initialData) setForm((f) => ({ ...f, ...initialData }));
+  //   }, [initialData]);
+  useEffect(() => {
+    if (initialData) setForm(initialData);
+  }, [initialData]);
+
+  /* ---------------- 取得雪場 ---------------- */
+  useEffect(() => {
+    fetch('http://localhost:3005/api/location')
+      .then((r) => r.json())
+      .then(setLocations)
+      .catch(console.error);
+  }, []);
+
+  /* ---------------- onChange ---------------- */
+  //   const onChange = (e) => {
+  //     const { name, value, type, files } = e.target;
+  //     if (type === 'file') {
+  //       const arr = Array.from(files || []);
+  //       setForm((p) => ({ ...p, course_imgs: arr }));
+  //       if (arr.length) setCoverPreview(URL.createObjectURL(arr[0]));
+  //       return;
+  //     }
+  //     if (name.startsWith('newLoc.')) {
+  //       const k = name.split('.')[1];
+  //       setForm((p) => ({ ...p, newLoc: { ...p.newLoc, [k]: value } }));
+  //       return;
+  //     }
+  //     setForm((p) => ({ ...p, [name]: value }));
+  //   };
   const onChange = (e) => {
     const { name, value, type, files } = e.target;
     console.log('欄位變更', name, value);
@@ -197,15 +238,24 @@ export default function CreateCoursePage() {
       setForm((p) => ({ ...p, [name]: value }));
     }
   };
-  /* ① 先抓雪場 */
-  useEffect(() => {
-    fetch('http://localhost:3005/api/location')
-      .then((r) => r.json())
-      .then(setLocations)
-      .catch(console.error);
-    console.log('地點選項：', locations);
-  }, []);
-  /* ---- 驗證（僅示意） ---- */
+
+  /* ---------------- 驗證 ---------------- */
+  //   const validate = useCallback(() => {
+  //     const now = new Date();
+  //     if (!form.name.trim()) return '請輸入課程名稱';
+  //     if (!form.start_at || !form.end_at) return '請選擇日期';
+
+  //     const start = new Date(form.start_at);
+  //     const end = new Date(form.end_at);
+
+  //     if (start < new Date(now.setHours(0, 0, 0, 0))) return '開始日期須晚於今天';
+  //     if (end <= start) return '結束日期需晚於開始日期';
+
+  //     if (!form.difficulty) return '請選擇難度';
+  //     if (mode === 'create' && !form.course_imgs.length)
+  //       return '請上傳至少 1 張圖片';
+  //     return '';
+  //   }, [form, mode]);
   const validate = () => {
     if (!form.name.trim()) return '請輸入課程名稱';
     if (!form.start_at || !form.end_at) return '請選擇日期';
@@ -213,23 +263,22 @@ export default function CreateCoursePage() {
     return '';
   };
 
-  /* ---- 送出 ---- */
+  /* ---------------- 送出 ---------------- */
   const handleSubmit = async () => {
     const errMsg = validate();
     if (errMsg) return setError(errMsg);
     if (!isAuth) return setError('請先登入');
 
     const fd = new FormData();
+    const isCreate = mode === 'create';
+    const targetCoachId = coachId || user.id;
 
-    // if (form.course_imgs?.length) {
-    // Array.from(form.course_imgs).forEach((f) => fd.append('images', f));
-    // }
+    // fd.append('images', form.course_imgs);
     // console.log(form.course_imgs);
-    // for (const image of form.course_imgs) {
-    //   fd.append('images', image);
-    // }
-    fd.append('images', form.course_imgs);
-    console.log(form.course_imgs);
+    (Array.isArray(form.course_imgs) ? form.course_imgs : [form.course_imgs])
+      .filter(Boolean) // 避免 null
+      .forEach((file) => fd.append('images', file));
+    console.log([...fd.entries()]);
 
     // 文字欄位
     fd.append('name', form.name.trim());
@@ -250,10 +299,14 @@ export default function CreateCoursePage() {
     fd.append('coach_id', +user.id);
     console.log(fd.get('price'));
     if (form.location_id === 'other') {
-      fd.append('new_location_name', form.newLoc.name);
-      fd.append('new_location_country', form.newLoc.country);
-      fd.append('new_location_city', form.newLoc.city);
-      fd.append('new_location_address', form.newLoc.address);
+      //   fd.append('new_location_name', form.newLoc.name);
+      //   fd.append('new_location_country', form.newLoc.country);
+      //   fd.append('new_location_city', form.newLoc.city);
+      //   fd.append('new_location_address', form.newLoc.address);
+      fd.append('new_name', form.newLoc.name);
+      fd.append('new_country', form.newLoc.country);
+      fd.append('new_city', form.newLoc.city);
+      fd.append('new_address', form.newLoc.address);
     }
     // 4. 把 tags 字串拆成陣列，送到 tagIds[]
     if (form.tags.trim()) {
@@ -271,14 +324,22 @@ export default function CreateCoursePage() {
     try {
       // await fetch(`http://localhost:3005/api/coaches/${user.id}/create`, { … })
       console.log(user.id);
-      const res = await fetch(
-        `http://localhost:3005/api/coaches/${user.id}/create`,
-        {
-          method: 'POST',
-          body: fd,
-          credentials: 'include',
-        }
-      );
+      //   const res = await fetch(
+      //     `http://localhost:3005/api/coaches/${user.id}/create`,
+      //     {
+      //       method: 'POST',
+      //       body: fd,
+      //       credentials: 'include',
+      //     }
+      //   );
+      const url = isCreate
+        ? `http://localhost:3005/api/coaches/${targetCoachId}/create`
+        : `http://localhost:3005/api/coaches/${targetCoachId}/courses/${courseId}`;
+      const res = await fetch(url, {
+        method: isCreate ? 'POST' : 'PUT',
+        body: fd,
+        credentials: 'include',
+      });
       // 確定拿到 JSON
       const payload = await res.json();
       if (!res.ok) {
@@ -353,7 +414,7 @@ export default function CreateCoursePage() {
                       rows={2}
                     />
                   </div>
-                  <div>
+                  {/* <div>
                     <Label htmlFor="content">詳細內容</Label>
                     <Textarea
                       id="content"
@@ -362,7 +423,14 @@ export default function CreateCoursePage() {
                       onChange={onChange}
                       rows={4}
                     />
-                  </div>
+                  </div> */}
+                  <label className="block mb-2 font-medium">詳細內容</label>
+                  <RichEditor
+                    value={form.content}
+                    onChange={(html) =>
+                      setForm((p) => ({ ...p, content: html }))
+                    }
+                  />
                   {/* 日期 */}
                   <div className="grid sm:grid-cols-2 gap-6">
                     <div>
@@ -370,7 +438,7 @@ export default function CreateCoursePage() {
                       <Input
                         id="start_at"
                         name="start_at"
-                        type="datetime-local"
+                        type="date"
                         value={form.start_at}
                         onChange={onChange}
                       />
@@ -380,7 +448,7 @@ export default function CreateCoursePage() {
                       <Input
                         id="end_at"
                         name="end_at"
-                        type="datetime-local"
+                        type="date"
                         value={form.end_at}
                         onChange={onChange}
                       />
@@ -491,7 +559,7 @@ export default function CreateCoursePage() {
                     </div>
                   )}
                   <div>
-                    <Label htmlFor="course_imgs">課程圖片</Label>
+                    <Label htmlFor="course_imgs">封面圖片</Label>
                     <Input
                       id="course_imgs"
                       name="course_imgs"
@@ -542,7 +610,7 @@ export default function CreateCoursePage() {
                 <CardHeader>
                   <CardTitle>確認課程資訊</CardTitle>
                   <CardDescription>
-                    請檢查以下內容，確認無誤後發佈
+                    請檢查以下內容，確認無誤後儲存
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
@@ -580,7 +648,7 @@ export default function CreateCoursePage() {
                     disabled={isSubmitting}
                     onClick={handleSubmit}
                   >
-                    {isSubmitting ? '發佈中...' : '確認發佈'}
+                    {isSubmitting ? '儲存中...' : '確認儲存'}
                   </Button>
                 </CardFooter>
               </Card>
@@ -600,7 +668,7 @@ export default function CreateCoursePage() {
                   </CardHeader>
                   <CardContent className="text-sm space-y-1 text-red-700">
                     <p>• 請確認課程資訊真實、準確。</p>
-                    <p>• 發佈後可在「我的課程」頁面管理。</p>
+                    <p>• 儲存後可在「我的課程」頁面管理。</p>
                   </CardContent>
                 </Card>
               )}

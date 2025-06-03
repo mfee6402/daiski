@@ -125,6 +125,11 @@ export default function CoursesIdPage() {
                 <li>{course.variants[0]?.location.name}</li>
               </ul>
               <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6 w-[60%] ml-5">
+                {/* 單雙板 */}
+                <div className="mb-6">
+                  <h2 className="text-xl font-semibold">單/雙板</h2>
+                  <p>{course.variants[0]?.boardtype.name}</p>
+                </div>
                 {/* 難易度 */}
                 <div className="mb-6">
                   <h2 className="text-xl font-semibold">難易度</h2>

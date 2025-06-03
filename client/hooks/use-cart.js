@@ -53,7 +53,12 @@ export function CartProvider({ children }) {
   }
 
   // 將資料傳給後端
-  async function fetchData(category = '', item = {}, method = '') {
+  async function fetchData(
+    category = '',
+    item = {},
+    method = '',
+    quantity = 1
+  ) {
     try {
       let url = '';
       if (method === 'POST') {
@@ -87,12 +92,12 @@ export function CartProvider({ children }) {
   }
 
   // 處理遞增
-  const onIncrease = (category, item) => {
+  const onIncrease = (category, item, quantity = 1) => {
     let nextItem;
     const nextList = cart[category].map((v) => {
       if (v.id === item.id) {
-        nextItem = { ...v, quantity: v.quantity + 1 };
-        return { ...v, quantity: v.quantity + 1 };
+        nextItem = { ...v, quantity: v.quantity + quantity };
+        return { ...v, quantity: v.quantity + quantity };
       } else {
         return v;
       }
@@ -103,7 +108,7 @@ export function CartProvider({ children }) {
       [category]: nextList,
     };
     setCart(nextCart);
-    fetchData(category, nextItem, 'PUT');
+    fetchData(category, nextItem, 'PUT', quantity);
   };
 
   // FIXME 處理遞減
@@ -131,10 +136,33 @@ export function CartProvider({ children }) {
   // 處理刪除
   const onRemove = (category, item) => {
     fetchData(category, item, 'DELETE');
+    if (category === 'CartGroup') {
+      async function fetchData() {
+        try {
+          const url = `localhost:3005/api/group/members/${item.id}`;
+          const res = await fetch(url, {
+            method: 'DELETE',
+            credentials: 'include',
+          });
+        } catch (err) {
+          throw new Error(err);
+        }
+      }
+      fetchData();
+    }
+
+    //  const res = await fetch(url, {
+    //     method: method,
+    //     credentials: 'include',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify(data),
+    // });
   };
 
   // 處理新增
-  const onAdd = (category = '', item = {}) => {
+  const onAdd = (category = '', item = {}, quantity = 1) => {
     const categoryOptions = ['CartGroup', 'CartProduct', 'CartCourse'];
 
     //  如果沒有該類別要return
@@ -146,7 +174,7 @@ export function CartProvider({ children }) {
     if (foundIndex !== -1) {
       // 如果有找到 ===> 遞增購物車狀態商品數量
       if (category === 'CartProduct') {
-        onIncrease(category, item);
+        onIncrease(category, item, quantity);
       } else {
         console.log('已重複且非商品，無作為');
       }
@@ -162,7 +190,6 @@ export function CartProvider({ children }) {
   };
 
   // 使用陣列的迭代方法reduce(歸納, 累加)
-  // 稱為"衍生,派生"狀態(derived state)，意即是狀態的一部份，或是由狀態計算得來的值
   const totalQty = [
     { type: 'CartProduct', quantity: 0 },
     { type: 'CartGroup', quantity: 0 },
@@ -179,13 +206,20 @@ export function CartProvider({ children }) {
     }
   }
 
-  // const totalAmount = {
-  //   product: 0,
-  //   group: 0,
-  //   course: 0,
-  // };
-  // for (const key in cart) {
-  //   totalAmount[key] = cart[key].reduce((acc, v) => acc + v.count, 0);
+  // const totalAmount = [
+  //   { type: 'CartProduct', amount: 0 },
+  //   { type: 'CartGroup', amount: 0 },
+  //   { type: 'CartCourse', amount: 0 },
+  // ];
+
+  // for (const list of totalAmount) {
+  //   const key = list.type;
+  //   if (cart?.[key]) {
+  //     list.price = cart[key].reduce(
+  //       (acc, v) => acc + v.price * (v.quantity ? v.quantity : 1),
+  //       0
+  //     );
+  //   }
   // }
 
   // 第一次渲染完成後，從localStorage取出儲存購物車資料進行同步化
@@ -209,6 +243,7 @@ export function CartProvider({ children }) {
         // 如果傳出的值很多時，建議可以將數值/函式分組，然後依英文字母排序
         value={{
           cart,
+          // totalAmount,
           totalQty,
           setCart,
           onAdd,
