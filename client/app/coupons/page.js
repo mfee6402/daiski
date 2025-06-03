@@ -8,11 +8,13 @@ import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
+import Link from 'next/link';
 
 import useSWR from 'swr';
 // import useSWRMutation from 'swr/dist/mutation';
 import useSWRMutation from 'swr/mutation';
 import { mutate } from 'swr';
+import { Button } from '@/components/ui/button';
 
 export default function CouponsPage(props) {
   // 在 useSWR 呼叫時，就直接傳 inline fetcher
@@ -55,11 +57,24 @@ export default function CouponsPage(props) {
   // 讀取會員ＩＤ
   const { user, isAuth } = useAuth();
 
+  // 已撕的 couponId
+  // const [tornIds, setTornIds] = useState(new Set());
+
+  // const [tearAnim, setTearAnim] = useState(false);
+  const [torn, setTorn] = useState(false);
+
+  // useEffect(() => {
+  //   if (torn) setTearAnim(true); // 每次 torn 變 true 就開動畫
+  // }, [torn]);
+
   // 執行一次領券
   const handleClaim = async (coupon) => {
     try {
       if (!isAuth) return alert('請先登錄');
       await trigger({ couponId: coupon.id }); // 這行才真的 fetch
+
+      // 樂觀UI 馬上把這張標記為torn
+      // setTornIds((prev) => new Set(prev).add(coupon.id));
       mutateCoupons();
 
       toast.success('已領取優惠券！');
@@ -84,6 +99,7 @@ export default function CouponsPage(props) {
       const claimable = couponsWithStatus?.filter(
         (c) => c.status === '可領取' && !c._used
       );
+
       // 如果沒有可以領的訊息
       if (!claimable?.length) {
         return toast.info('目前沒有可領取的優惠券');
@@ -92,6 +108,9 @@ export default function CouponsPage(props) {
       await Promise.all(
         claimable.map((c) => trigger({ userId: user.id, couponId: c.id }))
       );
+      // ⬇ 撕票動畫立即生效
+      // setTornIds((prev) => new Set([...prev, ...claimable]));
+
       mutateCoupons();
       toast.success('已領取優惠券！');
     } catch (e) {
@@ -175,16 +194,14 @@ export default function CouponsPage(props) {
   return (
     <>
       <Container>
-        <section className="flex flex-col gap-6 mt-20">
+        <section className="flex flex-col gap-6 mt-10 mx-2 md:mx-0">
           {/* 開頭 */}
           <div className="flex flex-row items-center justify-between">
             <h5 className="font-tw text-h5-tw">領取優惠劵</h5>
-            <a
-              href="http://localhost:3000/profile"
-              className="font-tw leading-p-tw cursor-pointer hover:underline decoration-red decoration-2 underline-offset-4 "
-            >
-              查看我的優惠劵
-            </a>
+
+            <Button className="font-tw leading-p-tw cursor-pointer bg-primary-600 ">
+              <Link href="http://localhost:3000/profile">查看我的優惠劵</Link>
+            </Button>
           </div>
 
           {/* 領取 */}
@@ -227,7 +244,7 @@ export default function CouponsPage(props) {
             <p className="color-primary-800">多多關注我們隨時領取優惠券</p>
           </div>
         ) : (
-          <ul className="grid grid-cols-1 justify-items-center gap-x-25 gap-y-6 lg:grid-cols-2 my-10">
+          <ul className="grid gap-5 lg:grid-cols-2 my-10 lg:mx-0 mx-2">
             {filteredData?.map((c) => {
               // 顯示狀態
               const isUpcoming = c.status === '尚未開始';
@@ -273,9 +290,13 @@ export default function CouponsPage(props) {
                     statusClass={statusClass}
                     buttonClass={buttonClass}
                     buttonText={buttonText}
-                    disabled={disabled}
+                    // disabled={disabled}
+                    isExpired={isExpired}
+                    _used={isUsed}
+                    isUpcoming={isUpcoming}
                     // 互動
                     onUse={() => handleClaim(c)}
+                    torn={c._used}
                   />
                 </li>
               );

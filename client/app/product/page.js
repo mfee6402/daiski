@@ -611,6 +611,7 @@ import ProductList from './_components/product-list';
 import ProductPagination from './_components/product-pagination';
 import ProductSidebar from './_components/product-sidebar';
 import ProductSort from './_components/product-sort';
+import ProductHighlightCard from './_components/product-highlight-card';
 
 // 引入自定義 Hook，用於管理用戶認證狀態
 import { useAuth } from '@/hooks/use-auth';
@@ -622,10 +623,13 @@ import { useAuth } from '@/hooks/use-auth';
 // SWR 的數據獲取函式 (Fetcher)
 // 這個函式負責從指定的 URL 獲取數據並將其解析為 JSON 格式。
 // `credentials: 'include'` 確保在請求中包含憑證（例如 Cookie），用於處理需要驗證的 API。
+const base = process.env.NEXT_PUBLIC_API_BASE || '';
 const fetcher = (url) =>
-  fetch(`http://localhost:3005${url}`, { credentials: 'include' }).then((r) =>
-    r.json()
-  );
+  // fetch(`http://localhost:3005${url}`, { credentials: 'include' }).then((r) =>
+  //   r.json()
+  fetch(`${base}${url}`, {
+    credentials: 'include',
+  }).then((r) => r.json());
 
 // 商品頁面主元件
 export default function ProductPage() {
@@ -754,7 +758,7 @@ export default function ProductPage() {
   // 2. **載入分類清單**
   //    這個 `useEffect` 在元件首次載入時執行，只會執行一次，用於獲取所有商品分類列表。
   useEffect(() => {
-    fetch('http://localhost:3005/api/products/categories')
+    fetch(`${base}/api/products/categories`)
       .then((r) => r.json())
       .then(setCategories)
       .catch(console.error);
@@ -766,7 +770,7 @@ export default function ProductPage() {
   //    並過濾掉 `selectedSizes` 中不屬於新列表的尺寸 ID。
   useEffect(() => {
     if (!pageInfo.category_id) return;
-    const url = new URL('http://localhost:3005/api/products/sizes');
+    const url = new URL(`${base}/api/products/sizes`);
     url.searchParams.set('category_id', String(pageInfo.category_id));
     fetch(url)
       .then((r) => r.json())
@@ -785,7 +789,7 @@ export default function ProductPage() {
   //    並過濾掉 `selectedBrands` 中不屬於新列表的品牌 ID。
   useEffect(() => {
     if (!pageInfo.category_id) return;
-    const url = new URL('http://localhost:3005/api/products/brands');
+    const url = new URL(`${base}/api/products/brands`);
     url.searchParams.set('category_id', String(pageInfo.category_id));
     fetch(url)
       .then((r) => r.json())
@@ -865,12 +869,12 @@ export default function ProductPage() {
 
       try {
         if (isFav) {
-          await fetch(
-            `http://localhost:3005/api/profile/favorites/${productId}`,
-            { method: 'DELETE', credentials: 'include' }
-          );
+          await fetch(`${base}/api/profile/favorites/${productId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+          });
         } else {
-          await fetch('http://localhost:3005/api/profile/favorites', {
+          await fetch(`${base}/api/profile/favorites`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -1083,6 +1087,7 @@ export default function ProductPage() {
       </section>
 
       <Container className="z-10 pt-4 md:pt-10 pb-20">
+        <ProductHighlightCard />
         {/* 顯示用戶歡迎訊息和 Email (如果用戶已登入) */}
         <div className="hidden md:flex">
           {/* <h1>你好，{user?.name}！</h1>

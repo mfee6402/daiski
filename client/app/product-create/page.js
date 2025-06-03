@@ -25,6 +25,7 @@ import {
 
 export default function NewProductForm() {
   const router = useRouter();
+  const base = process.env.NEXT_PUBLIC_API_BASE || '';
 
   // 下拉選單資料
   const [categories, setCategories] = useState([]);
@@ -33,17 +34,17 @@ export default function NewProductForm() {
 
   // 取得分類／品牌／尺寸列表
   useEffect(() => {
-    fetch('http://localhost:3005/api/products/categories/list')
+    fetch(`${base}/api/products/categories/list`)
       .then((res) => res.json())
       .then(setCategories)
       .catch(console.error);
 
-    fetch('http://localhost:3005/api/products/brands')
+    fetch(`${base}/api/products/brands`)
       .then((res) => res.json())
       .then(setBrands)
       .catch(console.error);
 
-    fetch('http://localhost:3005/api/products/sizes')
+    fetch(`${base}/api/products/sizes`)
       .then((res) => res.json())
       .then(setSizes)
       .catch(console.error);
@@ -91,7 +92,7 @@ export default function NewProductForm() {
       fd.append('images', file);
     });
 
-    const res = await fetch('http://localhost:3005/api/products', {
+    const res = await fetch(`${base}/api/products`, {
       method: 'POST',
       body: fd,
     });
