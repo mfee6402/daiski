@@ -107,7 +107,7 @@ export default function UserPage() {
                 </Link>
               </p>
             </div>
-            <div className="max-w-md mx-auto mt-6">
+            <div className="max-w-md mx-auto mt-6 flex flex-col gap-2">
               <label>
                 帳號:
                 <input
