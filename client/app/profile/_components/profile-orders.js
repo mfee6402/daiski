@@ -14,13 +14,14 @@ import { useAuth } from '@/hooks/use-auth';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import RateButton from '@/components/rate-button';
+// import RateButton from '@/components/rate-button';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { PiStarThin } from 'react-icons/pi';
 /* -------------------- 常數 -------------------- */
 const API_BASE_URL = 'http://localhost:3005/api';
 const ORDERS_API_URL = `${API_BASE_URL}/cart/orders`;
@@ -48,77 +49,156 @@ const MotionTableRow = motion(TableRow);
 export default function ProfileOrders() {
   const { isAuth, isLoading: authLoading } = useAuth();
 
-  /* SWR 只有登入後才打 API；未登入傳 null → SWR 會暫停 */
   const {
     data, // { status, orders }
     error,
-    isLoading: ordersLoading,
+    isLoading, // 訂單載入狀態
   } = useSWR(isAuth ? ORDERS_API_URL : null, fetcher);
 
   const orders = data?.orders ?? [];
 
   /* ---------- 介面狀態 ---------- */
-  if (authLoading || ordersLoading) return <p className="p-4">載入中…</p>;
+  if (authLoading || isLoading) return <p className="p-4">載入中…</p>;
   if (error)
     return <p className="p-4 text-red-500">載入失敗：{error.message}</p>;
   if (orders.length === 0) return <p className="p-4">目前沒有訂單紀錄</p>;
 
   /* ---------- 主畫面 ---------- */
   return (
-    <div className="container mx-0 xl:mx-auto overflow-y-auto h-dvh">
-      <Table className="w-full table-fixed">
-        <TableCaption>歷史訂單</TableCaption>
+    <div className="container mx-0 xl:mx-auto overflow-y-auto h-dvh p-4">
+      <Accordion type="multiple" className="space-y-4">
+        {orders.map((order) => (
+          <AccordionItem key={order.id} value={`order-${order.id}`}>
+            {/* === 折疊列 – 訂單摘要 === */}
+            <AccordionTrigger className="flex justify-self-start items-center pr-4 text-right">
+              <div className="">
+                <span className="font-semibold">訂單 #{order.id}</span>
+              </div>
+              <div className="">
+                <span className="text-sm text-muted-foreground">
+                  {new Date(order.createdAt).toLocaleString('zh-TW')}
+                </span>
+              </div>
+              <div className="w-[180px]">
+                <span>NT$ {order.amount.toLocaleString()}</span>
+              </div>
+            </AccordionTrigger>
 
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-20">訂單編號</TableHead>
-            <TableHead className="w-1/5">課程</TableHead>
-            <TableHead className="w-1/5">揪團活動</TableHead>
-            <TableHead className="w-2/5">商品 (數量)</TableHead>
+            {/* === 展開內容 – 三張表格 === */}
+            <AccordionContent className="space-y-8 pt-4">
+              {/* 1️⃣ 商品一覽 */}
+              {order.OrderProduct?.length > 0 && (
+                <section>
+                  <h3 className="mb-2 text-lg font-medium">商品</h3>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-20">預覽</TableHead>
+                        <TableHead>名稱</TableHead>
+                        <TableHead className="w-24 text-center">評價</TableHead>
+                        <TableHead className="w-24 text-center">數量</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {order.OrderProduct.map((p) => (
+                        <TableRow key={`product-${order.id}-${p.id}`}>
+                          <TableCell>
+                            <Image
+                              src={`http://localhost:3005/${p.imageUrl}`}
+                              alt={p.name}
+                              width={60}
+                              height={60}
+                              className="rounded-md object-cover"
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {p.name}
+                          </TableCell>
+                          <TableCell className="text-center ">
+                            {/* 評價的button放這邊 */}
+                            <button className="">
+                              <PiStarThin />
+                            </button>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {p.quantity}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </section>
+              )}
 
-            <TableHead className="text-right w-28">消費金額</TableHead>
-          </TableRow>
-        </TableHeader>
+              {/* 2️⃣ 課程一覽 */}
+              {order.OrderCourse?.length > 0 && (
+                <section>
+                  <h3 className="mb-2 text-lg font-medium">課程</h3>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-20">預覽</TableHead>
+                        <TableHead>名稱</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {order.OrderCourse.map((c, idx) => (
+                        <TableRow key={`course-${order.id}-${idx}`}>
+                          <TableCell>
+                            <Image
+                              src={`http://localhost:3005/${c.imageUrl}`}
+                              alt={c.name}
+                              width={60}
+                              height={60}
+                              className="rounded-md object-cover"
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {c.name}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </section>
+              )}
 
-        <TableBody>
-          <AnimatePresence initial={false}>
-            {orders.map((o) => (
-              <MotionTableRow
-                key={o.id}
-                layout
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 4, transition: { duration: 0.2 } }}
-              >
-                {/* 訂單編號 */}
-                <TableCell>{o.id}</TableCell>
-
-                {/* 課程 (列出多筆以「、」隔開) */}
-                <TableCell className="whitespace-normal break-words">
-                  {o.OrderCourse.map((c) => c.name).join('、')}
-                </TableCell>
-
-                {/* 揪團活動 */}
-                <TableCell className="whitespace-normal break-words">
-                  {o.OrderGroup.map((g) => g.name).join('、')}
-                </TableCell>
-
-                {/* 商品含數量 */}
-                <TableCell className="whitespace-normal break-words">
-                  {o.OrderProduct.map((p) => `${p.name} ×${p.quantity}`).join(
-                    '、'
-                  )}
-                </TableCell>
-
-                {/* 金額 */}
-                <TableCell className="text-right font-medium">
-                  NT$ {o.amount.toLocaleString()}
-                </TableCell>
-              </MotionTableRow>
-            ))}
-          </AnimatePresence>
-        </TableBody>
-      </Table>
+              {/* 3️⃣ 揪團一覽 */}
+              {order.OrderGroup?.length > 0 && (
+                <section>
+                  <h3 className="mb-2 text-lg font-medium">揪團</h3>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-20">預覽</TableHead>
+                        <TableHead>名稱</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {order.OrderGroup.map((g, idx) => (
+                        <TableRow key={`group-${order.id}-${idx}`}>
+                          <TableCell>
+                            <Image
+                              src={`http://localhost:3005/${g.imageUrl}`}
+                              alt={g.name}
+                              width={60}
+                              height={60}
+                              className="rounded-md object-cover"
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {g.name}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </section>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
     </div>
   );
 }
