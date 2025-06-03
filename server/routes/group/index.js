@@ -301,75 +301,19 @@ router.post(
         data.difficulty = null; // 非滑雪活動的 difficulty 應為 null
       }
 
-      // 1. 建立 Group 記錄
-      const newGroup = await prisma.group.create({ data }); // (Source 3) (變數名從 newGroup 修改)
+      const newGroup = await prisma.group.create({ data });
 
-      // 2. 如果有圖片，建立 GroupImage 記錄
       if (imageUrl) {
-        // (Source 3)
         await prisma.groupImage.create({
-          // (Source 3)
           data: {
-            groupId: newGroup.id, // (Source 3)
-            imageUrl, // (Source 3)
-            sortOrder: 0, // (Source 3)
+            groupId: newGroup.id,
+            imageUrl,
+            sortOrder: 0,
           },
         });
       }
 
-      // 3. 【新增】自動將開團者加入 GroupMember 表
-      const organizerGroupMember = await prisma.groupMember.create({
-        data: {
-          groupId: newGroup.id,
-          userId: organizerId, // 開團者 ID
-          joinedAt: new Date(),
-          // 關於 paidAt:
-          // 如果揪團價格為0，可以視為開團者已"支付"（免費加入）。
-          // 如果價格大於0，開團者是否需要支付或自動視為已支付取決於你的業務邏輯。
-          // 若開團者也需要透過購物車結帳，則此處應為 null。
-          // 這裡假設如果價格為0，則自動標記為已付款，否則為 null，等待結帳。
-          paidAt: newGroup.price === 0 ? new Date() : null,
-        },
-        select: {
-          id: true, // 我們需要這個 ID 給前端，用於加入購物車
-        },
-      });
-
-      // 4. 【修改】重新查詢剛建立的揪團，並包含其關聯的圖片資訊
-      const groupToReturn = await prisma.group.findUnique({
-        where: { id: newGroup.id },
-        include: {
-          images: {
-            // (Source 5)
-            select: {
-              imageUrl: true,
-            },
-            orderBy: {
-              sortOrder: 'asc',
-            },
-          },
-          // 你可以根據需要，選擇是否在此處也 include members 或 user(organizer) 等資訊
-          // user: { select: { id: true, name: true, avatar: true } },
-        },
-      });
-
-      if (!groupToReturn) {
-        // 這種情況理論上不太可能發生
-        console.error(
-          `[POST /group] 無法重新查詢剛建立的揪團 ID: ${newGroup.id}`
-        );
-        return res
-          .status(500)
-          .json({ error: '伺服器內部錯誤，無法獲取新建立揪團的完整資訊。' });
-      }
-
-      // 5. 【修改】回傳給前端的物件中，加入 organizerMemberId
-      const responsePayload = {
-        ...groupToReturn,
-        organizerMemberId: organizerGroupMember.id, // 將開團者在 group_member 中的記錄 ID 一併回傳
-      };
-
-      res.status(201).json(responsePayload); // 回傳包含 organizerMemberId 和 images 的揪團物件
+      res.status(201).json(newGroup);
     } catch (err) {
       if (err instanceof multer.MulterError) {
         return res.status(400).json({ error: `圖片上傳錯誤: ${err.message}` });
@@ -983,7 +927,7 @@ router.get('/user/:userId', async (req, res, next) => {
   }
 });
 // DELETE /api/group/:groupId (刪除揪團)
-router.delete('/:groupId', authenticate, async (req, res, next) => {
+router.delete('/:groupId', async (req, res, next) => {
   try {
     const groupId = Number(req.params.groupId);
     if (isNaN(groupId)) return res.status(400).json({ error: '無效的揪團 ID' });
@@ -1113,6 +1057,57 @@ router.delete(
           .json({ error: '找不到要刪除的參與記錄 (可能已被刪除)。' });
       }
       next(error);
+    }
+  }
+);
+
+router.put(
+  '/members/:groupMemberId/payment',
+  authenticate, // (Source 3) 請確保此認證機制適合呼叫此API的系統
+  async (req, res, next) => {
+    const { groupMemberId: groupMemberIdString } = req.params;
+    const groupMemberId = parseInt(groupMemberIdString, 10);
+
+    if (isNaN(groupMemberId)) {
+      return res.status(400).json({ error: '無效的 groupMemberId 格式。' });
+    }
+    try {
+      // 1. 查找 group_member 記錄
+      const memberEntry = await prisma.groupMember.findUnique({
+        where: { id: groupMemberId },
+      });
+
+      if (!memberEntry) {
+        return res
+          .status(404)
+          .json({ error: `找不到 ID 為 ${groupMemberId} 的參與記錄。` });
+      }
+
+      // 2. 更新 paid_at 欄位為當前時間
+      const updatedMemberEntry = await prisma.groupMember.update({
+        where: { id: groupMemberId },
+        data: {
+          paidAt: new Date(), // 設定為當前伺服器時間
+        },
+      });
+
+      res.status(200).json({
+        message: `ID 為 ${groupMemberId} 的參與記錄已成功更新付款時間。`,
+        data: updatedMemberEntry,
+      });
+    } catch (error) {
+      console.error(
+        `更新 groupMemberId ${groupMemberId} 的 paid_at 狀態時發生錯誤:`,
+        error
+      );
+      if (error.code === 'P2025') {
+        // Prisma "Record to update not found"
+        // 這個錯誤理論上會被上面的 findUnique 捕獲，但多一層保障
+        return res
+          .status(404)
+          .json({ error: `找不到 ID 為 ${groupMemberId} 的參與記錄來更新。` });
+      }
+      next(error); // 將其他錯誤交給 Express 錯誤處理中介軟體
     }
   }
 );
