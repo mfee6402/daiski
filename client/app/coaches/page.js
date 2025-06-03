@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Image from 'next/image';
 import Link from 'next/link';
+import { SelectTrigger } from '@radix-ui/react-select';
 
 export default function CoachesPage() {
   const [coaches, setCoaches] = useState([]);
@@ -91,26 +92,20 @@ export default function CoachesPage() {
     return <p className="text-center p-4">找不到符合的教練。</p>;
 
   return (
-    <main className="bg-gray-50 min-h-screen pb-8">
-      <Card className="mx-auto mt-8 max-w-xl shadow-lg ">
-        {/* <CardHeader>
-          <CardTitle></CardTitle>
-          <CardDescription> */}
-        {/* 多選板別／語言，下拉後勾選，輸入關鍵字後按「搜尋」 */}
-        {/* </CardDescription>
-        </CardHeader> */}
+    <main className=" min-h-screen pb-8">
+      <div className="mx-auto p-8 ">
         <CardContent className="p-4">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             {/* 板別 下拉多選 */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            {/* <DropdownMenu>
+              <SelectTrigger asChild>
                 <Button variant="outline" size="sm">
                   單／雙板{' '}
                   {tempFilters.boardTypes.length > 0
                     ? `(${tempFilters.boardTypes.length})`
                     : ''}
                 </Button>
-              </DropdownMenuTrigger>
+              </SelectTrigger>
               <DropdownMenuContent align="start" className="w-40">
                 <DropdownMenuLabel>選擇板別</DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -124,7 +119,7 @@ export default function CoachesPage() {
                   </DropdownMenuCheckboxItem>
                 ))}
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu> */}
 
             {/* 語言 下拉多選 */}
             <DropdownMenu>
@@ -160,7 +155,7 @@ export default function CoachesPage() {
               className="flex-shrink-0 w-40"
             />
             {/* 按鈕 */}
-            <div className="ml-auto flex gap-2">
+            <div className=" flex gap-2">
               <Button size="sm" onClick={handleSearch}>
                 <Send className="mr-1" /> 搜尋
               </Button>
@@ -170,7 +165,7 @@ export default function CoachesPage() {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </div>
 
       {/* 教練列表 */}
       <div className="mx-auto max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 p-8">
@@ -195,7 +190,7 @@ export default function CoachesPage() {
             <p className="mt-1 text-sm text-gray-600">
               語言：{t.languages.join('、') || '無'}
             </p>
-            <Link href={`/coaches/${t.id}#courses`}>
+            <Link href={`/coaches/${t.id}`}>
               <Button className="mt-4 w-full">查看課程</Button>
             </Link>
           </div>

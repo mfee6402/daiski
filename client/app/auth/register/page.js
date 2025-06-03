@@ -9,7 +9,14 @@ import Link from 'next/link';
 import { Toaster } from 'sonner';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { format } from 'date-fns';
 // newUser資料範例(物件) 註: name改為在profile資料表中
 // {
 //     "username":"ginny",
@@ -104,8 +111,8 @@ export default function RegisterPage() {
 
   return (
     <>
-      <div className="flex container justify-center  mx-auto  gap-1">
-        <div className="w-1/2 sr-only sm:not-sr-only">
+      <div className="flex container justify-center  mx-auto  gap-1 min-h-screen">
+        <div className="hidden sm:block w-1/2 flex-1 min-w-0">
           <Image
             src="/register.png"
             alt="register Image"
@@ -114,109 +121,120 @@ export default function RegisterPage() {
             className="object-cover shadow-lg w-full"
           />
         </div>
-        <div className="w-1/2 px-6 py-12">
-          <div className="text-center ">
-            <h1 className="text-h2-tw">會員註冊</h1>
-            <p>
-              已經有帳號？
-              <Link href="/auth/login">
-                <span className="text-primary-500">前往登入！</span>
-              </Link>
-            </p>
-          </div>
-          <div className="max-w-md mx-auto mt-6">
-            <form onSubmit={handleSubmit} noValidate method="post" action="/">
-              <label>
-                姓名:
-                <input
-                  type="text"
-                  name="name"
-                  value={userInput.name}
-                  onChange={handleFieldChange}
-                  className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
-                />
-              </label>
-              <label>
-                帳號:
-                <input
-                  type="text"
-                  name="account"
-                  value={userInput.account}
-                  onChange={handleFieldChange}
-                  className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
-                />
-              </label>
-              <label>
-                密碼:
-                <input
-                  type="password"
-                  name="password"
-                  value={userInput.password}
-                  onChange={handleFieldChange}
-                  className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
-                />
-              </label>
-              <label>
-                確認密碼:
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  value={userInput.confirmPassword}
-                  onChange={handleFieldChange}
-                  className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
-                />
-              </label>
-              <label>
-                電子郵件信箱:
-                <input
-                  type="text"
-                  name="email"
-                  value={userInput.email}
-                  onChange={handleFieldChange}
-                  className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
-                />
-              </label>
-              <label>
-                手機:
-                <input
-                  type="text"
-                  name="phone"
-                  value={userInput.phone}
-                  onChange={handleFieldChange}
-                  className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
-                  required
-                />
-              </label>
-              <label>
-                生日:
-                <input
-                  type="date"
-                  name="birthday"
-                  value={userInput.birthday}
-                  onChange={handleFieldChange}
-                  className=""
-                  required
-                />
-              </label>
-              <label className="inline-flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  name="is_coach"
-                  checked={userInput.is_coach}
-                  onChange={handleFieldChange}
-                />
-                我是教練
-              </label>
-              <button
-                type="submit"
-                className="w-full mt-16 px-4 py-3 hover:bg-primary-500 rounded-md text-white bg-primary-600"
+        <div className="relative w-full sm:w-1/2 py-12 left flex-1 min-w-0 bg-[url('/register.png')] bg-cover bg-center sm:bg-none px-4 sm:px-0 ">
+          <div className="absolute inset-0 bg-white/80 sm:hidden" />
+          <div className="relative z-10">
+            <div className="text-center ">
+              <h1 className="text-h2-tw">會員註冊</h1>
+              <p>
+                已經有帳號？
+                <Link href="/auth/login">
+                  <span className="text-primary-500">前往登入！</span>
+                </Link>
+              </p>
+            </div>
+            <div className="max-w-md mx-auto mt-6">
+              <form
+                onSubmit={handleSubmit}
+                noValidate
+                method="post"
+                action="/"
+                className="flex flex-col gap-2"
               >
-                註冊
-              </button>
-            </form>
+                <label>
+                  姓名:
+                  <input
+                    type="text"
+                    name="name"
+                    value={userInput.name}
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                  />
+                </label>
+                <label>
+                  帳號:
+                  <input
+                    type="text"
+                    name="account"
+                    value={userInput.account}
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                  />
+                </label>
+                <label>
+                  密碼:
+                  <input
+                    type="password"
+                    name="password"
+                    value={userInput.password}
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                  />
+                </label>
+                <label>
+                  確認密碼:
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    value={userInput.confirmPassword}
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                  />
+                </label>
+                <label>
+                  電子郵件信箱:
+                  <input
+                    type="text"
+                    name="email"
+                    value={userInput.email}
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                  />
+                </label>
+                <label>
+                  手機:
+                  <input
+                    type="text"
+                    name="phone"
+                    value={userInput.phone}
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                    required
+                  />
+                </label>
+                <label className="">
+                  生日:
+                  <input
+                    type="date"
+                    name="birthday"
+                    value={userInput.birthday}
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                    required
+                  />
+                </label>
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="is_coach"
+                    checked={userInput.is_coach}
+                    onChange={handleFieldChange}
+                    className=""
+                  />
+                  我是教練
+                </label>
+                <button
+                  type="submit"
+                  className="w-full mt-16 px-4 py-3 hover:bg-primary-500 rounded-md text-white bg-primary-600"
+                >
+                  註冊
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
+
       <button
         type="button"
         onClick={() => {
@@ -225,8 +243,8 @@ export default function RegisterPage() {
             name: '榮恩',
             email: 'ron@test.com',
             account: 'ron',
-            password: '99999',
-            confirmPassword: '99999',
+            password: '11111',
+            confirmPassword: '11111',
             phone: '0912345678',
             birthday: '1999-01-01',
             is_coach: 'true',

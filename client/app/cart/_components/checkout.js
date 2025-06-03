@@ -12,8 +12,9 @@ import {
 } from '@/components/ui/card';
 
 import { Button } from '@/components/ui/button';
+import { set } from 'date-fns';
 export default function Checkout() {
-  const { cart } = useCart();
+  const { cart, setCart } = useCart();
   const [checkedCoupon, setCheckedCoupon] = useState(null);
   const totalProduct = cart?.CartProduct?.reduce((acc, product) => {
     acc += product.price * product.quantity;
@@ -36,7 +37,6 @@ export default function Checkout() {
 
   if (checkedCoupon && checkedCoupon.type === '現金折扣') {
     couponDiscount = checkedCoupon.amount;
-    amount = totalProduct + totalCourse + totalGroup - couponDiscount;
   } else if (checkedCoupon && checkedCoupon.type === '百分比折扣') {
     couponDiscount = Math.floor(
       ((totalProduct + totalCourse) * checkedCoupon.amount) / 100
@@ -44,6 +44,7 @@ export default function Checkout() {
   }
 
   amount = totalProduct + totalCourse + totalGroup - couponDiscount;
+
   useEffect(() => {
     cart.CartCoupon?.forEach((coupon) => {
       if (coupon.checked) {
@@ -51,6 +52,15 @@ export default function Checkout() {
       }
     });
   }, [cart]);
+
+  const handleCheckout = () => {
+    setCart({
+      ...cart,
+      amount,
+      couponId: checkedCoupon?.id ? checkedCoupon.id : null,
+    });
+  };
+  console.log(cart);
   return (
     <>
       <Card
@@ -98,7 +108,10 @@ export default function Checkout() {
               href={'/cart/checkout'}
               className="text-p-tw text-secondary-200"
             >
-              <Button className="flex justify-center bg-primary-600 w-full py-5">
+              <Button
+                className="flex justify-center bg-primary-600 w-full py-5"
+                onClick={handleCheckout}
+              >
                 結帳
               </Button>
             </Link>

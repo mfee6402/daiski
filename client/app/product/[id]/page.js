@@ -18,6 +18,7 @@ import {
   Minus,
   Plus,
 } from 'lucide-react';
+import { FaStar } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -51,10 +52,9 @@ function useIsMobile(breakpoint = 1024) {
   return isMobile;
 }
 
+const base = process.env.NEXT_PUBLIC_API_BASE || '';
 const fetcher = (url) =>
-  fetch(`http://localhost:3005${url}`, { credentials: 'include' }).then((r) =>
-    r.json()
-  );
+  fetch(`${base}${url}`, { credentials: 'include' }).then((r) => r.json());
 
 export default function ProductDetail() {
   const isMobile = useIsMobile();
@@ -128,12 +128,12 @@ export default function ProductDetail() {
       try {
         // 根據收藏狀態發送 API 請求
         if (isFav) {
-          await fetch(
-            `http://localhost:3005/api/profile/favorites/${productId}`,
-            { method: 'DELETE', credentials: 'include' }
-          );
+          await fetch(`${base}/api/profile/favorites/${productId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+          });
         } else {
-          await fetch('http://localhost:3005/api/profile/favorites', {
+          await fetch(`${base}/api/profile/favorites`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -283,6 +283,22 @@ export default function ProductDetail() {
             <p className="text-xl font-bold text-red-500 mb-6">
               NT$ {price.toLocaleString()}
             </p>
+
+            {product.totalRatings > 0 ? (
+              <div className="flex items-center mb-4">
+                <FaStar className="text-yellow-500 mr-1" />
+                <span className="text-lg font-semibold">
+                  {product.averageRating}
+                </span>
+                <span className="text-gray-500 dark:text-white ml-1">
+                  ({product.totalRatings})
+                </span>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-white mb-4">
+                尚無評價
+              </p>
+            )}
 
             {/* 尺寸選擇（僅在有尺寸時顯示） */}
             {skus.some((s) => s.sizeId !== null) && (

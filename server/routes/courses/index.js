@@ -61,6 +61,12 @@ router.get('/', async function (req, res) {
           select: {
             id: true,
             price: true,
+            location: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },
@@ -77,9 +83,9 @@ router.get('/', async function (req, res) {
         name: c.name,
         // 例如 "2025/01/01~2025/01/05"
         period: `${fmt(c.start_at)}~${fmt(c.end_at)}`,
-        // price: c.price,
         photo: c.CourseImg[0]?.img || null,
         price: c.CourseVariant[0]?.price || null,
+        location: c.CourseVariant[0]?.location.name || null,
       };
     });
 
@@ -219,9 +225,13 @@ router.get('/:id', async (req, res) => {
             difficulty: true,
             price: true,
             duration: true,
+            // boardtype_id: true,
             // location_id: true,
             coach: {
               select: { id: true, name: true, profilephoto: true },
+            },
+            boardtype: {
+              select: { id: true, name: true },
             },
             courseImg: {
               select: { img: true },
@@ -269,6 +279,7 @@ router.get('/:id', async (req, res) => {
       // 多張圖片
       images: course.CourseImg.map((i) => i.img),
       difficulty: course.CourseVariant[0].difficulty,
+      // boardtype: course.CourseVariant[0].boardtype_id,
       price: course.CourseVariant[0].price,
       duration: course.CourseVariant[0].duration,
       variants: course.CourseVariant.map((v) => ({
@@ -281,6 +292,10 @@ router.get('/:id', async (req, res) => {
           id: v.coach.id,
           name: v.coach.name,
           photo: v.coach.profilephoto,
+        },
+        boardtype: {
+          id: v.boardtype.id,
+          name: v.boardtype.name,
         },
         photo: v.courseImg?.img ?? null,
         location: {

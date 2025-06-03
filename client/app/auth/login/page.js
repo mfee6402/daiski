@@ -92,92 +92,87 @@ export default function UserPage() {
     );
   }
 
-
   return (
     <>
-      <div className="flex container justify-center  mx-auto  gap-1">
-        <div className="w-1/2 px-6 py-12">
-          <div className="text-center ">
-            <h1 className="text-h2-tw">登入</h1>
-            <p>
-              還不是會員？
-              <Link href="/auth/register">
-                <span className="text-primary-500">現在加入！</span>
-              </Link>
-            </p>
-          </div>
-          <div className="max-w-md mx-auto mt-6">
-            <label>
-              帳號:
-              <input
-                type="text"
-                name="account"
-                value={userInput.account}
-                onChange={handleFieldChange}
-                className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
-              />
-            </label>
-            <label className="">
-              密碼:
-              <input
-                type="text"
-                name="password"
-                value={userInput.password}
-                onChange={handleFieldChange}
-                className="w-full px-4 py-3 rounded-lg border border-[#dae9f2] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
-              />
-            </label>
+      <div className="flex container justify-center  mx-auto  gap-1 min-h-screen">
+        <div className="relative w-full sm:w-1/2 py-12 left flex-1 min-w-0 bg-[url('/login.png')] bg-fixed bg-cover bg-center lg:bg-none px-4 lg:px-0 ">
+          <div className="absolute inset-0 bg-white/80  lg:hidden" />
+          <div className="relative z-10">
+            <div className="text-center ">
+              <h1 className="text-h2-tw">登入</h1>
+              <p>
+                還不是會員？
+                <Link href="/auth/register">
+                  <span className="text-primary-500">現在加入！</span>
+                </Link>
+              </p>
+            </div>
+            <div className="max-w-md mx-auto mt-30 flex flex-col gap-2">
+              <label>
+                帳號:
+                <input
+                  type="text"
+                  name="account"
+                  value={userInput.account}
+                  onChange={handleFieldChange}
+                  className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                />
+              </label>
+              <label className="">
+                密碼:
+                <input
+                  type="text"
+                  name="password"
+                  value={userInput.password}
+                  onChange={handleFieldChange}
+                  className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                />
+              </label>
 
-            <button
-              onClick={handleLogin}
-              className="w-full mt-16 px-4 py-3 hover:bg-primary-500 rounded-md text-white bg-primary-600"
-            >
-              登入(login)
-            </button>
-          </div>
+              <button
+                onClick={handleLogin}
+                className="w-full mt-16 px-4 py-3 hover:bg-primary-500 rounded-md text-white bg-primary-600"
+              >
+                登入(login)
+              </button>
+            </div>
 
-          <div className="mt-16">
-            <button
-              onClick={() => {
-                // 測試帳號 harry/11111
-                setUserInput({ account: 'harry', password: '11111' });
-              }}
-            >
-              一鍵輸入範例
-            </button>
-            <hr />
-            {/* <h1>會員登入認証&授權測試(JWT)</h1> */}
-            <p>會員狀態:{isAuth ? '已登入' : '未登入'}</p>
-            <hr />
-            <button onClick={handleLogout}>登出(logout)</button>
-            <hr />
-            <button onClick={handleCheckAuth}>檢查登入狀況(check login)</button>
-            <hr />
+            <div className="mt-16">
+              {/* <button
+                onClick={() => {
+                  // 測試帳號 harry/11111
+                  setUserInput({ account: 'harry', password: '11111' });
+                }}
+              >
+                一鍵輸入範例
+              </button>
+              <hr /> */}
+              {/* <h1>會員登入認証&授權測試(JWT)</h1> */}
+              {/* <p>會員狀態:{isAuth ? '已登入' : '未登入'}</p>
+              <hr />
+              <button onClick={handleLogout}>登出(logout)</button>
+              <hr />
+              <button onClick={handleCheckAuth}>
+                檢查登入狀況(check login)
+              </button>
+              <hr /> */}
 
-            {/* <p>
+              {/* <p>
             以下連結為測試會員隱私資料頁，如果未登入完成會跳轉回登入頁(本頁)，實作程式碼詳見useAuth勾子
           </p> */}
-            <p>
-              <Link href="/auth/login/status">存取會員隱私資料</Link>
-            </p>
+              {/* <p>
+                <Link href="/auth/login/status">存取會員隱私資料</Link>
+              </p> */}
+            </div>
           </div>
         </div>
-        {/* <div className="w-1/2 sr-only sm:not-sr-only">
-          <figure>
-            <img
-              src="/login.png"
-              alt="Login Image"
-              className="w-full shadow-lg"
-            />
-          </figure>
-        </div> */}
-        <div className="w-1/2 sr-only sm:not-sr-only">
+        <div className="hidden lg:block w-1/2 flex-1 min-w-0">
           <Image
             src="/login.png"
             alt="Login Image"
             width={100}
             height={100}
-            className="object-cover shadow-lg w-full"
+            className=" object-fill shadow-lg w-full h-full"
           />
         </div>
       </div>

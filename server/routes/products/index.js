@@ -4,6 +4,7 @@ import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
 import { PrismaClient } from '@prisma/client';
+import authenticate from '../../middlewares/authenticate.js';
 
 const prisma = new PrismaClient();
 
@@ -139,7 +140,7 @@ router.get('/', async (req, res, next) => {
   const {
     include,
     page = '1',
-    limit,
+    limit = '12',
     category_id,
     size_id,
     min_price,
@@ -161,21 +162,19 @@ router.get('/', async (req, res, next) => {
       };
     }
 
-    // 2. 如果有 category_id，就先從 closure table 取所有後裔 id
+    // 3. 如果有 category_id，就先從 closure table 取所有後裔 id
     let category_ids;
     if (category_id) {
       const rows = await prisma.productCategoryPath.findMany({
         where: { ancestor: Number(category_id) },
         select: { descendant: true },
       });
-      // descendant 包含 depth=0（自己）和所有 depth>0（子、孫、重孫…）
       category_ids = rows.map((r) => r.descendant);
       where.category_id = { in: category_ids };
     }
 
-    //  如果有 brand_id，就加上品牌過濾
+    // 4. 如果有 brand_id，就加上品牌過濾
     if (req.query.brand_id) {
-      // 支援多選 comma-separated
       const ids = String(req.query.brand_id)
         .split(/[,\s]+/)
         .map((v) => Number(v))
@@ -185,15 +184,12 @@ router.get('/', async (req, res, next) => {
       }
     }
 
-    //size_id
+    // 5. 處理 size_id 篩選（相同邏輯）
     if (size_id) {
-      // 前端傳「逗號分隔」或重複 ?size_id=1&size_id=3
       const ids = String(size_id)
         .split(/[,\s]+/)
         .map((v) => Number(v))
         .filter((v) => !Number.isNaN(v));
-
-      // Prisma 語法：products 底下有至少一個 sku，其 size_id 在 ids 裡
       where.product_sku = {
         some: {
           deleted_at: null,
@@ -202,9 +198,8 @@ router.get('/', async (req, res, next) => {
       };
     }
 
-    // 3. 組 SKU 篩選：size + price
+    // 6. 組 SKU 篩選：size + price（相同邏輯）
     const skuFilter = { deleted_at: null };
-
     if (size_id) {
       const ids = String(size_id)
         .split(/[,\s]+/)
@@ -212,7 +207,6 @@ router.get('/', async (req, res, next) => {
         .filter((v) => !Number.isNaN(v));
       skuFilter.size_id = { in: ids };
     }
-
     const minP = Number(min_price);
     const maxP = Number(max_price);
     if (!Number.isNaN(minP) || !Number.isNaN(maxP)) {
@@ -220,12 +214,11 @@ router.get('/', async (req, res, next) => {
       if (!Number.isNaN(minP)) skuFilter.price.gte = minP;
       if (!Number.isNaN(maxP)) skuFilter.price.lte = maxP;
     }
-
     if (Object.keys(skuFilter).length > 1) {
       where.product_sku = { some: skuFilter };
     }
 
-    // 4. 拿總數
+    // 7. 拿總數
     const total = await prisma.product.count({ where });
 
     const pagination = {
@@ -233,7 +226,7 @@ router.get('/', async (req, res, next) => {
       take: pageSize,
     };
 
-    // 1. 根據 sort 決定 orderByArg
+    // 8. 排序條件
     let orderByArg;
     switch (sort) {
       case 'price_asc':
@@ -250,12 +243,12 @@ router.get('/', async (req, res, next) => {
         break;
     }
 
-    // 5. include=card
+    // 9. 如果 include=card，就連同圖片、SKU、分類、品牌一起查，再把 rating 也補上
     if (include === 'card') {
+      // 9.1 先把主要商品資料 (含第一張圖、售價、分類、品牌) 撈出來
       const raw = await prisma.product.findMany({
         where,
         ...pagination,
-        // 如果有設定排序條件，就把它放進陣列裡
         ...(orderByArg ? { orderBy: [orderByArg] } : {}),
         include: {
           product_image: {
@@ -274,29 +267,53 @@ router.get('/', async (req, res, next) => {
         },
       });
 
-      const products = raw.map((p) => ({
-        id: p.id,
-        name: p.name,
-        image: p.product_image[0]
-          ? `http://localhost:3005${p.product_image[0].url}`
-          : 'http://localhost:3005/placeholder.jpg',
-        // price: p.product_sku[0]?.price ?? 0,
-        price: p.min_price ?? 0,
-        category: p.product_category?.name ?? '無分類',
-        category_id: p.product_category?.id ?? null,
-        brand: p.product_brand?.name ?? '無品牌',
-        brand_id: p.product_brand?.id ?? null,
-      }));
+      // 9.2 對剛剛撈出的每個商品，做 rating aggregate
+      const productsWithRating = await Promise.all(
+        raw.map(async (p) => {
+          // 針對當前商品 p.id，計算平均評分和評分總數
+          const ratingStats = await prisma.productRating.aggregate({
+            where: {
+              product_id: p.id,
+              deleted_at: null,
+            },
+            _avg: { rating: true },
+            _count: { id: true },
+          });
+
+          // 處理可能為 null 的狀況
+          const averageRating =
+            ratingStats._avg.rating !== null
+              ? parseFloat(Number(ratingStats._avg.rating).toFixed(1))
+              : 0;
+          const totalRatings = ratingStats._count.id;
+
+          return {
+            id: p.id,
+            name: p.name,
+            image: p.product_image[0]
+              ? `http://localhost:3005${p.product_image[0].url}`
+              : 'http://localhost:3005/placeholder.jpg',
+            price: p.min_price ?? 0,
+            category: p.product_category?.name ?? '無分類',
+            category_id: p.product_category?.id ?? null,
+            brand: p.product_brand?.name ?? '無品牌',
+            brand_id: p.product_brand?.id ?? null,
+            // 新增：評分欄位
+            averageRating,
+            totalRatings,
+          };
+        })
+      );
 
       return res.json({
         page: pageNum,
         limit: pageSize,
         total,
-        data: products,
+        data: productsWithRating,
       });
     }
 
-    // 6. 預設 basic 查詢
+    // 10. 否則走基本查詢 (不含卡片資訊)
     const basic = await prisma.product.findMany({
       where,
       select: {
@@ -312,7 +329,6 @@ router.get('/', async (req, res, next) => {
         deleted_at: true,
       },
       ...pagination,
-      // 同樣加上排序
       ...(orderByArg ? { orderBy: [orderByArg] } : {}),
     });
 
@@ -560,6 +576,179 @@ router.get('/brands', async (req, res, next) => {
   }
 });
 
+// --- 新增：商品評分摘要 API (目前2025/6/2 18:18沒用到) ---
+/**
+ * GET /api/products/:productId/rating-summary
+ * 獲取指定商品的平均評分和總評分數量。
+ */
+router.get('/:productId/rating-summary', async (req, res, next) => {
+  try {
+    const { productId } = req.params;
+    const productIdNum = parseInt(productId, 10);
+
+    if (isNaN(productIdNum)) {
+      return res.status(400).json({ message: '無效的商品 ID。' });
+    }
+
+    // 檢查商品是否存在 (可選，但建議)
+    const productExists = await prisma.product.findUnique({
+      where: {
+        id: productIdNum,
+        deleted_at: null, // 只找未刪除的商品
+      },
+      select: { id: true }, // 只需要 id 來確認存在性
+    });
+
+    if (!productExists) {
+      return res.status(404).json({ message: '找不到指定的商品。' });
+    }
+
+    const ratingStats = await prisma.productRating.aggregate({
+      _avg: {
+        rating: true, // 計算 rating 欄位的平均值
+      },
+      _count: {
+        id: true, // 計算總評分筆數 (使用 id 或任何非 null 欄位)
+      },
+      where: {
+        product_id: productIdNum,
+        deleted_at: null, // 只計算未被軟刪除的評分
+      },
+    });
+
+    // Prisma 回傳的 _avg.rating 可能是 Decimal 型別或 null
+    // 將其轉換為數字並格式化到小數點後一位
+    const averageRating =
+      ratingStats._avg.rating !== null
+        ? parseFloat(Number(ratingStats._avg.rating).toFixed(1))
+        : 0; // 如果沒有評分，預設為 0 (或可回傳 null，視前端需求而定)
+
+    const totalRatings = ratingStats._count.id;
+
+    res.json({
+      productId: productIdNum,
+      averageRating: averageRating,
+      totalRatings: totalRatings,
+    });
+  } catch (error) {
+    console.error('獲取商品評分摘要時發生錯誤:', error);
+    next(error); // 將錯誤傳遞給 Express 的錯誤處理中介軟體
+  }
+});
+
+/**
+ * POST /api/orders/:orderId/products/:productId/rate
+ * 建立一筆商品評分 (ProductRating)
+ * 需要先登入 (authenticate middleware)
+ *
+ * Path Params:
+ *   - orderId: 該筆訂單的 ID
+ *   - productId: 該筆訂單內要評價的商品 ID
+ *
+ * Request Body JSON:
+ * {
+ *   "rating": number,       // 0.0 ~ 5.0，最多到小數一位 (e.g. 3.5)
+ *   "review_text": string   // 選填
+ * }
+ */
+router.post(
+  '/:productId/orders/:orderId/rate',
+  authenticate, // 先透過 authenticate 拿到 req.user.id
+  async (req, res, next) => {
+    try {
+      // 1. 解析路由參數
+      const orderIdNum = parseInt(req.params.orderId, 10);
+      const productIdNum = parseInt(req.params.productId, 10);
+      if (isNaN(orderIdNum) || isNaN(productIdNum)) {
+        return res
+          .status(400)
+          .json({ message: 'orderId 或 productId 格式錯誤' });
+      }
+
+      // 2. 解析 request body
+      const { rating, review_text } = req.body;
+      const numRating = parseFloat(rating);
+      if (
+        Number.isNaN(numRating) ||
+        numRating < 0 ||
+        numRating > 5 ||
+        !/^\d+(\.[05])?$/.test(String(rating))
+      ) {
+        return res.status(400).json({
+          message:
+            'rating 格式錯誤，請輸入 0.0～5.0 之間的一位小數 (例：3.5、4.0)',
+        });
+      }
+
+      // 3. 檢查訂單是否存在且屬於當前使用者
+      const order = await prisma.order.findUnique({
+        where: { id: orderIdNum },
+        select: { userId: true },
+      });
+      if (!order) {
+        return res.status(404).json({ message: '找不到該訂單' });
+      }
+      if (order.userId !== req.user.id) {
+        return res.status(403).json({ message: '無權為此訂單的商品評分' });
+      }
+
+      // 4. 檢查「訂單裡是否包含這個 productId」
+      //  → 先去 ProductSku 撈所有屬於此 productId 的 sku.id
+      const skus = await prisma.productSku.findMany({
+        where: { product_id: productIdNum, deleted_at: null },
+        select: { id: true },
+      });
+      const skuIds = skus.map((s) => s.id);
+      if (skuIds.length === 0) {
+        // 代表根本找不到任何 SKU 屬於此 product，也不用往下查
+        return res.status(400).json({ message: '無此商品或商品不可評分' });
+      }
+
+      //  → 再去 OrderProduct 裡面查：orderId = X 且 productSkuId 要在 [skuIds] 裡
+      const orderProduct = await prisma.orderProduct.findFirst({
+        where: {
+          orderId: orderIdNum,
+          productSkuId: { in: skuIds },
+        },
+      });
+      if (!orderProduct) {
+        return res.status(400).json({
+          message: '此訂單未包含該商品，無法提交評分',
+        });
+      }
+
+      // 5. 檢查是否已經評分過 (order_id + product_id 的複合唯一)
+      const existing = await prisma.productRating.findUnique({
+        where: {
+          order_id_product_id: {
+            order_id: orderIdNum,
+            product_id: productIdNum,
+          },
+        },
+      });
+      if (existing) {
+        return res.status(400).json({ message: '您已經對此商品評分過' });
+      }
+
+      // 6. 建立新的 ProductRating
+      const created = await prisma.productRating.create({
+        data: {
+          user_id: req.user.id,
+          order_id: orderIdNum,
+          product_id: productIdNum,
+          rating: numRating,
+          review_text: review_text?.trim() || null,
+        },
+      });
+
+      return res.status(201).json({ message: '評分已成功提交', data: created });
+    } catch (error) {
+      console.error('建立商品評價時錯誤：', error);
+      next(error);
+    }
+  }
+);
+
 // --------------------------------------------------
 // GET /api/products/:id — 取得單一商品詳細資料 + 相關商品
 // --------------------------------------------------
@@ -600,16 +789,6 @@ router.get('/:id', async (req, res, next) => {
     const catId = product.product_category?.id;
     const parentId = product.product_category?.parent_id;
 
-    // helper: 統一把 Prisma 回來的 p 轉成前端要的格式
-    const normalize = (p) => ({
-      id: p.id,
-      name: p.name,
-      image: p.product_image[0]
-        ? `http://localhost:3005${p.product_image[0].url}`
-        : '/placeholder.jpg',
-      price: p.product_sku[0]?.price ?? 0,
-    });
-
     // 2. 撈同子分類（最多 4 筆，排除自己）
     let related = await prisma.product.findMany({
       where: {
@@ -639,7 +818,6 @@ router.get('/:id', async (req, res, next) => {
       const siblings = await prisma.product.findMany({
         where: {
           deleted_at: null,
-          // 取該 parentId 底下的所有子分類商品
           product_category: { parent_id: parentId },
           id: { notIn: excludeIds },
         },
@@ -663,6 +841,15 @@ router.get('/:id', async (req, res, next) => {
     }
 
     // 4. 組 response
+    const normalize = (p) => ({
+      id: p.id,
+      name: p.name,
+      image: p.product_image[0]
+        ? `http://localhost:3005${p.product_image[0].url}`
+        : '/placeholder.jpg',
+      price: p.product_sku[0]?.price ?? 0,
+    });
+
     const response = {
       id: product.id,
       name: product.name,
@@ -688,7 +875,28 @@ router.get('/:id', async (req, res, next) => {
       related: related.map(normalize),
     };
 
-    res.json(response);
+    // ================= 新增：取得這個商品的平均評分與評分總數 =================
+    const ratingStats = await prisma.productRating.aggregate({
+      where: {
+        product_id: product.id,
+        deleted_at: null,
+      },
+      _avg: { rating: true },
+      _count: { id: true },
+    });
+
+    const averageRating =
+      ratingStats._avg.rating !== null
+        ? parseFloat(Number(ratingStats._avg.rating).toFixed(1))
+        : 0;
+    const totalRatings = ratingStats._count.id;
+
+    // 把 rating 放到 response 裡
+    response.averageRating = averageRating;
+    response.totalRatings = totalRatings;
+    // =============================================================
+
+    return res.json(response);
   } catch (error) {
     next(error);
   }

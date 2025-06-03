@@ -95,13 +95,6 @@ export default function CoursesPage(props) {
       <div className=" mx-auto p-8">
         <div className="flex items-center justify-center  gap-2 mb-4 relative">
           <div className="flex flex-wrap items-center gap-4">
-            {/* <Select>
-              <SelectTrigger className="w-[180px]">單/雙板</SelectTrigger>
-              <SelectContent>
-                <SelectItem value="單板">單板</SelectItem>
-              </SelectContent>
-            </Select> */}
-
             {/* 板型（動態產生） */}
             <Select onValueChange={handle('boardtype')}>
               <SelectTrigger className="w-[180px]">
@@ -116,16 +109,6 @@ export default function CoursesPage(props) {
               </SelectContent>
             </Select>
 
-            {/* <Select>
-              <SelectTrigger className="w-[180px]">
-                <MapPinned />
-                <SelectValue placeholder="雪場" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="二世谷">二世谷</SelectItem>
-                <SelectItem value="野澤">野澤</SelectItem>
-              </SelectContent>
-            </Select> */}
             {/* 雪場（動態產生） */}
             <Select onValueChange={handle('location')}>
               <SelectTrigger className="w-[180px]">
@@ -140,6 +123,7 @@ export default function CoursesPage(props) {
                 ))}
               </SelectContent>
             </Select>
+
             {/* 難度（動態產生） */}
             <Select onValueChange={handle('difficulty')}>
               <SelectTrigger className="w-[180px]">
@@ -156,16 +140,14 @@ export default function CoursesPage(props) {
             </Select>
             <DatePickerWithRange />
             {/* 關鍵字 */}
-            {/* 關鍵字 */}
             <div className="flex w-100 max-w-sm items-center space-x-2">
               <InputWithButton onSearch={handleSearch} />
             </div>
-            {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"></div> */}
           </div>
         </div>
       </div>
       {/* 課程卡片 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mt-8">
         {course.map((c) => (
           <div
             key={c.id}
@@ -177,7 +159,7 @@ export default function CoursesPage(props) {
                 alt={c.name}
                 width={400}
                 height={250}
-                className="w-full h-48 object-cover"
+                className="w-full h-48 object-cover hover:scale-[1.02] transition"
               />
             </Link>
 
@@ -185,10 +167,16 @@ export default function CoursesPage(props) {
               <Link href={`/courses/${c.id}`}>
                 <h3 className="">{c.name}</h3>
               </Link>
+              <p className="text-sm text-gray-500">{c.location}</p>
               <p className="text-sm text-gray-500 mt-1">{c.period}</p>
+
               <p className="text-sm  mt-2 mb-2">
                 售價
-                <span className="text-red-500"> $NT {c.price} </span>起
+                <span className="text-red-500">
+                  {' '}
+                  $NT {(+c.price).toLocaleString()}{' '}
+                </span>
+                起
               </p>
               <hr />
               {/* 點按鈕也能進入詳細頁 */}

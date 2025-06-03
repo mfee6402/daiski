@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Card,
@@ -16,6 +16,80 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 
+// uploadImage 回傳時就附上 host
+function getCkImageUrl(path) {
+  // 假設後端跑在 3005 埠
+  return `http://localhost:3005${path}`;
+}
+
+// async function uploadImage(file) {
+//   const fd = new FormData();
+//   // fd.append('images', file);
+
+//   const res = await fetch(
+//     'http://localhost:3005/api/coaches/uploads/ckeditor',
+//     {
+//       method: 'POST',
+//       body: fd,
+//       credentials: 'include',
+//     }
+//   );
+//   if (!res.ok) throw new Error('上傳失敗');
+//   const data = await res.json();
+//   return getCkImageUrl(data.url);
+// }
+
+function insertImageAtCursor(editorEl, imageUrl) {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) {
+    // 沒游標就直接 append 到最末
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.style.maxWidth = '100%';
+    editorEl.appendChild(img);
+    return;
+  }
+
+  let range = selection.getRangeAt(0);
+  // 檢查游標是否在 editorEl 裡
+  let node = range.commonAncestorContainer;
+  let inside = false;
+  while (node) {
+    if (node === editorEl) {
+      inside = true;
+      break;
+    }
+    node = node.parentNode;
+  }
+
+  if (!inside) {
+    // 如果游標原本不在 editor 區塊，就先 focus 並 collapse 到尾巴
+    editorEl.focus();
+    selection.removeAllRanges();
+    const newRange = document.createRange();
+    newRange.selectNodeContents(editorEl);
+    newRange.collapse(false);
+    selection.addRange(newRange);
+  }
+
+  // 建立 img node
+  const img = document.createElement('img');
+  img.src = imageUrl;
+  img.alt = 'uploaded image';
+  img.style.maxWidth = '100%';
+
+  // 刪除範圍內的文字（若有）
+  range.deleteContents();
+  // 插入 img
+  range.insertNode(img);
+
+  // 把游標置於 <img> 之後
+  range.setStartAfter(img);
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
+  editorEl.focus();
+}
 /* -------- 建立時才需要的 Stepper -------- */
 const STEPS = [
   { id: 'basic', name: '步驟 1', description: '填寫課程' },
@@ -153,9 +227,6 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
   /* ---------------- 基本 hooks ---------------- */
   const router = useRouter();
   const { coachId, courseId } = useParams();
-  //   const params = useParams();
-  //   const coachId = params.coachId || params.id; // 兼容舊 [id]
-  //   const courseId = params.courseId;
   const { user, isAuth } = useAuth();
 
   /* ---------------- 狀態 ---------------- */
@@ -177,6 +248,8 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
   };
   const [form, setForm] = useState(initialData || DEFAULT);
   const [locations, setLocations] = useState([]);
+  // 在 useState 那邊，加：
+  const [coverFile, setCoverFile] = useState(null);
   const [coverPreview, setCoverPreview] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -186,7 +259,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
   const todayLocal = (() => {
     const d = new Date();
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); // to local ISO
-    return d.toISOString().slice(0, 16);
+    return d.toISOString().slice(0, 10);
   })();
 
   /* ---------------- 載入初始資料 (edit) ---------------- */
@@ -197,7 +270,13 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
     if (initialData) setForm(initialData);
   }, [initialData]);
 
-  /* ---------------- 取得雪場 ---------------- */
+  const editorRef = useRef(null);
+  // ref：隱藏的 <input type="file">
+  const fileInputRef = useRef(null);
+  // 控制上傳狀態
+  const [uploading, setUploading] = useState(false);
+
+  // 取得雪場清單
   useEffect(() => {
     fetch('http://localhost:3005/api/location')
       .then((r) => r.json())
@@ -205,25 +284,79 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
       .catch(console.error);
   }, []);
 
-  /* ---------------- onChange ---------------- */
-  //   const onChange = (e) => {
-  //     const { name, value, type, files } = e.target;
-  //     if (type === 'file') {
-  //       const arr = Array.from(files || []);
-  //       setForm((p) => ({ ...p, course_imgs: arr }));
-  //       if (arr.length) setCoverPreview(URL.createObjectURL(arr[0]));
-  //       return;
-  //     }
-  //     if (name.startsWith('newLoc.')) {
-  //       const k = name.split('.')[1];
-  //       setForm((p) => ({ ...p, newLoc: { ...p.newLoc, [k]: value } }));
-  //       return;
-  //     }
-  //     setForm((p) => ({ ...p, [name]: value }));
-  //   };
+  // 如果是 edit 模式，載入後把 initialData 塞入
+  useEffect(() => {
+    if (initialData) {
+      setForm(initialData);
+    }
+  }, [initialData]);
+
+  // ---------- 處理 contenteditable 內文字變動 ----------
+  // const handleInput = useCallback(() => {
+  //   if (!editorRef.current) return;
+  //   // 把 innerHTML 存回 form.content
+  //   setForm(function (prev) {
+  //     return Object.assign({}, prev, { content: editorRef.current.innerHTML });
+  //   });
+  // }, []);
+  const handleInput = () => {
+    if (!editorRef.current) return;
+    setForm((prev) => ({
+      ...prev,
+      content: editorRef.current.innerHTML,
+    }));
+  };
+  // ---------- 處理「點按插入圖片」按鈕 ----------
+  // const handleClickInsertImage = useCallback(() => {
+  //   if (fileInputRef.current) {
+  //     fileInputRef.current.click();
+  //   }
+  // }, []);
+  // ---------- 處理 <input type="file"> 的 onChange，並插圖 ----------
+  // const handleFileChange = useCallback(async function (e) {
+  //   let files = e.target.files;
+  //   if (!files || files.length === 0) return;
+  //   let file = files[0];
+  //   if (!editorRef.current) return;
+
+  //   setUploading(true);
+  //   try {
+  //     let imageUrl = await uploadImage(file);
+  //     insertImageAtCursor(editorRef.current, imageUrl);
+  //     // 同步一次最新內容
+  //     setForm(function (prev) {
+  //       return Object.assign({}, prev, {
+  //         content: editorRef.current.innerHTML,
+  //       });
+  //     });
+  //   } catch (err) {
+  //     console.error(err);
+  //     alert('圖片上傳或插入失敗');
+  //   } finally {
+  //     setUploading(false);
+  //     // 清空 input
+  //     e.target.value = '';
+  //   }
+  // }, []);
+  // 新的 onChangeCover:
+  const onChangeCover = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const { files } = e.target;
+      const f = files[0];
+      setForm((p) => ({ ...p, course_imgs: f }));
+      setCoverFile(file);
+      setCoverPreview(URL.createObjectURL(file)); // 用於右側預覽
+    } else {
+      setCoverFile(null);
+      setCoverPreview('');
+    }
+  };
+
   const onChange = (e) => {
     const { name, value, type, files } = e.target;
     console.log('欄位變更', name, value);
+    console.log(type);
     if (type === 'file') {
       const f = files[0];
       setForm((p) => ({ ...p, course_imgs: f }));
@@ -275,19 +408,33 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
 
     // fd.append('images', form.course_imgs);
     // console.log(form.course_imgs);
-    (Array.isArray(form.course_imgs) ? form.course_imgs : [form.course_imgs])
-      .filter(Boolean) // 避免 null
-      .forEach((file) => fd.append('images', file));
-    console.log([...fd.entries()]);
+    // (Array.isArray(form.course_imgs) ? form.course_imgs : [form.course_imgs])
+    //   .filter(Boolean) // 避免 null
+    //   .forEach((file) => fd.append('images', file));
+    // console.log([...fd.entries()]);
+    console.log('-------' + coverFile);
+    if (Array.isArray(form.course_imgs)) {
+      form.course_imgs.forEach((file) => fd.append('images', file));
+    }
+    // else if (form.course_imgs) {
+    //   fd.append('images', form.course_imgs);
+    // }
+    else if (coverFile) {
+      fd.append('images', coverFile);
+    }
+
+    // if (coverFile) {
+    //   // 把這個 File 直接 append 成 'cover'
+    //   fd.append('cover', coverFile);
+    // }
 
     // 文字欄位
     fd.append('name', form.name.trim());
     fd.append('description', form.description.trim());
-    fd.append('content', form.content.trim());
     fd.append('start_at', form.start_at); // '2025-06-01T09:00'
     fd.append('end_at', form.end_at);
     fd.append('difficulty', form.difficulty);
-
+    fd.append('content', form.content.trim());
     [
       // 數字欄位
       'price',
@@ -296,13 +443,11 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
       'boardtype_id',
       'location_id',
     ].forEach((k) => fd.append(k, Number(form[k]) || 0));
+
     fd.append('coach_id', +user.id);
+
     console.log(fd.get('price'));
     if (form.location_id === 'other') {
-      //   fd.append('new_location_name', form.newLoc.name);
-      //   fd.append('new_location_country', form.newLoc.country);
-      //   fd.append('new_location_city', form.newLoc.city);
-      //   fd.append('new_location_address', form.newLoc.address);
       fd.append('new_name', form.newLoc.name);
       fd.append('new_country', form.newLoc.country);
       fd.append('new_city', form.newLoc.city);
@@ -319,6 +464,11 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
         });
     }
 
+    // **印出 FormData 裡的所有 key、value （不包括檔案二進位，只列 key）**
+    console.log('>>> FormData keys:');
+    for (let pair of fd.entries()) {
+      console.log('    ', pair[0], pair[1]);
+    }
     setIsSubmitting(true);
 
     try {
@@ -335,13 +485,16 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
       const url = isCreate
         ? `http://localhost:3005/api/coaches/${targetCoachId}/create`
         : `http://localhost:3005/api/coaches/${targetCoachId}/courses/${courseId}`;
+      console.log(url);
       const res = await fetch(url, {
         method: isCreate ? 'POST' : 'PUT',
         body: fd,
         credentials: 'include',
       });
+
       // 確定拿到 JSON
       const payload = await res.json();
+      console.log('okay');
       if (!res.ok) {
         console.error('🛑 後端錯誤明細：', payload);
         throw new Error(payload.message || '伺服器錯誤');
@@ -414,14 +567,30 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                       rows={2}
                     />
                   </div>
-                  <div>
+                  {/* <div>
                     <Label htmlFor="content">詳細內容</Label>
                     <Textarea
+                      contentEditable="true"
                       id="content"
                       name="content"
                       value={form.content}
                       onChange={onChange}
                       rows={4}
+                    />
+                  </div> */}
+                  <div>
+                    <Label htmlFor="content">詳細內容</Label>
+                    {/* 這才是真正的 contenteditable 區塊 */}
+                    <div
+                      ref={editorRef}
+                      contentEditable
+                      onInput={handleInput}
+                      className="min-h-[200px] w-full border p-2 rounded focus:outline-none"
+                      style={{ whiteSpace: 'pre-wrap' }}
+                      // 下面這屬性只是讓 React 不再警告
+                      suppressContentEditableWarning
+                      // 初次 render 時放進 innerHTML
+                      dangerouslySetInnerHTML={{ __html: form.content }}
                     />
                   </div>
                   {/* 日期 */}
@@ -431,7 +600,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                       <Input
                         id="start_at"
                         name="start_at"
-                        type="datetime-local"
+                        type="date"
                         value={form.start_at}
                         onChange={onChange}
                       />
@@ -441,7 +610,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                       <Input
                         id="end_at"
                         name="end_at"
-                        type="datetime-local"
+                        type="date"
                         value={form.end_at}
                         onChange={onChange}
                       />
@@ -552,14 +721,13 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                     </div>
                   )}
                   <div>
-                    <Label htmlFor="course_imgs">課程圖片</Label>
+                    <Label htmlFor="course_imgs">封面圖片</Label>
                     <Input
-                      id="course_imgs"
-                      name="course_imgs"
+                      id="cover"
+                      name="images"
                       type="file"
                       accept="image/*"
-                      multiple
-                      onChange={onChange}
+                      onChange={onChangeCover}
                     />
                     {coverPreview && (
                       <button
@@ -603,7 +771,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                 <CardHeader>
                   <CardTitle>確認課程資訊</CardTitle>
                   <CardDescription>
-                    請檢查以下內容，確認無誤後發佈
+                    請檢查以下內容，確認無誤後儲存
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
@@ -641,7 +809,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                     disabled={isSubmitting}
                     onClick={handleSubmit}
                   >
-                    {isSubmitting ? '發佈中...' : '確認發佈'}
+                    {isSubmitting ? '儲存中...' : '確認儲存'}
                   </Button>
                 </CardFooter>
               </Card>
@@ -661,7 +829,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
                   </CardHeader>
                   <CardContent className="text-sm space-y-1 text-red-700">
                     <p>• 請確認課程資訊真實、準確。</p>
-                    <p>• 發佈後可在「我的課程」頁面管理。</p>
+                    <p>• 儲存後可在「我的課程」頁面管理。</p>
                   </CardContent>
                 </Card>
               )}

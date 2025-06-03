@@ -1,7 +1,7 @@
 'use client';
 
 // FIXME 路徑報錯?
-import { useShip711StoreOpener } from './_hooks/use-ship-711-store';
+import { useShip711StoreOpener } from '../../use-ship-711-store';
 import {
   nextUrl,
   // eslint-disable-next-line no-unused-vars

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { Clock5, MapPin } from 'lucide-react';
+import { Clock5, MapPin, LocateFixed } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 // import L from 'leaflet';
 // import 'leaflet/dist/leaflet.css';
@@ -75,13 +75,13 @@ export default function CoursesIdPage() {
       <main className=" py-8 bg-gray-100  min-h-screen">
         {/* 主卡片 */}
         <Container>
-          <div className="bg-white grid md:grid-cols-[3fr_1fr] gap-8 rounded-2xl shadow-lg mb-8 ">
+          <div className="bg-white md:grid md:grid-cols-[3fr_1fr] gap-8 rounded-2xl shadow-lg mb-8 ">
             {/* hero圖片 */}
             <div className="relative md:col-span-2 ">
               <Image
                 src={
                   course.images
-                    ? `http://localhost:3005${course.images[0]}`
+                    ? `http://localhost:3005${course.images[course.images.length - 1]}`
                     : ''
                 }
                 alt="{course.name}"
@@ -104,27 +104,37 @@ export default function CoursesIdPage() {
             </div>
 
             {/* 課程名稱 */}
-            <div className="p-6 space-y-8">
+            <div className="p-6 space-y-8 w-full">
               <h1 className="text-2xl mb-2 font-bold">{course.name}</h1>
-              <ul>
+              <ul className="flex flex-col w-full">
                 {/* 課程日期 */}
-                <li>
-                  <Clock5 className="inline-block" />
+                <li className="flex items-center justify-star">
+                  <Clock5
+                    size={20}
+                    className="min-w-[20px] inline-block pr-0.5"
+                  />
                   {course.period}
                 </li>
                 {/* 課程地點 */}
-                <li>
-                  <MapPin className="inline-block" />
+                <li className="flex lg:items-center justify-start">
+                  <MapPin size={20} className="min-w-[20px] inline-block " />
                   {course.variants[0]?.location.city}
                   {course.variants[0]?.location.country &&
                     `,${course.variants[0].location.country}`}
                   {course.variants[0]?.location.address &&
                     `,${course.variants[0].location.address}`}
+                </li>
+                <li className="flex lg:items-center justify-start">
+                  <LocateFixed size={20} />
                   {course.variants[0]?.location.name}
                 </li>
-                <li>{course.variants[0]?.location.name}</li>
               </ul>
-              <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6 w-[60%] ml-5">
+              <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6  w-full ">
+                {/* 單雙板 */}
+                <div className="mb-6">
+                  <h2 className="text-xl font-semibold">單/雙板</h2>
+                  <p>{course.variants[0]?.boardtype.name}</p>
+                </div>
                 {/* 難易度 */}
                 <div className="mb-6">
                   <h2 className="text-xl font-semibold">難易度</h2>
@@ -143,14 +153,19 @@ export default function CoursesIdPage() {
                 {/* 課程內容 */}
                 <div className="mb-6">
                   <h2 className="text-xl font-semibold mb-2">課程內容</h2>
-                  <p className="text-gray-700">{course.content}</p>
+                  <div
+                    className="text-gray-700"
+                    dangerouslySetInnerHTML={{ __html: course.content }}
+                  >
+                    {/* {course.content} */}
+                  </div>
                 </div>
               </div>
             </div>
             {/* <div className="px-8 py-6 space-y-6"></div> */}
 
             {/* ——— 右側側邊欄 ——— */}
-            <div className="w-80">
+            <div className="w-80 md:p-0 px-6">
               {/* sticky 直到距離頂端 6rem (= top-24) */}
               <div className="sticky top-24  space-y-4">
                 {/* 报名卡片 */}
