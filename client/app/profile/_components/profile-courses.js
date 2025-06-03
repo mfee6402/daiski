@@ -27,6 +27,7 @@ export default function ProfileCourses(props) {
   if (error) return <p className="text-sm text-destructive">讀取失敗</p>;
 
   const courses = data?.courses ?? [];
+  console.log(courses);
 
   return (
     <Card className="w-full">
@@ -72,7 +73,7 @@ export default function ProfileCourses(props) {
               </div>
             </div>
             <Button asChild variant="outline" className="self-end">
-              <Link href={`/courses/${c.id}`}>查看</Link>
+              <Link href={`/courses/${c.course_variant_id}`}>查看</Link>
             </Button>
           </article>
         ))}
