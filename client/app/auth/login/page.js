@@ -95,8 +95,8 @@ export default function UserPage() {
   return (
     <>
       <div className="flex container justify-center  mx-auto  gap-1 min-h-screen">
-        <div className="relative w-full sm:w-1/2 py-12 left flex-1 min-w-0 bg-[url('/login.png')] bg-fixed bg-cover bg-center sm:bg-none px-4 sm:px-0 ">
-          <div className="absolute inset-0 bg-white/80  sm:hidden" />
+        <div className="relative w-full sm:w-1/2 py-12 left flex-1 min-w-0 bg-[url('/login.png')] bg-fixed bg-cover bg-center lg:bg-none px-4 lg:px-0 ">
+          <div className="absolute inset-0 bg-white/80  lg:hidden" />
           <div className="relative z-10">
             <div className="text-center ">
               <h1 className="text-h2-tw">登入</h1>
@@ -166,13 +166,13 @@ export default function UserPage() {
             </div>
           </div>
         </div>
-        <div className="hidden sm:block w-1/2 flex-1 min-w-0">
+        <div className="hidden lg:block w-1/2 flex-1 min-w-0">
           <Image
             src="/login.png"
             alt="Login Image"
             width={100}
             height={100}
-            className="object-cover shadow-lg w-full"
+            className=" object-fill shadow-lg w-full h-full"
           />
         </div>
       </div>
