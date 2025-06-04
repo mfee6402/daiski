@@ -14,15 +14,32 @@ const cartCreateMap = {
 const foreignKeyMap = {
   CartGroup: 'groupMemberId',
   CartProduct: 'productSkuId',
-  CartCourse: 'courseId',
+  CartCourse: 'courseVariantId',
 };
+
+// 註冊完成時要分配一台購物車給使用者
+router.post('/createCart/:id', async function (req, res) {
+  const userId = +req.body.userId;
+
+  try {
+    const userCart = await prisma.cart.create({
+      data: { userId },
+    });
+
+    return res
+      .status(200)
+      .json({ status: 'success', message: '建立購物車成功' });
+  } catch (error) {
+    return res.status(200).json({ status: 'fail', message: '建立購物車失敗' });
+  }
+});
 
 // 新增
 router.post('/', authenticate, async function (req, res, next) {
   try {
     const userId = +req.user.id;
     const category = req.body.category;
-    const itemId = req.body.itemId;
+    const itemId = +req.body.itemId;
 
     // 檢查分類
     const cartModel = cartCreateMap[category];
@@ -50,6 +67,7 @@ router.post('/', authenticate, async function (req, res, next) {
           [foreignKeyName]: itemId,
         },
       });
+
       if (!existingItem) {
         if (category === 'CartProduct') {
           await cartModel.create({
@@ -140,6 +158,30 @@ router.get('/', authenticate, async function (req, res) {
             },
           },
         },
+        CartGroup: {
+          include: {
+            groupMember: {
+              select: {
+                group: {
+                  select: {
+                    id: true,
+                    title: true,
+                    startDate: true,
+                    endDate: true,
+                    price: true,
+                    location: { select: { name: true } },
+                    customLocation: true,
+                    images: {
+                      select: { imageUrl: true },
+                      orderBy: { sortOrder: 'asc' },
+                      take: 1,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
 
       where: {
@@ -147,7 +189,7 @@ router.get('/', authenticate, async function (req, res) {
       },
     });
 
-    // 商品、課程攤平
+    // 商品、課程、揪團攤平
     const CartProduct = data.CartProduct.map((item) => ({
       id: item.productSku.id,
       quantity: item.quantity,
@@ -174,6 +216,18 @@ router.get('/', authenticate, async function (req, res) {
       };
     });
 
+    const CartGroup = data.CartGroup.map((item) => ({
+      id: item.groupMemberId,
+      name: item.groupMember.group.title,
+      startAt: item.groupMember.group.startDate,
+      endAt: item.groupMember.group.endDate,
+      price: item.groupMember.group.price,
+      // FIXME若無照片則回傳預設
+      imageUrl: item.groupMember.group.images[0].imageUrl
+        ? item.groupMember.group.images[0].imageUrl
+        : '',
+    }));
+
     const totalCartProduct = CartProduct.reduce((acc, product) => {
       acc += product.price * product.quantity;
       return acc;
@@ -183,21 +237,11 @@ router.get('/', authenticate, async function (req, res) {
       return acc;
     }, 0);
 
-    // 調用後端API獲得Group資料
-    let resGroup = await fetch(
-      `http://localhost:3005/api/group/user/${userId}`
-    );
-    let CartGroup = (await resGroup.json()).memberships;
-    console.log(CartGroup);
-    CartGroup = CartGroup.map((item) => ({
-      id: item.groupMemberId,
-      name: item.group.title,
-      startAt: item.group.time.split(' —')[0],
-      endAt: item.group.time.split('— ')[1],
-      price: item.group.price,
-      // FIXME若無照片則回傳預設
-      imageUrl: item.group.imageUrl ? item.group.imageUrl : '',
-    }));
+    // 調用後端API獲得Group資料;
+    // let resGroup = await fetch(
+    //   `http://localhost:3005/api/group/user/${userId}`
+    // );
+    // let CartGroup = (await resGroup.json()).memberships;
 
     // 優惠券
     const couponData = await prisma.userCoupon.findMany({
@@ -377,7 +421,7 @@ router.delete('/:itemId', authenticate, async function (req, res) {
     const userCart = await prisma.cart.findFirst({
       where: { userId },
     });
-    console.log(req.params.itemId);
+
     await cartModel.deleteMany({
       where: {
         cartId: +userCart.id,
@@ -393,6 +437,7 @@ router.delete('/:itemId', authenticate, async function (req, res) {
   }
 });
 
+// 訂單紀錄
 router.post('/order', authenticate, async function (req, res) {
   try {
     const userId = +req.user.id;

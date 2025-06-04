@@ -71,7 +71,7 @@ export default function CartItemList({ category = '' }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cart[category]?.map((item) => {
+                {cart?.[category]?.map((item) => {
                   const totalPrice = (
                     item.price * (item.quantity ? item.quantity : 1)
                   ).toLocaleString();

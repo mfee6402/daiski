@@ -40,7 +40,7 @@ export default function Coupon(props) {
       <div className="w-full px-15">
         <Carousel opts={{ align: 'start' }}>
           <CarouselContent className="">
-            {cart.CartCoupon?.map((item) => {
+            {cart?.CartCoupon?.map((item) => {
               const id = item.id;
               const name = item.name;
               const type = item.type;

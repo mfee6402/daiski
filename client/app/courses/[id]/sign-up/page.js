@@ -91,7 +91,7 @@ export default function SignUpPage({ params }) {
         id: id,
         price: variant.price,
         name: course.name,
-        imageUrl: variant.images[0],
+        // imageUrl: variant.images[0],
       });
 
       setTimeout(() => {

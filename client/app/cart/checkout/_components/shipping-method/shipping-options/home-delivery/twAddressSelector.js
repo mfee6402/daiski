@@ -38,12 +38,7 @@ export default function TwAddressSelector() {
     setValue('district', value, { shouldValidate: true });
     setValue('zipCode', twAddress[city][value]);
   };
-  useEffect(() => {
-    if (selectedShipping === 'homeDelivery') {
-      unregister('district');
-      unregister('city');
-    }
-  }, [selectedShipping]);
+
   return (
     <>
       <div className="w-full flex flex-col gap-4 ">

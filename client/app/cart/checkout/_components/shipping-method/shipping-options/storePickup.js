@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { useShip711StoreOpener } from '../../../_hooks/use-ship-711-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,20 +13,14 @@ export default function StorePickup({ checked = false }) {
   const {
     register,
     formState: { errors },
-    control,
-    unregister,
+    setValue,
   } = useFormContext();
-  const selectedShipping = useWatch({
-    control,
-    name: 'shippingMethod',
-  });
+
   useEffect(() => {
-    if (selectedShipping === 'storePickup') {
-      unregister('storename');
-      unregister('phone');
-      unregister('name');
+    if (store711.storename) {
+      setValue('storename', store711.storename, { shouldValidate: true });
     }
-  }, [selectedShipping]);
+  }, [store711.storename, setValue]);
   return (
     <>
       {

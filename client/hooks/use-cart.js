@@ -151,18 +151,45 @@ export function CartProvider({ children }) {
         }
       }
       fetchData();
+    } else if (category === 'CartCourse') {
+      async function fetchData() {
+        try {
+          const url = `http://localhost:3005/api/coaches/cancel/${item.id}}`;
+          const res = await fetch(url, {
+            method: 'DELETE',
+            credentials: 'include',
+          });
+        } catch (err) {
+          throw new Error(err);
+        }
+      }
+      fetchData();
     }
   };
 
   // 清空購物車
   const onClear = () => {
-    console.log('OK');
+    async function fetchData() {
+      try {
+        const url = `http://localhost:3005/api/cart/items`;
+        const res = await fetch(url, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+        fetchSyncData();
+        console.log(res);
+      } catch (err) {
+        throw new Error(err);
+      }
+    }
+    fetchData();
   };
 
   // 處理新增
   const onAdd = (category = '', item = {}, quantity = 1) => {
     const categoryOptions = ['CartGroup', 'CartProduct', 'CartCourse'];
-
+    console.log(item.id);
+    console.log(category);
     //  如果沒有該類別要return
     if (!categoryOptions.includes(category)) {
       return console.log('分類錯誤');
