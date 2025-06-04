@@ -19,7 +19,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import { useParams, useRouter } from 'next/navigation';
 // import { json } from 'stream/consumers';
 import { useAuth } from '@/hooks/use-auth';
-
+import { useCart } from '@/hooks/use-cart';
 export default function SignUpPage({ params }) {
   const { user } = useAuth();
   const { id } = useParams();
@@ -33,6 +33,7 @@ export default function SignUpPage({ params }) {
     birthday: '',
     terms: false,
   });
+  const { onAdd } = useCart();
 
   // 載入課程資料
   useEffect(() => {
@@ -76,8 +77,8 @@ export default function SignUpPage({ params }) {
             phone: form.phone,
             email: form.email,
             birthday: form.birthday,
-            // user_id: 後端可從 session 拿，如果開發階段就先塞一個測試 id
             user_id: user.id,
+            course_variant_id: variant.id,
           }),
         }
       );
@@ -86,6 +87,13 @@ export default function SignUpPage({ params }) {
         throw new Error(json.message || '報名失敗');
       }
       toast.success('報名成功！');
+      onAdd('CartCourse', {
+        id: id,
+        price: variant.price,
+        name: course.name,
+        imageUrl: variant.images[0],
+      });
+
       setTimeout(() => {
         router.push(`/courses/${id}`);
       }, 1200);
@@ -115,7 +123,10 @@ export default function SignUpPage({ params }) {
                 日期: {course.period}
               </CardDescription>
               {/* 上課地點 */}
-              <CardDescription className="mt-4">地點:</CardDescription>
+              <CardDescription className="mt-4">
+                上課地點:
+                {variant.location_id.name ? variant.location_id.name : '未提供'}
+              </CardDescription>
               {/* 售價 */}
               <CardDescription className="mt-4">
                 費用:{' '}

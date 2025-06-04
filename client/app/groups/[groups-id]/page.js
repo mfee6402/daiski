@@ -419,7 +419,7 @@ export default function GroupDetailPage() {
   );
 
   return (
-    <div className="bg-secondary-200 text-secondary-800 min-h-screen">
+    <div className="bg-secondary-200 text-secondary-800 min-h-screen dark:bg-background">
       <main className="w-full max-w-[1920px] mx-auto px-4 py-8 space-y-8">
         <PageLevelError />
         <div className="flex justify-between items-center mb-6">

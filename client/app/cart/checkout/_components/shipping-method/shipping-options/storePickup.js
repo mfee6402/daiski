@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { useShip711StoreOpener } from '../../../_hooks/use-ship-711-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,20 @@ export default function StorePickup({ checked = false }) {
   const {
     register,
     formState: { errors },
+    control,
+    unregister,
   } = useFormContext();
+  const selectedShipping = useWatch({
+    control,
+    name: 'shippingMethod',
+  });
+  useEffect(() => {
+    if (selectedShipping === 'storePickup') {
+      unregister('storename');
+      unregister('phone');
+      unregister('name');
+    }
+  }, [selectedShipping]);
   return (
     <>
       {
@@ -59,7 +72,9 @@ export default function StorePickup({ checked = false }) {
           >
             選擇門市
           </Button>
-
+          {errors.storename && (
+            <p className="text-red">{errors.storename.message}</p>
+          )}
           <div className="flex flex-col gap-4">
             <div>
               <span className="whitespace-nowrap">門市名稱 : </span>
@@ -68,6 +83,7 @@ export default function StorePickup({ checked = false }) {
                 className="w-auto"
                 value={store711.storename}
                 disabled
+                {...register('storename', { required: '門市必選' })}
               />
             </div>
             <div className="">
