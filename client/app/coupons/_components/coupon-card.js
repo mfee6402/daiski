@@ -84,10 +84,10 @@ export default function CouponCard({
           onAnimationEnd={() => setTearAnim(false)}
         >
           {/* 上下圓形缺口 (decorative circles) */}
-          <span className="absolute -top-3 -right-4 h-6 w-6 rounded-full bg-white"></span>
-          <span className="absolute -bottom-3 -right-4 h-6 w-6 rounded-full bg-white"></span>
+          <span className="absolute -top-3 -right-4 h-6 w-6 rounded-full dark:bg-background bg-white "></span>
+          <span className="absolute -bottom-3 -right-4 h-6 w-6 rounded-full dark:bg-background bg-white"></span>
 
-          <RiCoupon2Line className="text-[35px]" />
+          <RiCoupon2Line className="text-[35px] dark:text-background" />
           {/* <h2 className="text-5xl font-extrabold leading-none">23</h2> */}
           <p className="mt-1 text-xl text-gray-700">{target}</p>
         </div>
@@ -96,9 +96,6 @@ export default function CouponCard({
         <div
           className={`relative w-2/3 md:w-3/4 sm:w-4/5 p-6 ${bgClass} bg-cover`}
         >
-          {/* 半透明遮罩 (overlay) */}
-          <div className="absolute inset-0 sm:bg-black/0 sm:bg-gradient-to-r sm:from-black/60 sm:via-black/30 sm:to-black/0 bg-black/50 "></div>
-
           {/* 反光 */}
           <div
             onAnimationEnd={handleAnimEnd}
@@ -110,30 +107,38 @@ export default function CouponCard({
                   : 'holo-strip absolute inset-0 opacity-0'
             }
           />
+          {/* 半透明遮罩 (overlay) */}
+          <div className="absolute  inset-0 sm:bg-black/0 sm:bg-gradient-to-r sm:from-black/60 sm:via-black/30 sm:to-black/0 bg-black/50 "></div>
 
           {/* 內容文字 */}
           <div className="relative text-white ">
             <div className="space-y-1 pr-2 flex flex-col">
-              <p className="font-tw leading-p-tw text-white truncate">
-                {type} ${amount}
+              <p className=" leading-p-tw text-white truncate ">
+                {type} {amount.toLocaleString()}
               </p>
-              <p className="font-tw leading-p-tw text-white truncate">
-                結帳金額滿 ${minPurchase} 使用
+              <p className="font-tw leading-p-tw text-white truncate ">
+                結帳金額滿 {minPurchase.toLocaleString()} 使用
               </p>
               <p className="font-tw leading-p-tw text-white line-clamp-2">
                 {name}
               </p>
-              <p className="font-tw leading-p-tw text-white truncate">
-                {displayTime} {timeLabel}
-              </p>
             </div>
 
             {/* 按鈕 (button) */}
-            <div className="flex justify-end">
+            <div className="flex justify-between mt-5">
+              <p
+                className={
+                  isUpcoming
+                    ? 'text-h6-tw text-white truncate '
+                    : 'text-h6-tw text-white truncate '
+                }
+              >
+                {displayTime} {timeLabel}
+              </p>
               <Button
                 data-tear
                 className={`
-                 text-white mt-2 
+                 text-white 
                 ${
                   isDisabled
                     ? 'bg-gray-400 opacity-60 cursor-default'

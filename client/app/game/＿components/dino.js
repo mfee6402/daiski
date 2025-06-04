@@ -68,7 +68,7 @@ export default function Dino() {
   const vyRef = useRef(0); // 速度
   const [, forceRender] = useState(0); // 用來觸發畫面更新
   const gravity = -0.6; // 每幀重力加速度
-  const jump_power = 12; //起跳出速
+  const jump_power = 11; //起跳出速
   const max_hold_time = 800; //最多可按 800ms
 
   // 控制 AlertDialog 開關
@@ -399,7 +399,7 @@ export default function Dino() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="relative w-[1000px] h-[500px] border border-black mx-auto overflow-hidden mt-10 z-[1]">
+      <div className="relative lg:w-[1000px] h-[500px] border border-black mx-auto overflow-hidden mt-10 z-[1]">
         {/* 遊戲畫面 */}
         <div className="absolute top-2 left-2 text-lg font-medium">
           Score: {score}
