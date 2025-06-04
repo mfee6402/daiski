@@ -61,6 +61,12 @@ router.get('/', async function (req, res) {
           select: {
             id: true,
             price: true,
+            location: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },
@@ -77,9 +83,9 @@ router.get('/', async function (req, res) {
         name: c.name,
         // 例如 "2025/01/01~2025/01/05"
         period: `${fmt(c.start_at)}~${fmt(c.end_at)}`,
-        // price: c.price,
         photo: c.CourseImg[0]?.img || null,
         price: c.CourseVariant[0]?.price || null,
+        location: c.CourseVariant[0]?.location.name || null,
       };
     });
 

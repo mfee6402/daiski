@@ -22,6 +22,8 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { PiStarThin } from 'react-icons/pi';
+import RateButton from '@/components/rate-button';
+import { Rat } from 'lucide-react';
 /* -------------------- 常數 -------------------- */
 const API_BASE_URL = 'http://localhost:3005/api';
 const ORDERS_API_URL = `${API_BASE_URL}/cart/orders`;
@@ -116,9 +118,14 @@ export default function ProfileOrders() {
                           </TableCell>
                           <TableCell className="text-center ">
                             {/* 評價的button放這邊 */}
-                            <button className="">
+                            {/* <button className="">
                               <PiStarThin />
-                            </button>
+                            </button> */}
+                            {console.log(p)}
+                            <RateButton
+                              orderId={order.id}
+                              productSkuId={p.id}
+                            />
                           </TableCell>
                           <TableCell className="text-center">
                             {p.quantity}
