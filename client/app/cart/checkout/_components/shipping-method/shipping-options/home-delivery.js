@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -11,10 +11,23 @@ export default function HomeDelivery() {
   const {
     register,
     formState: { errors },
+    control,
+    unregister,
   } = useFormContext();
+  const selectedShipping = useWatch({
+    control,
+    name: 'shippingMethod',
+  });
+  useEffect(() => {
+    if (selectedShipping === 'homeDelivery') {
+      unregister('storename');
+      unregister('phone');
+      unregister('name');
+    }
+  }, [selectedShipping]);
   return (
     <>
-      {
+      {selectedShipping === 'homeDelivery' && (
         <div className="flex flex-col gap-4">
           <div className="flex gap-10">
             <div className=" w-full max-w-64">
@@ -52,7 +65,7 @@ export default function HomeDelivery() {
             <TwAddressSelector></TwAddressSelector>
           </div>
         </div>
-      }
+      )}
     </>
   );
 }

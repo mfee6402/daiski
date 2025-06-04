@@ -328,8 +328,39 @@ router.put('/:itemId', authenticate, async function (req, res) {
     res.status(200).json({ status: 'fail', message: '更新商品失敗' });
   }
 });
+// 清空購物車
+router.delete('/items', authenticate, async function (req, res) {
+  try {
+    const userId = +req.user.id;
+    // 查詢使用者對應的購物車
+    const userCart = await prisma.cart.findFirst({
+      where: { userId },
+    });
 
-// 刪除
+    await prisma.cartCourse.deleteMany({
+      where: {
+        cartId: +userCart.id,
+      },
+    });
+    await prisma.cartProduct.deleteMany({
+      where: {
+        cartId: +userCart.id,
+      },
+    });
+    await prisma.cartGroup.deleteMany({
+      where: {
+        cartId: +userCart.id,
+      },
+    });
+
+    return res.status(200).json({ status: 'success', message: '購物車已清空' });
+  } catch (error) {
+    return res
+      .status(200)
+      .json({ status: 'fail', message: `查詢失敗:${error}` });
+  }
+});
+// 刪除特定商品
 router.delete('/:itemId', authenticate, async function (req, res) {
   try {
     const category = req.body.category;
