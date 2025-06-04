@@ -63,10 +63,10 @@ export default function MemberPage() {
       bio: user?.bio ?? '',
     }, // 建議加上預設值，避免未定義警告
   });
-
+  const base = process.env.NEXT_PUBLIC_API_BASE || '';
   async function onSubmit(values) {
     try {
-      const res = await fetch(`http://localhost:3005/api/profile/${user.id}`, {
+      const res = await fetch(`${base}/api/profile/${user.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
