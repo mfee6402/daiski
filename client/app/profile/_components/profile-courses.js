@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+const base = process.env.NEXT_PUBLIC_API_BASE || '';
 /* ---------- 常數 ---------- */
 const COURSES_API = 'http://localhost:3005/api/coaches/me/courses';
 
@@ -115,11 +116,7 @@ export default function ProfileCourses() {
           >
             {/* 圖片 */}
             <Image
-              src={
-                c.image?.startsWith('http')
-                  ? c.image
-                  : `http://localhost:3005${c.image}`
-              }
+              src={c.image?.startsWith('http') ? c.image : `${base}${c.image}`}
               alt={c.name}
               width={20}
               height={20}
