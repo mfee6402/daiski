@@ -127,7 +127,7 @@ export const sendOtpMail = async (to, otpToken, secret = '') => {
   const mailOptions = {
     // 這裡要改寄送人
     from: user, // sender address
-    to: to, // list of receivers
+    to: "artemismoon0804@gmail.com", // list of receivers
     subject: '重設登入密碼的一次性驗証碼(OTP)',
     text: otpMailText(otpToken, secret),
     html: otpMailHtml(otpToken, secret),

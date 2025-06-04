@@ -15,10 +15,29 @@ import { Toaster } from 'sonner';
 // 為了跳轉頁面（App Router）
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+
+import { Input } from '@/components/ui/input';
 
 export default function UserPage() {
   // 輸入表單用的狀態
   const [userInput, setUserInput] = useState({ account: '', password: '' });
+
+  // 忘記密碼視窗狀態
+  const [fpOpen, setFpOpen] = useState(false); // Dialog 開關
+  const [fpEmail, setFpEmail] = useState(''); // email
+  const [otpSent, setOtpSent] = useState(false); // 是否已寄出 OTP
+  const [fpOtp, setFpOtp] = useState(''); // 使用者輸入的 OTP
+  const [fpNewPwd, setFpNewPwd] = useState(''); // 新密碼
+  const [fpLoading, setFpLoading] = useState(false); // 送出 loading
 
   // 登入後設定全域的會員資料用
   const { mutate } = useAuthGet();
@@ -128,7 +147,15 @@ export default function UserPage() {
                   className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
                 />
               </label>
-
+              <p className="text-end">
+                <button
+                  type="button"
+                  onClick={() => setFpOpen(true)}
+                  className="text-primary-500 hover:underline"
+                >
+                  忘記密碼？
+                </button>
+              </p>
               <button
                 onClick={handleLogin}
                 className="w-full mt-16 px-4 py-3 hover:bg-primary-500 rounded-md text-white bg-primary-600"
@@ -179,6 +206,140 @@ export default function UserPage() {
 
       {/* 土司訊息視窗用 */}
       <ToastContainer position="bottom-right" autoClose={1000} closeOnClick />
+      {/* 忘記密碼彈出式視窗 */}
+      <Dialog open={fpOpen} onOpenChange={setFpOpen}>
+        <DialogTrigger asChild />
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>重設密碼</DialogTitle>
+            <DialogDescription>
+              {otpSent
+                ? '請輸入收到的 OTP 驗證碼與新密碼'
+                : '輸入註冊時的 Email，我們會寄送 OTP 驗證碼給你'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* ========= 階段 1：只輸入 email ========= */}
+          {!otpSent && (
+            <div className="space-y-4">
+              <Input
+                placeholder="email@example.com"
+                type="email"
+                value={fpEmail}
+                onChange={(e) => setFpEmail(e.target.value)}
+                disabled={fpLoading}
+              />
+              <button
+                onClick={async () => {
+                  if (!fpEmail) return toast.error('請輸入 Email');
+                  setFpLoading(true);
+                  try {
+                    const r = await fetch(
+                      'http://localhost:3005/api/auth/otp',
+                      {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: fpEmail }),
+                      }
+                    );
+                    const data = await r.json();
+                    if (r.ok && data.status === 'success') {
+                      toast.success('OTP 已寄出，請收信！');
+                      setOtpSent(true); // 進入階段 2
+                    } else {
+                      toast.error(data.message || '寄送失敗');
+                    }
+                  } catch (err) {
+                    toast.error('系統錯誤，請稍後再試');
+                  } finally {
+                    setFpLoading(false);
+                  }
+                }}
+                disabled={fpLoading}
+                className="w-full px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-500"
+              >
+                {fpLoading ? '寄送中…' : '取得 OTP 驗證碼'}
+              </button>
+            </div>
+          )}
+
+          {/* ========= 階段 2：輸入 OTP + 新密碼 ========= */}
+          {otpSent && (
+            <div className="space-y-4">
+              {/* 仍顯示「OTP」，但實際送出 token */}
+              <Input
+                placeholder="6 位數 OTP"
+                value={fpOtp}
+                onChange={(e) => setFpOtp(e.target.value)}
+                maxLength={6}
+                disabled={fpLoading}
+              />
+              {/* 仍顯示「新密碼」，但實際送出 password */}
+              <Input
+                placeholder="請輸入新密碼"
+                type="password"
+                value={fpNewPwd}
+                onChange={(e) => setFpNewPwd(e.target.value)}
+                disabled={fpLoading}
+              />
+
+              <button
+                onClick={async () => {
+                  if (!fpEmail || !fpOtp || !fpNewPwd)
+                    return toast.error('資料填寫不完整');
+
+                  setFpLoading(true);
+                  try {
+                    const r = await fetch(
+                      'http://localhost:3005/api/auth/reset-password',
+                      {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          email: fpEmail, // ✔ 必填
+                          token: fpOtp, // ✔ 後端要 token
+                          password: fpNewPwd, // ✔ 後端要 password
+                        }),
+                      }
+                    );
+                    const data = await r.json();
+
+                    if (r.ok && data.status === 'success') {
+                      toast.success('密碼已重設，請重新登入');
+                      setFpOpen(false);
+                      // 清理狀態
+                      setOtpSent(false);
+                      setFpEmail('');
+                      setFpOtp('');
+                      setFpNewPwd('');
+                    } else {
+                      toast.error(data.message || '重設失敗');
+                    }
+                  } catch (err) {
+                    toast.error('系統錯誤，請稍後再試');
+                  } finally {
+                    setFpLoading(false);
+                  }
+                }}
+                disabled={fpLoading}
+                className="w-full px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-500"
+              >
+                {fpLoading ? '送出中…' : '重設密碼'}
+              </button>
+            </div>
+          )}
+
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => setFpOpen(false)}
+              className="text-sm text-muted-foreground hover:underline"
+            >
+              取消
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
