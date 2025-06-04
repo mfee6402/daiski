@@ -26,7 +26,7 @@ export default function HomeCard() {
             title="教練一覽"
             imgSrc="/home-images/img_ins.png"
             reverse /* 文字右 / 圖片左 */
-            className="xl:mt-[8rem]"
+            className=""
             textClassName="sm:mb-[15rem] mb-[8rem] text-center"
             href="/coaches"
           />

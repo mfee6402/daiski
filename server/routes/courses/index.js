@@ -147,17 +147,14 @@ router.get('/:id/sign-up', async (req, res) => {
             price: true,
             duration: true,
             coach_id: true,
+            location: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
-        // location: {
-        //   select: {
-        //     id: true,
-        //     name: true,
-        //     country: true,
-        //     city: true,
-        //     address: true,
-        //   },
-        // },
       },
     });
     // 若找不到資料則回傳 404
@@ -190,7 +187,12 @@ router.get('/:id/sign-up', async (req, res) => {
         start_at: fmt(v.start_at),
         image: v.courseImg?.img || null,
         coach_id: v.coach_id,
-        location_id: v.location_id,
+        location_id: v.location
+          ? {
+              id: v.location.id,
+              name: v.location.name,
+            }
+          : null,
       })),
     };
 

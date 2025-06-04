@@ -415,9 +415,10 @@ router.get('/', async (req, res, next) => {
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
     const groupsFromDb = await prisma.group.findMany({
-      where: { deletedAt: null },
+      where: { deletedAt: null,
+         ...where,},
       skip: (Number(page) - 1) * itemsPerPage,
-      take: itemsPerPage,
+      take: itemsPerPage, 
       include: {
         user: {
           // 開團者資訊

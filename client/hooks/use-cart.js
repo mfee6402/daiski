@@ -152,15 +152,11 @@ export function CartProvider({ children }) {
       }
       fetchData();
     }
+  };
 
-    //  const res = await fetch(url, {
-    //     method: method,
-    //     credentials: 'include',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify(data),
-    // });
+  // 清空購物車
+  const onClear = () => {
+    console.log('OK');
   };
 
   // 處理新增
@@ -252,6 +248,7 @@ export function CartProvider({ children }) {
           onDecrease,
           onIncrease,
           onRemove,
+          onClear,
         }}
       >
         {children}

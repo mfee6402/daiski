@@ -27,7 +27,7 @@ import PaymentOption from './_components/paymentOption';
 import { produce } from 'immer';
 
 export default function CheckoutPage(props) {
-  const { cart, setCart } = useCart();
+  const { cart, setCart, onClear } = useCart();
   const router = useRouter();
 
   const methods = useForm({
@@ -36,6 +36,7 @@ export default function CheckoutPage(props) {
       district: '',
       zipCode: '',
       addressDetail: '',
+      shouldUnregister: true,
     },
   });
 
@@ -77,7 +78,8 @@ export default function CheckoutPage(props) {
       CartCourse: nextCart.CartCourse,
       CartProduct: nextCart.CartProduct,
     };
-    const response = await fetch('http://localhost:3005/api/cart/order', {
+    // 建立訂單
+    const responseOrder = await fetch('http://localhost:3005/api/cart/order', {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -85,9 +87,10 @@ export default function CheckoutPage(props) {
       },
       body: JSON.stringify(orderData),
     });
-    const amount = await response.json();
+    const responseOrderData = await responseOrder.json();
 
-    console.log('測試' + amount);
+    // 清空購物車
+    onClear();
 
     if (data.payment === 'paypal') {
       router.push('/cart/checkout/paypal');
@@ -102,7 +105,7 @@ export default function CheckoutPage(props) {
       router.push('/cart/summary');
     }
   };
-  console.log(cart);
+
   return (
     <>
       <FormProvider {...methods}>

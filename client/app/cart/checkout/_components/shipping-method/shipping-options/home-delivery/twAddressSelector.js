@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { twAddress } from './tw-address-data';
 import {
   Select,
@@ -20,10 +20,15 @@ export default function TwAddressSelector() {
     setValue,
     watch,
     formState: { errors },
+    unregister,
+    control,
   } = useFormContext();
   const city = watch('city');
   const district = watch('district');
-
+  const selectedShipping = useWatch({
+    control,
+    name: 'shippingMethod',
+  });
   const handleCityChange = (value) => {
     setValue('city', value, { shouldValidate: true });
     setValue('district', '');
@@ -33,7 +38,12 @@ export default function TwAddressSelector() {
     setValue('district', value, { shouldValidate: true });
     setValue('zipCode', twAddress[city][value]);
   };
-
+  useEffect(() => {
+    if (selectedShipping === 'homeDelivery') {
+      unregister('district');
+      unregister('city');
+    }
+  }, [selectedShipping]);
   return (
     <>
       <div className="w-full flex flex-col gap-4 ">
