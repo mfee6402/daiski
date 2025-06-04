@@ -106,7 +106,7 @@ export default function RateButton({ orderId, productSkuId }) {
         // —— 已評分過，就顯示星星＋分數 ——
         <div className="flex items-center space-x-1">
           <div>{renderStars(existingRate.rating)}</div>
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-gray-600 dark:text-white">
             ({existingRate.rating.toFixed(1)})
           </span>
         </div>
