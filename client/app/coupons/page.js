@@ -194,7 +194,7 @@ export default function CouponsPage(props) {
   return (
     <>
       <Container>
-        <section className="flex flex-col gap-6 mt-20">
+        <section className="flex flex-col gap-6 mt-10 mx-2 md:mx-0">
           {/* 開頭 */}
           <div className="flex flex-row items-center justify-between">
             <h5 className="font-tw text-h5-tw">領取優惠劵</h5>
@@ -244,7 +244,7 @@ export default function CouponsPage(props) {
             <p className="color-primary-800">多多關注我們隨時領取優惠券</p>
           </div>
         ) : (
-          <ul className="grid gap-5 md:grid-cols-2 my-10">
+          <ul className="grid gap-5 lg:grid-cols-2 my-10 lg:mx-0 mx-2">
             {filteredData?.map((c) => {
               // 顯示狀態
               const isUpcoming = c.status === '尚未開始';

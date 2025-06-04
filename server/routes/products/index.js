@@ -4,6 +4,7 @@ import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
 import { PrismaClient } from '@prisma/client';
+import authenticate from '../../middlewares/authenticate.js';
 
 const prisma = new PrismaClient();
 
@@ -634,6 +635,119 @@ router.get('/:productId/rating-summary', async (req, res, next) => {
     next(error); // 將錯誤傳遞給 Express 的錯誤處理中介軟體
   }
 });
+
+/**
+ * POST /api/orders/:orderId/products/:productId/rate
+ * 建立一筆商品評分 (ProductRating)
+ * 需要先登入 (authenticate middleware)
+ *
+ * Path Params:
+ *   - orderId: 該筆訂單的 ID
+ *   - productId: 該筆訂單內要評價的商品 ID
+ *
+ * Request Body JSON:
+ * {
+ *   "rating": number,       // 0.0 ~ 5.0，最多到小數一位 (e.g. 3.5)
+ *   "review_text": string   // 選填
+ * }
+ */
+router.post(
+  '/:productId/orders/:orderId/rate',
+  authenticate, // 先透過 authenticate 拿到 req.user.id
+  async (req, res, next) => {
+    try {
+      // 1. 解析路由參數
+      const orderIdNum = parseInt(req.params.orderId, 10);
+      const productIdNum = parseInt(req.params.productId, 10);
+      if (isNaN(orderIdNum) || isNaN(productIdNum)) {
+        return res
+          .status(400)
+          .json({ message: 'orderId 或 productId 格式錯誤' });
+      }
+
+      // 2. 解析 request body
+      const { rating, review_text } = req.body;
+      const numRating = parseFloat(rating);
+      if (
+        Number.isNaN(numRating) ||
+        numRating < 0 ||
+        numRating > 5 ||
+        !/^\d+(\.[05])?$/.test(String(rating))
+      ) {
+        return res.status(400).json({
+          message:
+            'rating 格式錯誤，請輸入 0.0～5.0 之間的一位小數 (例：3.5、4.0)',
+        });
+      }
+
+      // 3. 檢查訂單是否存在且屬於當前使用者
+      const order = await prisma.order.findUnique({
+        where: { id: orderIdNum },
+        select: { userId: true },
+      });
+      if (!order) {
+        return res.status(404).json({ message: '找不到該訂單' });
+      }
+      if (order.userId !== req.user.id) {
+        return res.status(403).json({ message: '無權為此訂單的商品評分' });
+      }
+
+      // 4. 檢查「訂單裡是否包含這個 productId」
+      //  → 先去 ProductSku 撈所有屬於此 productId 的 sku.id
+      const skus = await prisma.productSku.findMany({
+        where: { product_id: productIdNum, deleted_at: null },
+        select: { id: true },
+      });
+      const skuIds = skus.map((s) => s.id);
+      if (skuIds.length === 0) {
+        // 代表根本找不到任何 SKU 屬於此 product，也不用往下查
+        return res.status(400).json({ message: '無此商品或商品不可評分' });
+      }
+
+      //  → 再去 OrderProduct 裡面查：orderId = X 且 productSkuId 要在 [skuIds] 裡
+      const orderProduct = await prisma.orderProduct.findFirst({
+        where: {
+          orderId: orderIdNum,
+          productSkuId: { in: skuIds },
+        },
+      });
+      if (!orderProduct) {
+        return res.status(400).json({
+          message: '此訂單未包含該商品，無法提交評分',
+        });
+      }
+
+      // 5. 檢查是否已經評分過 (order_id + product_id 的複合唯一)
+      const existing = await prisma.productRating.findUnique({
+        where: {
+          order_id_product_id: {
+            order_id: orderIdNum,
+            product_id: productIdNum,
+          },
+        },
+      });
+      if (existing) {
+        return res.status(400).json({ message: '您已經對此商品評分過' });
+      }
+
+      // 6. 建立新的 ProductRating
+      const created = await prisma.productRating.create({
+        data: {
+          user_id: req.user.id,
+          order_id: orderIdNum,
+          product_id: productIdNum,
+          rating: numRating,
+          review_text: review_text?.trim() || null,
+        },
+      });
+
+      return res.status(201).json({ message: '評分已成功提交', data: created });
+    } catch (error) {
+      console.error('建立商品評價時錯誤：', error);
+      next(error);
+    }
+  }
+);
 
 // --------------------------------------------------
 // GET /api/products/:id — 取得單一商品詳細資料 + 相關商品

@@ -53,7 +53,12 @@ export function CartProvider({ children }) {
   }
 
   // 將資料傳給後端
-  async function fetchData(category = '', item = {}, method = '') {
+  async function fetchData(
+    category = '',
+    item = {},
+    method = '',
+    quantity = 1
+  ) {
     try {
       let url = '';
       if (method === 'POST') {
@@ -87,12 +92,12 @@ export function CartProvider({ children }) {
   }
 
   // 處理遞增
-  const onIncrease = (category, item) => {
+  const onIncrease = (category, item, quantity = 1) => {
     let nextItem;
     const nextList = cart[category].map((v) => {
       if (v.id === item.id) {
-        nextItem = { ...v, quantity: v.quantity + 1 };
-        return { ...v, quantity: v.quantity + 1 };
+        nextItem = { ...v, quantity: v.quantity + quantity };
+        return { ...v, quantity: v.quantity + quantity };
       } else {
         return v;
       }
@@ -103,7 +108,7 @@ export function CartProvider({ children }) {
       [category]: nextList,
     };
     setCart(nextCart);
-    fetchData(category, nextItem, 'PUT');
+    fetchData(category, nextItem, 'PUT', quantity);
   };
 
   // FIXME 處理遞減
@@ -131,10 +136,35 @@ export function CartProvider({ children }) {
   // 處理刪除
   const onRemove = (category, item) => {
     fetchData(category, item, 'DELETE');
+    console.log('刪除' + item.id);
+
+    if (category === 'CartGroup') {
+      async function fetchData() {
+        try {
+          const url = `http://localhost:3005/api/group/members/${item.id}`;
+          const res = await fetch(url, {
+            method: 'DELETE',
+            credentials: 'include',
+          });
+        } catch (err) {
+          throw new Error(err);
+        }
+      }
+      fetchData();
+    }
+
+    //  const res = await fetch(url, {
+    //     method: method,
+    //     credentials: 'include',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify(data),
+    // });
   };
 
   // 處理新增
-  const onAdd = (category = '', item = {}) => {
+  const onAdd = (category = '', item = {}, quantity = 1) => {
     const categoryOptions = ['CartGroup', 'CartProduct', 'CartCourse'];
 
     //  如果沒有該類別要return
@@ -146,7 +176,7 @@ export function CartProvider({ children }) {
     if (foundIndex !== -1) {
       // 如果有找到 ===> 遞增購物車狀態商品數量
       if (category === 'CartProduct') {
-        onIncrease(category, item);
+        onIncrease(category, item, quantity);
       } else {
         console.log('已重複且非商品，無作為');
       }

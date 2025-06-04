@@ -190,7 +190,7 @@ export default function CoachesPage() {
             <p className="mt-1 text-sm text-gray-600">
               語言：{t.languages.join('、') || '無'}
             </p>
-            <Link href={`/coaches/${t.id}#courses`}>
+            <Link href={`/coaches/${t.id}`}>
               <Button className="mt-4 w-full">查看課程</Button>
             </Link>
           </div>

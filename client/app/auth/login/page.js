@@ -95,8 +95,8 @@ export default function UserPage() {
   return (
     <>
       <div className="flex container justify-center  mx-auto  gap-1 min-h-screen">
-        <div className="relative w-full sm:w-1/2 py-12 left flex-1 min-w-0 bg-[url('/login.png')] bg-fixed bg-cover bg-center sm:bg-none px-4 sm:px-0 ">
-          <div className="absolute inset-0 bg-white/80  sm:hidden" />
+        <div className="relative w-full sm:w-1/2 py-12 left flex-1 min-w-0 bg-[url('/login.png')] bg-fixed bg-cover bg-center lg:bg-none px-4 lg:px-0 ">
+          <div className="absolute inset-0 bg-white/80  lg:hidden" />
           <div className="relative z-10">
             <div className="text-center ">
               <h1 className="text-h2-tw">登入</h1>
@@ -107,7 +107,7 @@ export default function UserPage() {
                 </Link>
               </p>
             </div>
-            <div className="max-w-md mx-auto mt-6">
+            <div className="max-w-md mx-auto mt-30 flex flex-col gap-2">
               <label>
                 帳號:
                 <input
@@ -138,7 +138,7 @@ export default function UserPage() {
             </div>
 
             <div className="mt-16">
-              <button
+              {/* <button
                 onClick={() => {
                   // 測試帳號 harry/11111
                   setUserInput({ account: 'harry', password: '11111' });
@@ -146,33 +146,33 @@ export default function UserPage() {
               >
                 一鍵輸入範例
               </button>
-              <hr />
+              <hr /> */}
               {/* <h1>會員登入認証&授權測試(JWT)</h1> */}
-              <p>會員狀態:{isAuth ? '已登入' : '未登入'}</p>
+              {/* <p>會員狀態:{isAuth ? '已登入' : '未登入'}</p>
               <hr />
               <button onClick={handleLogout}>登出(logout)</button>
               <hr />
               <button onClick={handleCheckAuth}>
                 檢查登入狀況(check login)
               </button>
-              <hr />
+              <hr /> */}
 
               {/* <p>
             以下連結為測試會員隱私資料頁，如果未登入完成會跳轉回登入頁(本頁)，實作程式碼詳見useAuth勾子
           </p> */}
-              <p>
+              {/* <p>
                 <Link href="/auth/login/status">存取會員隱私資料</Link>
-              </p>
+              </p> */}
             </div>
           </div>
         </div>
-        <div className="hidden sm:block w-1/2 flex-1 min-w-0">
+        <div className="hidden lg:block w-1/2 flex-1 min-w-0">
           <Image
             src="/login.png"
             alt="Login Image"
             width={100}
             height={100}
-            className="object-cover shadow-lg w-full"
+            className=" object-fill shadow-lg w-full h-full"
           />
         </div>
       </div>

@@ -66,6 +66,7 @@ export default function CheckoutPage(props) {
 
     // FIXME 資料庫沒有送貨方式
     const orderData = {
+      shipping: nextCart.shippingInfo.shippingMethod,
       payment: nextCart.payment,
       name: nextCart.userInfo.name,
       phone: nextCart.userInfo.phone,
@@ -86,7 +87,7 @@ export default function CheckoutPage(props) {
     });
     const amount = await response.json();
 
-    console.log(amount);
+    console.log('測試' + amount);
 
     if (data.payment === 'paypal') {
       router.push('/cart/checkout/paypal');
@@ -102,7 +103,6 @@ export default function CheckoutPage(props) {
     }
   };
   console.log(cart);
-
   return (
     <>
       <FormProvider {...methods}>
