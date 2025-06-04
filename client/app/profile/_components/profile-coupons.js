@@ -143,8 +143,8 @@ export default function ProfileCoupons(props) {
   return (
     <section className="overflow-y-auto h-dvh ">
       <CardHeader>
-        <CardTitle>已報名課程</CardTitle>
-        <CardDescription>共 {usercoupon.length} 筆</CardDescription>
+        <CardTitle>已擁有優惠卷</CardTitle>
+        <CardDescription>共 {usercoupon.length} 張</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-row gap-6 p-5 justify-between ">
         <div className="flex flex-row gap-6">
