@@ -93,7 +93,6 @@ export default function RateDialog({ orderId, productId, open, onOpenChange }) {
             onValueChange={(val) => {
               setRating(val[0]);
             }}
-            className=""
           >
             <Slider.Track>
               <Slider.Range />
@@ -102,7 +101,7 @@ export default function RateDialog({ orderId, productId, open, onOpenChange }) {
           </Slider>
         </div>
 
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-gray-600 dark:text-white mt-1">
           目前評分：{rating.toFixed(1)}
         </p>
 
