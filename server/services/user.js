@@ -1,13 +1,13 @@
-import prisma from '../lib/prisma.js'
-import { z } from 'zod'
-import bcrypt from 'bcrypt'
+import prisma from '../lib/prisma.js';
+import { z } from 'zod';
+import bcrypt from 'bcrypt';
 
 import {
   isDev,
   isEmpty,
   validatedParamId,
   safeParseBindSchema,
-} from '../lib/utils.js'
+} from '../lib/utils.js';
 
 // service層的函式，主要負責處理與模型間的業務邏輯，被route層的API呼叫
 // 並不負責所有的安全性檢查與資料轉型，但會作輸入資料格式的檢查
@@ -16,7 +16,7 @@ import {
 
 // #region 建立驗證格式用函式
 // 建立會員資料的驗證用的schema物件
-const userSchema = {}
+const userSchema = {};
 
 // 建立會員資料的驗証用的schema
 userSchema.newUser = z.object({
@@ -28,7 +28,7 @@ userSchema.newUser = z.object({
   avatar: z.string().optional(), // 字串，可選填
   googleUid: z.string().optional(), // 字串，可選填
   lineUid: z.string().optional(), // 字串，可選填
-})
+});
 
 // 更新會員資料的驗証用的schema
 userSchema.updateUser = z.object({
@@ -46,7 +46,7 @@ userSchema.updateUser = z.object({
       address: z.string().optional(), // 字串，可選填
     })
     .optional(), // 物件，可選填
-})
+});
 
 // 更新會員資料的驗証用的schema(不包含頭像avatar)
 // {"name":"榮恩","bio":"","sex":"","phone":"","birth":"","postcode":"","address":""}
@@ -58,35 +58,35 @@ userSchema.updateUserProfile = z.object({
   phone: z.string().optional(), // 字串，可選填
   postcode: z.string().optional(), // 字串，可選填
   address: z.string().optional(), // 字串，可選填
-})
+});
 
 // 更新會員密碼的驗証用的schema
 userSchema.updatePassword = z.object({
   currentPassword: z.string().min(5).max(30), // 5-30個字元，必要
   newPassword: z.string().min(5).max(30), // 5-30個字元，必要
-})
+});
 
 // 綁定驗證用的schema的檢查函式
-const userSchemaValidator = safeParseBindSchema(userSchema)
+const userSchemaValidator = safeParseBindSchema(userSchema);
 // #endregion
 
 // 獲得所有使用者資料
 export const getUsers = async () => {
   // 使用findMany方法取得所有使用者資料
-  const users = await prisma.user.findMany()
+  const users = await prisma.user.findMany();
 
   // 不回傳密碼，刪除密碼屬性
   users.forEach((user) => {
-    delete user.password
-  })
+    delete user.password;
+  });
 
-  return users
-}
+  return users;
+};
 
 // 獲得單筆使用者資料(包含profile)
 export const getUserById = async (userId) => {
   // 驗證參數是否為正整數
-  validatedParamId(userId)
+  validatedParamId(userId);
 
   // 使用findUnique方法取得單筆使用者資料
   const user = await prisma.user.findUnique({
@@ -97,20 +97,18 @@ export const getUserById = async (userId) => {
     // include: {
     //   profile: true,
     // },
-  })
+  });
 
   // user=null，表示無此會員資料
   if (!user) {
-    throw new Error('會員資料不存在')
+    throw new Error('會員資料不存在');
   }
-
-
 
   // 如果user的屬性中有null值，轉換為空字串birth
   if (user) {
     for (const key in user) {
       if (user[key] === null) {
-        user[key] = ''
+        user[key] = '';
       }
     }
   }
@@ -119,44 +117,44 @@ export const getUserById = async (userId) => {
   if (user.profile) {
     for (const key in user.profile) {
       if (user.profile[key] === null) {
-        user.profile[key] = ''
+        user.profile[key] = '';
       }
     }
   }
 
   // 不回傳密碼，刪除密碼屬性
-  if (user) delete user.password
+  if (user) delete user.password;
 
-  return user
+  return user;
   // return {"name":"testName"}
-}
+};
 
 // 過濾某個欄位得到使用者資料(不包含profile)
 export const getUserByField = async (where = {}) => {
   // 驗證參數
   if (isEmpty(where)) {
-    throw new Error('缺少必要參數')
+    throw new Error('缺少必要參數');
   }
 
   // 使用findUnique方法取得單筆使用者資料
-  const user = await prisma.user.findUnique({
+  const user = await prisma.user.findFirst({
     where,
-  })
+  });
 
   // 如果user的屬性中有null值，轉換為空字串
   if (user) {
     for (const key in user) {
       if (user[key] === null) {
-        user[key] = ''
+        user[key] = '';
       }
     }
   }
 
   // 不回傳密碼，刪除密碼屬性
-  if (user) delete user.password
+  if (user) delete user.password;
 
-  return user
-}
+  return user;
+};
 
 // export const getUserByEmail = async (email) => {
 //   // 驗證參數
@@ -237,7 +235,7 @@ export const getUserByField = async (where = {}) => {
 
 // 新增會員資料
 export const createUser = async (newUser) => {
-  if (isDev) console.log('newUser', newUser)
+  if (isDev) console.log('newUser', newUser);
   // newUser資料範例(物件) 註: name改為在profile資料表中
   // {
   //     "username":"ginny",
@@ -256,7 +254,7 @@ export const createUser = async (newUser) => {
   // }
 
   // 檢查從前端來的資料是否符合格式，注意要傳入與檢查schema同名的物件值，例如{ newUser: newUser }，前者為物件的key，會比對schema物件中的檢查格式，後者為要檢查物件的值
-  userSchemaValidator({ newUser })
+  userSchemaValidator({ newUser });
 
   // 要新增的會員資料
   const {
@@ -267,7 +265,7 @@ export const createUser = async (newUser) => {
     avatar = '',
     googleUid = null,
     lineUid = null,
-  } = newUser
+  } = newUser;
 
   // 查詢是否有相同email或username的會員資料(這兩者其一都不能有重覆)
   const dbUser = await prisma.user.findFirst({
@@ -281,15 +279,15 @@ export const createUser = async (newUser) => {
         },
       ],
     },
-  })
+  });
 
   // 如果有重覆的會員資料，拋出錯誤
   if (dbUser) {
-    throw new Error('會員資料重覆')
+    throw new Error('會員資料重覆');
   }
 
   // 將密碼字串進行加密
-  const passwordHash = await bcrypt.hash(password, 10)
+  const passwordHash = await bcrypt.hash(password, 10);
   // 建立會員資料，這裡會同時建立profile資料
   const user = await prisma.user.create({
     data: {
@@ -302,24 +300,24 @@ export const createUser = async (newUser) => {
         create: { name: name, avatar: avatar },
       },
     },
-  })
+  });
 
   // 如果user的屬性中有null值，轉換為空字串
   if (user) {
     for (const key in user) {
       if (user[key] === null) {
-        user[key] = ''
+        user[key] = '';
       }
     }
   }
 
-  return user
-}
+  return user;
+};
 
 // 更新會員資料(不包含頭像avatar)
 export const updateUserProfileById = async (userId, updateUserProfile) => {
   // 驗證參數是否為正整數
-  validatedParamId(userId)
+  validatedParamId(userId);
 
   // updateUser資料範例(物件)
   // {
@@ -333,63 +331,63 @@ export const updateUserProfileById = async (userId, updateUserProfile) => {
   // }
 
   // 檢查從前端來的資料是否符合格式
-  userSchemaValidator({ updateUserProfile })
+  userSchemaValidator({ updateUserProfile });
 
   // 將生日的日期字串轉為Date物件
   if (updateUserProfile.birth) {
-    updateUserProfile.birth = new Date(updateUserProfile.birth)
+    updateUserProfile.birth = new Date(updateUserProfile.birth);
   } else {
-    updateUserProfile.birth = null
+    updateUserProfile.birth = null;
   }
 
   return await prisma.profile.update({
     where: { userId: userId },
     data: updateUserProfile,
-  })
-}
+  });
+};
 
 export const getUserAvatarById = async (userId) => {
   // 驗證參數是否為正整數
-  validatedParamId(userId)
+  validatedParamId(userId);
 
   // 使用findUnique方法取得單筆使用者資料
   const profile = await prisma.profile.findUnique({
     where: { userId: userId },
-  })
+  });
 
-  return profile.avatar
-}
+  return profile.avatar;
+};
 
 // 更新會員頭像avatar
 export const updateUserAvatarById = async (userId, avatar) => {
   // 驗證參數是否為正整數
-  validatedParamId(userId)
+  validatedParamId(userId);
 
   // 檢查從avatar資料是否符合格式(檔案名稱)
   if (!avatar) {
-    throw new Error('缺少必要參數')
+    throw new Error('缺少必要參數');
   }
 
   // 更新頭像欄位
   return await prisma.profile.update({
     where: { userId: userId },
     data: { avatar: avatar },
-  })
-}
+  });
+};
 
 // google uid連結會員資料用
 export const updateUserDataByField = async (where = {}, data = {}) => {
   // 驗證參數
   if (isEmpty(where) || isEmpty(data)) {
-    throw new Error('缺少必要參數')
+    throw new Error('缺少必要參數');
   }
 
   // 更新欄位
   return await prisma.user.update({
     where,
     data,
-  })
-}
+  });
+};
 
 // google uid連結會員資料用
 // export const updateUserGoogleUidByEmail = async (email, googleUid) => {
@@ -425,56 +423,56 @@ export const updateUserDataByField = async (where = {}, data = {}) => {
 // 更新會員密碼
 export const updateUserPasswordById = async (userId, updatePassword) => {
   // 驗證參數是否為正整數
-  validatedParamId(userId)
+  validatedParamId(userId);
 
   // 檢查從前端來的資料是否符合格式
-  userSchemaValidator({ updatePassword })
+  userSchemaValidator({ updatePassword });
 
   // 使用findUnique方法取得單筆使用者資料
   const user = await prisma.user.findUnique({
     where: { id: userId },
-  })
+  });
 
   if (!user) {
-    throw new Error('無此會員資料')
+    throw new Error('無此會員資料');
   }
 
   // 比對密碼是否正確
   const isPasswordMatch = await bcrypt.compare(
     updatePassword.currentPassword, // 使用者輸入的目前密碼
     user.password
-  )
+  );
 
   // 密碼不符合 拋出錯誤
   if (!isPasswordMatch) {
-    throw new Error('輸入的當前密碼錯誤')
+    throw new Error('輸入的當前密碼錯誤');
   }
 
   // 將輸入的新密碼字串進行加密
-  const passwordHash = await bcrypt.hash(updatePassword.newPassword, 10)
+  const passwordHash = await bcrypt.hash(updatePassword.newPassword, 10);
 
   // 更新密碼欄位
   return await prisma.user.update({
     where: { id: userId },
     data: { password: passwordHash },
-  })
-}
+  });
+};
 
 // 刪除會員資料
 export const deleteUserById = async (userId) => {
   // 驗證參數是否為正整數
-  validatedParamId(userId)
+  validatedParamId(userId);
 
   return await prisma.user.delete({
     where: { id: userId },
-  })
-}
+  });
+};
 
 // 判斷某商品是否已加入我的最愛
 export const isUserFavorite = async (userId, productId) => {
   // 驗證參數是否為正整數
-  validatedParamId(userId)
-  validatedParamId(productId)
+  validatedParamId(userId);
+  validatedParamId(productId);
 
   // 使用findUnique方法取得單筆最愛商品資料
   const favorite = await prisma.favorite.findFirst({
@@ -482,23 +480,23 @@ export const isUserFavorite = async (userId, productId) => {
       userId: userId,
       productId: productId,
     },
-  })
+  });
 
-  return favorite ? true : false
-}
+  return favorite ? true : false;
+};
 
 // 新增商品到我的最愛
 export const addUserFavorite = async (userId, productId) => {
   // 驗證參數是否為正整數
-  validatedParamId(userId)
-  validatedParamId(productId)
+  validatedParamId(userId);
+  validatedParamId(productId);
 
   // 查詢是否有相同的最愛商品資料
-  const existFav = await isUserFavorite(userId, productId)
+  const existFav = await isUserFavorite(userId, productId);
 
   // 如果有重覆的最愛商品資料，拋出錯誤
   if (existFav) {
-    throw new Error('資料已經存在，新增失敗')
+    throw new Error('資料已經存在，新增失敗');
   }
 
   // 查詢是否有此商品資料
@@ -506,11 +504,11 @@ export const addUserFavorite = async (userId, productId) => {
     where: {
       id: productId,
     },
-  })
+  });
 
   // 如果無此商品資料，拋出錯誤
   if (!existProduct) {
-    throw new Error('商品資料不存在，新增失敗')
+    throw new Error('商品資料不存在，新增失敗');
   }
 
   // 建立最愛商品資料
@@ -519,21 +517,21 @@ export const addUserFavorite = async (userId, productId) => {
       userId: userId,
       productId: productId,
     },
-  })
-}
+  });
+};
 
 // 刪除我的最愛的商品
 export const deleteUserFavorite = async (userId, productId) => {
   // 驗證參數是否為正整數
-  validatedParamId(userId)
-  validatedParamId(productId)
+  validatedParamId(userId);
+  validatedParamId(productId);
 
   // 查詢此資料是否存在
-  const existFav = await isUserFavorite(userId, productId)
+  const existFav = await isUserFavorite(userId, productId);
 
   // 如果無此最愛商品資料，拋出錯誤
   if (!existFav) {
-    throw new Error('資料不存在，刪除失敗')
+    throw new Error('資料不存在，刪除失敗');
   }
 
   return await prisma.favorite.delete({
@@ -544,5 +542,5 @@ export const deleteUserFavorite = async (userId, productId) => {
         productId: productId,
       },
     },
-  })
-}
+  });
+};
