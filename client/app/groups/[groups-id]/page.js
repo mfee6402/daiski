@@ -303,7 +303,10 @@ export default function GroupDetailPage() {
       try {
         const response = await fetch(`${API_BASE}/api/group/${groupId}`, {
           method: 'DELETE',
-          // headers: { 'Authorization': `Bearer ${your_token_variable}` }, // 如果需要
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}));
@@ -416,7 +419,7 @@ export default function GroupDetailPage() {
   );
 
   return (
-    <div className="bg-secondary-200 text-secondary-800 min-h-screen">
+    <div className="bg-secondary-200 text-secondary-800 min-h-screen dark:bg-background">
       <main className="w-full max-w-[1920px] mx-auto px-4 py-8 space-y-8">
         <PageLevelError />
         <div className="flex justify-between items-center mb-6">

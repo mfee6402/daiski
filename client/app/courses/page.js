@@ -143,7 +143,6 @@ export default function CoursesPage(props) {
             <div className="flex w-100 max-w-sm items-center space-x-2">
               <InputWithButton onSearch={handleSearch} />
             </div>
-            {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"></div> */}
           </div>
         </div>
       </div>
@@ -160,7 +159,7 @@ export default function CoursesPage(props) {
                 alt={c.name}
                 width={400}
                 height={250}
-                className="w-full h-48 object-cover"
+                className="w-full h-48 object-cover hover:scale-[1.02] transition"
               />
             </Link>
 
@@ -168,10 +167,16 @@ export default function CoursesPage(props) {
               <Link href={`/courses/${c.id}`}>
                 <h3 className="">{c.name}</h3>
               </Link>
+              <p className="text-sm text-gray-500">{c.location}</p>
               <p className="text-sm text-gray-500 mt-1">{c.period}</p>
+
               <p className="text-sm  mt-2 mb-2">
                 售價
-                <span className="text-red-500"> $NT {c.price} </span>起
+                <span className="text-red-500">
+                  {' '}
+                  $NT {(+c.price).toLocaleString()}{' '}
+                </span>
+                起
               </p>
               <hr />
               {/* 點按鈕也能進入詳細頁 */}
