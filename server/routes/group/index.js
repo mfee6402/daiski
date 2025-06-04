@@ -415,7 +415,7 @@ router.get('/', async (req, res, next) => {
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
     const groupsFromDb = await prisma.group.findMany({
-      where,
+      where: { deletedAt: null },
       skip: (Number(page) - 1) * itemsPerPage,
       take: itemsPerPage,
       include: {
@@ -487,7 +487,7 @@ router.get('/:groupId', async (req, res, next) => {
     }
 
     const group = await prisma.group.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
       include: {
         user: { select: { id: true, name: true, avatar: true } },
         images: { orderBy: { sortOrder: 'asc' } },
@@ -927,45 +927,57 @@ router.get('/user/:userId', async (req, res, next) => {
   }
 });
 // DELETE /api/group/:groupId (刪除揪團)
-router.delete('/:groupId', async (req, res, next) => {
+router.delete('/:groupId', authenticate, async (req, res, next) => {
   try {
     const groupId = Number(req.params.groupId);
-    if (isNaN(groupId)) return res.status(400).json({ error: '無效的揪團 ID' });
+    if (isNaN(groupId)) {
+      return res.status(400).json({ error: '無效的揪團 ID' });
+    }
 
-    const userId = req.user?.id; // ** 從 req.user 獲取 **
-    if (!userId)
+    const userId = req.user?.id;
+    if (!userId) {
       return res
         .status(401)
         .json({ error: '未授權操作，請先登入以刪除揪團。' });
+    }
 
-    const groupToDelete = await prisma.group.findUnique({
+    const groupToSoftDelete = await prisma.group.findUnique({
       where: { id: groupId },
     });
-    if (!groupToDelete)
+
+    if (!groupToSoftDelete) {
       return res.status(404).json({ error: '找不到要刪除的揪團' });
-    if (groupToDelete.organizerId !== Number(userId)) {
-      // 確保比較的是數字
+    }
+
+    // 檢查是否已經被軟刪除 (可選，但建議加上)
+    if (groupToSoftDelete.deletedAt) {
+      return res.status(404).json({ error: '此揪團先前已被刪除。' });
+    }
+
+    if (groupToSoftDelete.organizerId !== Number(userId)) {
       console.log(
-        `權限檢查: 資料庫 organizerId (${groupToDelete.organizerId}) !== req.user.id (${userId})`
+        `權限檢查: 資料庫 organizerId (${groupToSoftDelete.organizerId}) !== req.user.id (${userId})`
       );
       return res.status(403).json({ error: '您沒有權限刪除此揪團' });
     }
 
-    await prisma.group.delete({ where: { id: groupId } });
+    // --- 修改為軟刪除 ---
+    const softDeletedGroup = await prisma.group.update({
+      where: { id: groupId },
+      data: {
+        deletedAt: new Date(), // 設定 deletedAt 為當前時間
+      },
+    });
+    // --- 軟刪除修改結束 ---
 
-    res.status(200).json({ message: '揪團已成功刪除' });
+    res.status(200).json({ message: '揪團已成功標記為刪除。', data: softDeletedGroup }); // 可以選擇回傳更新後的記錄
+
   } catch (err) {
-    // ... (錯誤處理保持不變)
-    console.error(`刪除揪團 ${req.params.groupId} 失敗:`, err);
-    if (err.code === 'P2025')
-      return res.status(404).json({ error: '找不到要刪除的揪團。' });
-    if (err.code === 'P2003') {
-      return res.status(409).json({
-        error:
-          '無法刪除揪團，可能因為它仍被其他資料引用。請確認資料庫關聯設定。',
-      });
+    console.error(`標記刪除揪團 ${req.params.groupId} 失敗:`, err);
+    if (err.code === 'P2025') {
+      return res.status(404).json({ error: '找不到要標記為刪除的揪團。' });
     }
-    return res.status(500).json({ error: '伺服器內部錯誤，刪除揪團失敗。' });
+    return res.status(500).json({ error: '伺服器內部錯誤，標記刪除揪團失敗。' });
   }
 });
 // 新增：DELETE /api/group/members/:groupMemberId
