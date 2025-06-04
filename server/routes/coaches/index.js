@@ -167,6 +167,37 @@ router.get('/me/courses', authenticate, async (req, res) => {
   }
 });
 
+// 購物車取消報名
+router.delete('/cancel/:variantId', authenticate, async (req, res) => {
+  const userId = req.user.id;
+  const variantId = Number(req.params.variantId);
+
+  try {
+    const record = await prisma.courseVariantUser.findFirst({
+      where: {
+        user_id: userId,
+        course_variant_id: variantId,
+      },
+    });
+
+    if (!record) {
+      return res.status(404).json({ message: '沒有報名這門課' });
+    }
+
+    // 找到了就刪除
+    await prisma.courseVariantUser.delete({
+      where: {
+        id: record.id,
+      },
+    });
+
+    return res.json({ message: '已成功取消報名' });
+  } catch (err) {
+    console.error('取消報名失敗:', err);
+    return res.status(500).json({ message: '伺服器錯誤' });
+  }
+});
+
 // 抓教練列表
 router.get('/', async function (req, res) {
   try {

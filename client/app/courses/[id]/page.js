@@ -4,12 +4,21 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Clock5, MapPin, LocateFixed } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-// import L from 'leaflet';
-// import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import Image from 'next/image';
 import { memo, useMemo } from 'react';
 import Container from '@/components/container';
 import Link from 'next/link';
+import CourseMap from '../_component/coursemap';
+
+// 解決 icon 不顯示的問題
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+});
 // 修正 Leaflet 預設圖標路徑
 // if (typeof window !== 'undefined') {
 //   delete L.Icon.Default.prototype._getIconUrl;
@@ -75,7 +84,7 @@ export default function CoursesIdPage() {
       <main className=" py-8 bg-gray-100  min-h-screen">
         {/* 主卡片 */}
         <Container>
-          <div className="bg-white md:grid md:grid-cols-[3fr_1fr] gap-8 rounded-2xl shadow-lg mb-8 ">
+          <div className="bg-white md:grid md:grid-cols-[3fr_1fr] gap-8 rounded-2xl shadow-lg mb-8">
             {/* hero圖片 */}
             <div className="relative md:col-span-2 ">
               <Image
@@ -170,83 +179,35 @@ export default function CoursesIdPage() {
               <div className="sticky top-24  space-y-4">
                 {/* 报名卡片 */}
                 <div className="bg-white p-6 rounded-2xl shadow-lg">
-                  <div className="text-center">
-                    {/* 主辦方 Logo */}
-                    {course.organizer?.logo && (
-                      <Image
-                        src={course.organizer.logo}
-                        alt={course.organizer.name}
-                        width={48}
-                        height={48}
-                        className="rounded-full mx-auto"
-                      />
-                    )}
-                    <h3 className="mt-3 font-semibold text-lg">
-                      {course.organizer?.name}
-                    </h3>
+                  <div className="flex justify-center">
+                    {/* Logo */}
+                    <img
+                      src="/LOGO-dark.svg"
+                      width={100}
+                      height={48}
+                      alt="logo"
+                      className="item-center"
+                    />
                   </div>
                   <Link href={`/courses/${id}/sign-up`}>
                     <button className="mt-6 w-full px-4 py-2 bg-primary-600 text-white rounded-full hover:bg-primary-500 transition">
                       立即報名
                     </button>
                   </Link>
-                  {/* 下方提示卡片 */}
-                  {/* <div className="bg-pink-50 border border-pink-200 rounded-2xl p-4">
-                  <h4 className="font-semibold mb-2">線下活動</h4>
-                  <p className="text-sm text-gray-600 leading-relaxed"></p>
-                  <button className="mt-2 text-pink-600 underline text-sm">
-                    如何取票？
-                  </button>
-                </div> */}
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* 課程基本資訊 */}
-
-          {/* 地圖 */}
-          {/* <div className="h-64 w-full">
-              <MapContainer
-                center={[latitude, longitude]}
-                zoom={14}
-                style={{ height: '100%', width: '100%' }}
-              >
-                <TileLayer
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  attribution="&copy; OpenStreetMap contributors"
+            {course.variants[0]?.location?.latitude && (
+              <div className="bg-white rounded-2xl shadow-lg mt-0 p-6 space-y-4">
+                <h2 className="text-xl font-semibold">課程地點地圖</h2>
+                <CourseMap
+                  lat={course.variants[0].location.latitude}
+                  lng={course.variants[0].location.longitude}
+                  name={course.variants[0].location.name}
                 />
-                <Marker position={[latitude, longitude]}>
-                  <Popup>{locName}</Popup>
-                </Marker>
-              </MapContainer>
-            </div> */}
-
-          {/* <div className="mt-12">
-              <h2 className="text-2xl mb-8">教練資訊</h2>
-              <div className="flex">
-                <div className="max-w-xs mx-auto border-2 border-blue-200 rounded-2xl p-6 text-center">
-                  <Image
-                    src="null"
-                    alt=""
-                    width={100}
-                    height={100}
-                    className="w-32 h-32 rounded-full mx-auto object-cover"
-                  />
-                  <h2 className="mt-4 text-xl font-semibold flex items-center justify-center">
-                    <span className="mr-2"></span>
-                  </h2>
-                  <p className="mt-2 text-gray-700"></p>
-                  <p className="mt-1 text-gray-700">語言：</p>
-                  <p className="mt-1 text-gray-700"></p>
-                  <button className="mt-6 bg-gray-800 text-white text-sm px-6 py-2 rounded-full hover:bg-gray-700 transition">
-                    查看課程
-                  </button>
-                </div>
               </div>
-            </div> */}
-          {/* </div> */}
-          {/* </div> */}
+            )}
+          </div>
         </Container>
       </main>
     </>
