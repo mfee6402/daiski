@@ -10,6 +10,8 @@ router.get('/', async function (req, res) {
   const { boardtype, location, difficulty, keyword } = req.query;
 
   const where = {
+    deleted_at: null,
+
     ...(keyword && {
       OR: [
         { name: { contains: keyword } },
@@ -55,8 +57,10 @@ router.get('/', async function (req, res) {
         end_at: true,
         CourseImg: {
           take: 1,
+          orderBy: { id: 'desc' },
           select: { img: true },
         },
+
         CourseVariant: {
           select: {
             id: true,
