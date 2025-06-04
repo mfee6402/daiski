@@ -11,11 +11,22 @@ export default function ShippingMethod() {
   const {
     formState: { errors },
     control,
+    unregister,
   } = useFormContext();
   const selectedShipping = useWatch({
     control,
     name: 'shippingMethod',
   });
+
+  useEffect(() => {
+    if (selectedShipping !== 'homeDelivery') {
+      unregister('addressDetail');
+      unregister('city');
+      unregister('district');
+    } else if (selectedShipping !== 'storePickup') {
+      unregister('storename');
+    }
+  }, [selectedShipping]);
   return (
     <>
       <ShippingOptions

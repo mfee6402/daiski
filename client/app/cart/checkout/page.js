@@ -103,7 +103,7 @@ export default function CheckoutPage(props) {
 
     // 清空購物車
     onClear();
-
+    console.log(data.payment);
     if (data.payment === 'paypal') {
       router.push('/cart/checkout/paypal');
     } else if (data.payment === 'ecpay') {
