@@ -28,6 +28,8 @@ import {
 import { Input } from '@/components/ui/input';
 
 export default function UserPage() {
+  const base = process.env.NEXT_PUBLIC_API_BASE || '';
+  
   // 輸入表單用的狀態
   const [userInput, setUserInput] = useState({ account: '', password: '' });
 
@@ -38,6 +40,7 @@ export default function UserPage() {
   const [fpOtp, setFpOtp] = useState(''); // 使用者輸入的 OTP
   const [fpNewPwd, setFpNewPwd] = useState(''); // 新密碼
   const [fpLoading, setFpLoading] = useState(false); // 送出 loading
+  
 
   // 登入後設定全域的會員資料用
   const { mutate } = useAuthGet();
