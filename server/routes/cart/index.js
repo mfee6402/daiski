@@ -510,7 +510,7 @@ router.post('/order', authenticate, async function (req, res) {
   }
 });
 
-// 訂單紀錄
+// 會員訂單紀錄
 router.get('/orders', authenticate, async function (req, res) {
   try {
     const userId = +req.user.id;
@@ -589,23 +589,6 @@ router.get('/orders', authenticate, async function (req, res) {
       return `${d} ${t.split('.')[0].slice(0, 5)}`;
     };
 
-    //  const CartCourse = data.CartCourse.map((item) => {
-    //     const start_at = item.courseVariant.start_at;
-    //     const duration = item.courseVariant.duration;
-    //     const date = new Date(start_at);
-    //     date.setHours(date.getHours() + duration);
-    //     const end_at = date.toISOString();
-    //     return {
-    //       id: item.courseVariant.id,
-    //       price: item.courseVariant.price,
-    //       name: item.courseVariant.course.name,
-    //       imageUrl: item.courseVariant.course.CourseImg[0].img,
-    //       startAt: start_at,
-    //       endAt: end_at,
-    //       duration: duration,
-    //     };
-    //   });
-
     const orders = ordersResult.map((order) => {
       return {
         id: order.id,
@@ -646,4 +629,321 @@ router.get('/orders', authenticate, async function (req, res) {
   }
 });
 
+// 購物車第三部分記錄
+router.post('/order', authenticate, async function (req, res) {
+  try {
+    const userId = +req.user.id;
+    const orderInput = req.body;
+
+    const {
+      shipping,
+      payment,
+      name,
+      phone,
+      address,
+      amount,
+      couponId,
+      CartGroup,
+      CartCourse,
+      CartProduct,
+    } = orderInput;
+
+    const orderResult = await prisma.order.create({
+      data: {
+        userId,
+        // 其他欄位，如：
+        amount,
+        couponId,
+        payment,
+        address,
+        phone,
+        name,
+        shipping,
+      },
+    });
+
+    const newOrderId = +orderResult.id;
+
+    // 揪團
+    const groupIds = CartGroup.map((item) => item.id);
+    const orderGroup = groupIds.map((groupId) => ({
+      orderId: newOrderId,
+      groupMemberId: groupId,
+    }));
+    console.log(orderGroup);
+    const orderGroupResult = await prisma.orderGroup.createMany({
+      data: orderGroup,
+    });
+
+    // 課程
+    const courseIds = CartCourse.map((item) => item.id);
+    const orderCourse = courseIds.map((courseId) => ({
+      orderId: newOrderId,
+      courseVariantId: courseId,
+    }));
+
+    const orderCourseResult = await prisma.orderCourse.createMany({
+      data: orderCourse,
+    });
+
+    // 商品
+    const orderProduct = CartProduct.map((product) => ({
+      orderId: newOrderId,
+      productSkuId: product.id,
+      quantity: product.quantity,
+    }));
+
+    const orderProductResult = await prisma.orderProduct.createMany({
+      data: orderProduct,
+    });
+
+    return res.status(200).json({ status: 'success', data: orderResult });
+  } catch (error) {
+    res
+      .status(200)
+      .json({ status: 'fail', message: '訂單失敗:', error: { error } });
+  }
+});
+
+// 最新訂單紀錄
+router.get('/order', authenticate, async function (req, res) {
+  // try {
+  //   const userId = +req.user.id;
+
+  //   const data = await prisma.order.findFirst({
+  //     select: {
+  //       id: true,
+  //       couponId: true,
+  //       amount: true,
+  //       payment: true,
+  //       address: true,
+  //       phone: true,
+  //       name: true,
+  //       shipping: true,
+  //       createdAt: true,
+
+  //       orderProduct: {
+  //         select: {
+  //           id: true,
+  //           quantity: true,
+  //           productSku: {
+  //             select: {
+  //               id: true,
+  //               price: true,
+  //               product_size: {
+  //                 select: {
+  //                   name: true,
+  //                 },
+  //               },
+  //               product: {
+  //                 select: {
+  //                   name: true,
+  //                   product_image: {
+  //                     select: {
+  //                       url: true,
+  //                     },
+  //                     where: {
+  //                       sort_order: 0,
+  //                     },
+  //                   },
+  //                 },
+  //               },
+  //             },
+  //           },
+  //         },
+  //       },
+  //       orderCourse: {
+  //         select: {
+  //           courseVariant: {
+  //             select: {
+  //               id: true,
+  //               price: true,
+  //               duration: true,
+  //               start_at: true,
+  //               course: {
+  //                 select: {
+  //                   name: true,
+  //                   CourseImg: {
+  //                     select: {
+  //                       img: true,
+  //                     },
+  //                   },
+  //                 },
+  //               },
+  //             },
+  //           },
+  //         },
+  //       },
+  //       orderGroup: {
+  //         include: {
+  //           groupMember: {
+  //             select: {
+  //               group: {
+  //                 select: {
+  //                   id: true,
+  //                   title: true,
+  //                   startDate: true,
+  //                   endDate: true,
+  //                   price: true,
+  //                   location: { select: { name: true } },
+  //                   customLocation: true,
+  //                   images: {
+  //                     select: { imageUrl: true },
+  //                     orderBy: { sortOrder: 'asc' },
+  //                     take: 1,
+  //                   },
+  //                 },
+  //               },
+  //             },
+  //           },
+  //         },
+  //       },
+  //     },
+
+  //     where: {
+  //       userId: userId,
+  //     },
+  //     orderBy: {
+  //       createdAt: 'desc',
+  //     },
+  //   });
+
+  //   // 商品、課程、揪團攤平
+  //   const orderProduct = data.orderProduct.map((item) => ({
+  //     id: item.productSku.id,
+  //     quantity: item.quantity,
+  //     price: item.productSku.price,
+  //     name: item.productSku.product.name,
+  //     imageUrl: item.productSku.product.product_image[0].url,
+  //     size: item.productSku.product_size.name,
+  //   }));
+
+  //   const orderCourse = data.orderCourse.map((item) => {
+  //     const start_at = item.courseVariant.start_at;
+  //     const duration = item.courseVariant.duration;
+  //     const date = new Date(start_at);
+  //     date.setHours(date.getHours() + duration);
+  //     const end_at = date.toISOString();
+  //     return {
+  //       id: item.courseVariant.id,
+  //       price: item.courseVariant.price,
+  //       name: item.courseVariant.course.name,
+  //       imageUrl: item.courseVariant.course.CourseImg[0].img,
+  //       startAt: start_at,
+  //       endAt: end_at,
+  //       duration: duration,
+  //     };
+  //   });
+
+  //   const orderGroup = data.orderGroup.map((item) => ({
+  //     id: item.groupMemberId,
+  //     name: item.groupMember.group.title,
+  //     startAt: item.groupMember.group.startDate,
+  //     endAt: item.groupMember.group.endDate,
+  //     price: item.groupMember.group.price,
+  //     // FIXME若無照片則回傳預設
+  //     imageUrl: item.groupMember.group.images[0].imageUrl
+  //       ? item.groupMember.group.images[0].imageUrl
+  //       : '',
+  //   }));
+
+  //   // const totalCartProduct = CartProduct.reduce((acc, product) => {
+  //   //   acc += product.price * product.quantity;
+  //   //   return acc;
+  //   // }, 0);
+  //   // const totalCartCourse = CartCourse.reduce((acc, course) => {
+  //   //   acc += course.price;
+  //   //   return acc;
+  //   // }, 0);
+
+  //   // 調用後端API獲得Group資料;
+  //   // let resGroup = await fetch(
+  //   //   `http://localhost:3005/api/group/user/${userId}`
+  //   // );
+  //   // let CartGroup = (await resGroup.json()).memberships;
+
+  //   // 優惠券
+  //   // const couponData = await prisma.userCoupon.findMany({
+  //   //   select: {
+  //   //     couponId: true,
+  //   //     coupon: {
+  //   //       select: {
+  //   //         minPurchase: true,
+  //   //         endAt: true,
+  //   //         name: true,
+  //   //         couponTarget: {
+  //   //           select: {
+  //   //             target: true,
+  //   //           },
+  //   //         },
+  //   //         couponType: {
+  //   //           select: {
+  //   //             amount: true,
+  //   //             type: true,
+  //   //           },
+  //   //         },
+  //   //       },
+  //   //     },
+  //   //   },
+  //   //   where: {
+  //   //     userId: userId,
+  //   //   },
+  //   // });
+  //   // let resCoupon = await fetch(`http://localhost:3005/api/coupons/cartcoupon`);
+  //   // let CartCoupon = await resCoupon.json();
+
+  //   // CartCoupon = couponData.map((item) => {
+  //   //   const id = item.couponId;
+  //   //   const name = item.coupon.name;
+  //   //   const target = item.coupon.couponTarget.target;
+  //   //   const amount = item.coupon.couponType.amount;
+  //   //   const type = item.coupon.couponType.type;
+  //   //   const endAt = item.coupon.endAt;
+  //   //   const minPurchase = item.coupon.minPurchase;
+  //   //   let canUse = false;
+  //   //   const checked = false;
+  //   //   // totalCartCourse
+  //   //   // totalCartProduct
+  //   //   if (target === '全站') {
+  //   //     if (totalCartProduct + totalCartCourse >= minPurchase) {
+  //   //       canUse = true;
+  //   //     }
+  //   //   } else if (target === '商品') {
+  //   //     if (totalCartProduct >= minPurchase) {
+  //   //       canUse = true;
+  //   //     }
+  //   //   } else if (target === '課程') {
+  //   //     if (totalCartCourse >= minPurchase) {
+  //   //       canUse = true;
+  //   //     }
+  //   //   }
+  //   //   return {
+  //   //     id,
+  //   //     name,
+  //   //     target,
+  //   //     amount,
+  //   //     type,
+  //   //     endAt,
+  //   //     minPurchase,
+  //   //     canUse,
+  //   //     checked,
+  //   //   };
+  //   // });
+
+  //   const order = {
+  //     ...data,
+  //     orderProduct,
+  //     orderCourse,
+  //     orderGroup,
+  //     // CartCoupon,
+  //   };
+
+  //   return res.status(200).json({ status: 'success', order });
+  // } catch (error) {
+  //   return res
+  //     .status(200)
+  //     .json({ status: 'fail', message: `查詢失敗:${error}` });
+  // }
+  return res.status(200).json({ status: 'success', message: 'OK' });
+});
 export default router;

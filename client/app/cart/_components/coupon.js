@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/card';
 
 import CouponCard from '@/app/coupons/_components/coupon-card';
-export default function Coupon(props) {
+export default function Coupon({ isOrder = false }) {
   const { cart, setCart } = useCart();
   const applyCoupon = (id) => {
     const nextCoupon = cart.CartCoupon.map((coupon) => {

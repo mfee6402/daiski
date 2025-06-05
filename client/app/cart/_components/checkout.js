@@ -12,9 +12,10 @@ import {
 } from '@/components/ui/card';
 
 import { Button } from '@/components/ui/button';
-import { set } from 'date-fns';
+
 export default function Checkout() {
   const { cart, setCart } = useCart();
+
   const [checkedCoupon, setCheckedCoupon] = useState(null);
   const totalProduct = cart?.CartProduct?.reduce((acc, product) => {
     acc += product.price * product.quantity;
@@ -46,7 +47,7 @@ export default function Checkout() {
   amount = totalProduct + totalCourse + totalGroup - couponDiscount;
 
   useEffect(() => {
-    cart.CartCoupon?.forEach((coupon) => {
+    cart?.CartCoupon?.forEach((coupon) => {
       if (coupon.checked) {
         setCheckedCoupon(coupon);
       }
@@ -60,7 +61,7 @@ export default function Checkout() {
       couponId: checkedCoupon?.id ? checkedCoupon.id : null,
     });
   };
-  console.log(cart);
+
   return (
     <>
       <Card
@@ -74,17 +75,17 @@ export default function Checkout() {
           <div className="flex flex-col gap-3  ">
             <div className="flex justify-between">
               <p className="text-p-tw">商品原價總金額</p>
-              <p className="text-p-tw">${totalProduct.toLocaleString()}</p>
+              <p className="text-p-tw">${totalProduct?.toLocaleString()}</p>
             </div>
 
             <div className="flex justify-between">
               <p className="text-p-tw">課程原價總金額</p>
-              <p className="text-p-tw">${totalCourse.toLocaleString()}</p>
+              <p className="text-p-tw">${totalCourse?.toLocaleString()}</p>
             </div>
 
             <div className="flex justify-between">
               <p className="text-p-tw">揪團總金額</p>
-              <p className="text-p-tw">${totalGroup.toLocaleString()}</p>
+              <p className="text-p-tw">${totalGroup?.toLocaleString()}</p>
             </div>
 
             <div className="flex justify-between">
