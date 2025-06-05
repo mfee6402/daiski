@@ -241,43 +241,28 @@ router.get('/', authenticate, async function (req, res) {
     // let CartGroup = (await resGroup.json()).memberships;
 
     // 優惠券
-    const couponData = await prisma.userCoupon.findMany({
-      select: {
-        couponId: true,
-        coupon: {
-          select: {
-            minPurchase: true,
-            endAt: true,
-            name: true,
-            couponTarget: {
-              select: {
-                target: true,
-              },
-            },
-            couponType: {
-              select: {
-                amount: true,
-                type: true,
-              },
-            },
-          },
-        },
-      },
-      where: {
-        userId: userId,
-      },
-    });
-    let resCoupon = await fetch(`http://localhost:3005/api/coupons/cartcoupon`);
-    let CartCoupon = await resCoupon.json();
+    const token = req.token;
 
-    CartCoupon = couponData.map((item) => {
-      const id = item.couponId;
-      const name = item.coupon.name;
-      const target = item.coupon.couponTarget.target;
-      const amount = item.coupon.couponType.amount;
-      const type = item.coupon.couponType.type;
-      const endAt = item.coupon.endAt;
-      const minPurchase = item.coupon.minPurchase;
+    let resCoupon = await fetch(
+      `http://localhost:3005/api/coupons/cartcoupon`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    let CartCoupon = (await resCoupon.json()).cartcoupon;
+    console.log(CartCoupon);
+
+    CartCoupon = CartCoupon.map((item) => {
+      const id = item.id;
+      const name = item.name;
+      const target = item.target;
+      const amount = item.amount;
+      const type = item.type;
+      const endAt = item.endAt;
+      const minPurchase = item.minPurchase;
       let canUse = false;
       const checked = false;
       // totalCartCourse
@@ -434,7 +419,7 @@ router.delete('/:itemId', authenticate, async function (req, res) {
   }
 });
 
-// 訂單紀錄
+// 新增單筆訂單紀錄
 router.post('/order', authenticate, async function (req, res) {
   try {
     const userId = +req.user.id;
@@ -502,7 +487,7 @@ router.post('/order', authenticate, async function (req, res) {
       data: orderProduct,
     });
 
-    return res.status(200).json({ status: 'success', data: orderResult });
+    return res.status(200).json({ status: 'success', data: newOrderId });
   } catch (error) {
     res
       .status(200)
@@ -629,85 +614,11 @@ router.get('/orders', authenticate, async function (req, res) {
   }
 });
 
-// 購物車第三部分記錄
-router.post('/order', authenticate, async function (req, res) {
-  try {
-    const userId = +req.user.id;
-    const orderInput = req.body;
-
-    const {
-      shipping,
-      payment,
-      name,
-      phone,
-      address,
-      amount,
-      couponId,
-      CartGroup,
-      CartCourse,
-      CartProduct,
-    } = orderInput;
-
-    const orderResult = await prisma.order.create({
-      data: {
-        userId,
-        // 其他欄位，如：
-        amount,
-        couponId,
-        payment,
-        address,
-        phone,
-        name,
-        shipping,
-      },
-    });
-
-    const newOrderId = +orderResult.id;
-
-    // 揪團
-    const groupIds = CartGroup.map((item) => item.id);
-    const orderGroup = groupIds.map((groupId) => ({
-      orderId: newOrderId,
-      groupMemberId: groupId,
-    }));
-    console.log(orderGroup);
-    const orderGroupResult = await prisma.orderGroup.createMany({
-      data: orderGroup,
-    });
-
-    // 課程
-    const courseIds = CartCourse.map((item) => item.id);
-    const orderCourse = courseIds.map((courseId) => ({
-      orderId: newOrderId,
-      courseVariantId: courseId,
-    }));
-
-    const orderCourseResult = await prisma.orderCourse.createMany({
-      data: orderCourse,
-    });
-
-    // 商品
-    const orderProduct = CartProduct.map((product) => ({
-      orderId: newOrderId,
-      productSkuId: product.id,
-      quantity: product.quantity,
-    }));
-
-    const orderProductResult = await prisma.orderProduct.createMany({
-      data: orderProduct,
-    });
-
-    return res.status(200).json({ status: 'success', data: orderResult });
-  } catch (error) {
-    res
-      .status(200)
-      .json({ status: 'fail', message: '訂單失敗:', error: { error } });
-  }
-});
-
+// 寫入使用的優惠券時間
 router.put('/couponUsed/:id', authenticate, async function (req, res) {
   const couponId = +req.params.id;
   const userId = +req.user.id;
+  console.log(couponId);
   try {
     // 1. 查找領取記錄
     const couponEntry = await prisma.userCoupon.findFirst({
@@ -720,9 +631,15 @@ router.put('/couponUsed/:id', authenticate, async function (req, res) {
         .json({ error: `找不到 ID 為 ${couponId} 的領取記錄。` });
     }
 
-    // 2. 更新 paid_at 欄位為當前時間
+    // 2. 更新 usedAt 欄位為當前時間
     const updatedCouponEntry = await prisma.userCoupon.update({
-      where: { userId, couponId },
+      where: {
+        uniq_user_coupon: {
+          userId,
+          couponId,
+        },
+      },
+
       data: {
         usedAt: new Date(), // 設定為當前伺服器時間
       },
@@ -740,10 +657,11 @@ router.put('/couponUsed/:id', authenticate, async function (req, res) {
   }
 });
 
-// 最新訂單紀錄
-router.get('/order', authenticate, async function (req, res) {
+// 結帳後訂單紀錄
+router.get('/order/:id', authenticate, async function (req, res) {
   try {
     const userId = +req.user.id;
+    const orderId = +req.params.id;
 
     const data = await prisma.order.findFirst({
       select: {
@@ -837,9 +755,7 @@ router.get('/order', authenticate, async function (req, res) {
 
       where: {
         userId: userId,
-      },
-      orderBy: {
-        createdAt: 'desc',
+        id: orderId,
       },
     });
 

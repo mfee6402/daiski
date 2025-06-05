@@ -21,10 +21,12 @@ import {
 
 export default function SummaryPage() {
   const [order, setOrder] = useState({});
+
   useEffect(() => {
+    const orderId = localStorage.getItem('summaryOrderId');
     async function fetchData() {
       try {
-        const url = 'http://localhost:3005/api/cart/order';
+        const url = `http://localhost:3005/api/cart/order/${orderId}`;
         const res = await fetch(url, { credentials: 'include' });
         const data = await res.json();
         setOrder(data.order);
@@ -35,12 +37,11 @@ export default function SummaryPage() {
     fetchData();
   }, []);
 
-  console.log(order);
   const payMentMap = {
     cashOnDelivery: '宅配',
     storePickup: '超商取貨',
   };
-
+  console.log(order);
   return (
     <>
       {/* <Process step="3"></Process> */}
@@ -86,10 +87,10 @@ export default function SummaryPage() {
             data={order}
             isOrder={true}
           ></CartItemList>
-          <Coupon isOrder={true}></Coupon>
+          <Coupon isOrder={true} couponId={order.couponId}></Coupon>
         </div>
         <div className="">
-          <Checkout isOrder={true}></Checkout>
+          <Checkout isOrder={true} data={order}></Checkout>
         </div>
       </div>
     </>
