@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { twAddress } from './tw-address-data';
 import {
   Select,
@@ -103,10 +103,13 @@ export default function TwAddressSelector() {
             // className="border-1 border-primary-600 w-full  "
             type="text"
             name="address"
-            {...register('addressDetail', { required: true })}
+            {...register('addressDetail', { required: '詳細地址為必填' })}
           />
         </div>
-        {errors.addressDetail && <p className="text-red">詳細地址為必填</p>}
+
+        {errors.addressDetail && (
+          <p className="text-red">{errors.addressDetail.message}</p>
+        )}
       </div>
     </>
   );

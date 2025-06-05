@@ -59,8 +59,10 @@ export default function ProfileCoupons(props) {
   // 格式化時間
   const formatDateTime = (d) => {
     new Date(d.setHours(d.getHours() + 8));
-    const [date, time] = d.toISOString().split('T');
-    return `${date} ${time.split('.')[0]}`;
+    const [date, timeWithMs] = d.toISOString().split('T');
+    const time = timeWithMs.split('.')[0]; // "HH:mm:ss"
+    const hhmm = time.slice(0, 5); // 取前 5 個字 => "HH:mm"
+    return `${date} ${hhmm}`;
   };
 
   // 狀態的判斷
@@ -143,7 +145,7 @@ export default function ProfileCoupons(props) {
   return (
     <section className="overflow-y-auto h-dvh ">
       <CardHeader>
-        <CardTitle>已報名課程</CardTitle>
+        <CardTitle>已領取的優惠券</CardTitle>
         <CardDescription>共 {usercoupon.length} 筆</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-row gap-6 p-5 justify-between ">

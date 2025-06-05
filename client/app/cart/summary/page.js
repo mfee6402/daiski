@@ -6,6 +6,12 @@ import Process from '../_components/process';
 import Checkout from '../_components/checkout';
 import { FaRegCheckCircle } from 'react-icons/fa';
 
+import Coupon from '../_components/coupon';
+
+import CartItemList from '../_components/cartItemList';
+
+import { useAuth } from '@/hooks/use-auth';
+
 export default function SummaryPage(props) {
   const { cart } = useCart();
   console.log(cart);
@@ -32,14 +38,18 @@ export default function SummaryPage(props) {
             <p className="text-p-tw">手機：</p>
             <p className="text-p-tw">收貨地址：</p>
           </div>
-          <div>
-            {cart.CartProduct?.map((item) => {
-              return <p key={item.id}>{item.name}</p>;
-            })}
-          </div>
-          <div>
-            <Checkout></Checkout>
-          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-between md:gap-6  ">
+        <div className="flex flex-col w-full gap-6 min-w-0 justify-center item-center">
+          <CartItemList key="CartProduct" category="CartProduct"></CartItemList>
+          <CartItemList key="CartCourse" category="CartCourse"></CartItemList>
+          <CartItemList key="CartGroup" category="CartGroup"></CartItemList>
+          <Coupon></Coupon>
+        </div>
+        <div className="">
+          <Checkout></Checkout>
         </div>
       </div>
     </>
