@@ -89,17 +89,30 @@ export default function CheckoutPage(props) {
     });
 
     // 揪團付錢
-    const responseGroupPaid = await fetch(
-      `http://localhost:3005/api/group/members/${cart.CartGroup[0]?.id}/payment`,
-      {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orderData),
-      }
-    );
+    if (cart.CartGroup[0]?.id) {
+      const responseGroupPaid = await fetch(
+        `http://localhost:3005/api/group/members/${cart.CartGroup[0].id}/payment`,
+        {
+          method: 'PUT',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    }
+    // FIXME 使用優惠券時間
+    // const responseCouponUsed = await fetch(
+    //   `http://localhost:3005/api/cart/couponUsed/${cart.couponId}`,
+    //   {
+    //     method: 'PUT',
+    //     credentials: 'include',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify(orderData),
+    //   }
+    // );
 
     // 清空購物車
     onClear();

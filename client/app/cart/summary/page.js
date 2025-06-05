@@ -86,7 +86,7 @@ export default function SummaryPage() {
             data={order}
             isOrder={true}
           ></CartItemList>
-          <Coupon></Coupon>
+          <Coupon isOrder={true}></Coupon>
         </div>
         <div className="">
           <Checkout isOrder={true}></Checkout>
