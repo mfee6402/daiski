@@ -65,7 +65,6 @@ export default function CheckoutPage(props) {
     // 設定到狀態
     setCart(nextCart);
 
-    // FIXME 資料庫沒有送貨方式
     const orderData = {
       shipping: nextCart.shippingInfo.shippingMethod,
       payment: nextCart.payment,
@@ -78,6 +77,7 @@ export default function CheckoutPage(props) {
       CartCourse: nextCart.CartCourse,
       CartProduct: nextCart.CartProduct,
     };
+
     // 建立訂單
     const responseOrder = await fetch('http://localhost:3005/api/cart/order', {
       method: 'POST',
@@ -87,7 +87,32 @@ export default function CheckoutPage(props) {
       },
       body: JSON.stringify(orderData),
     });
-    const responseOrderData = await responseOrder.json();
+
+    // 揪團付錢
+    if (cart.CartGroup[0]?.id) {
+      const responseGroupPaid = await fetch(
+        `http://localhost:3005/api/group/members/${cart.CartGroup[0].id}/payment`,
+        {
+          method: 'PUT',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    }
+    // FIXME 使用優惠券時間
+    // const responseCouponUsed = await fetch(
+    //   `http://localhost:3005/api/cart/couponUsed/${cart.couponId}`,
+    //   {
+    //     method: 'PUT',
+    //     credentials: 'include',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify(orderData),
+    //   }
+    // );
 
     // 清空購物車
     onClear();
@@ -96,12 +121,10 @@ export default function CheckoutPage(props) {
       router.push('/cart/checkout/paypal');
     } else if (data.payment === 'ecpay') {
       // 可傳金額當 query 參數
-      router.push(`http://localhost:3005/api/cart/ecpay-test-only?amount=2500`);
+      router.push(
+        `http://localhost:3005/api/cart/ecpay-test-only?amount=${orderData.amount}`
+      );
     } else {
-      // 假設是貨到付款或信用卡，這裡可以寫訂單建立邏輯
-      // 然後跳轉
-      // await fetch('/api/order', { method: 'POST', body: form });
-
       router.push('/cart/summary');
     }
   };
