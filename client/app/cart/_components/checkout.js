@@ -13,10 +13,11 @@ import {
 
 import { Button } from '@/components/ui/button';
 
-export default function Checkout() {
+export default function Checkout({ isOrder = false }) {
   const { cart, setCart } = useCart();
 
   const [checkedCoupon, setCheckedCoupon] = useState(null);
+
   const totalProduct = cart?.CartProduct?.reduce((acc, product) => {
     acc += product.price * product.quantity;
     return acc;
@@ -43,7 +44,6 @@ export default function Checkout() {
       ((totalProduct + totalCourse) * checkedCoupon.amount) / 100
     );
   }
-
   amount = totalProduct + totalCourse + totalGroup - couponDiscount;
 
   useEffect(() => {
@@ -105,17 +105,19 @@ export default function Checkout() {
             </div>
             {/* FIXME 抓數量於"結帳"字後 */}
 
-            <Link
-              href={'/cart/checkout'}
-              className="text-p-tw text-secondary-200"
-            >
-              <Button
-                className="flex justify-center bg-primary-600 w-full py-5"
-                onClick={handleCheckout}
+            {!isOrder && (
+              <Link
+                href={'/cart/checkout'}
+                className="text-p-tw text-secondary-200"
               >
-                結帳
-              </Button>
-            </Link>
+                <Button
+                  className="flex justify-center bg-primary-600 w-full py-5"
+                  onClick={handleCheckout}
+                >
+                  結帳
+                </Button>
+              </Link>
+            )}
           </div>
         </CardContent>
       </Card>

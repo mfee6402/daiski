@@ -288,6 +288,7 @@ export function CartProvider({ children }) {
           onIncrease,
           onRemove,
           onClear,
+          fetchSyncData,
         }}
       >
         {children}
