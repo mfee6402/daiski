@@ -13,39 +13,67 @@ import {
 
 import { Button } from '@/components/ui/button';
 
-export default function Checkout({ isOrder = false }) {
+export default function Checkout({ isOrder = false, data = {} }) {
   const { cart, setCart } = useCart();
+  console.log(data);
 
   const [checkedCoupon, setCheckedCoupon] = useState(null);
-
-  const totalProduct = cart?.CartProduct?.reduce((acc, product) => {
-    acc += product.price * product.quantity;
-    return acc;
-  }, 0);
-
-  const totalCourse = cart?.CartCourse?.reduce((acc, course) => {
-    acc += course.price;
-    return acc;
-  }, 0);
-
-  const totalGroup = cart?.CartGroup?.reduce((acc, group) => {
-    acc += group.price;
-    return acc;
-  }, 0);
-
   // couponDiscount
   let couponDiscount = 0;
   let amount = 0;
+  let totalProduct = 0;
+  let totalCourse = 0;
+  let totalGroup = 0;
 
-  if (checkedCoupon && checkedCoupon.type === '現金折扣') {
-    couponDiscount = checkedCoupon.amount;
-  } else if (checkedCoupon && checkedCoupon.type === '百分比折扣') {
-    couponDiscount = Math.floor(
-      ((totalProduct + totalCourse) * checkedCoupon.amount) / 100
-    );
+  if (!isOrder) {
+    totalProduct = cart?.CartProduct?.reduce((acc, product) => {
+      acc += product.price * product.quantity;
+      return acc;
+    }, 0);
+
+    totalCourse = cart?.CartCourse?.reduce((acc, course) => {
+      acc += course.price;
+      return acc;
+    }, 0);
+
+    totalGroup = cart?.CartGroup?.reduce((acc, group) => {
+      acc += group.price;
+      return acc;
+    }, 0);
+
+    if (checkedCoupon && checkedCoupon.type === '現金折扣') {
+      couponDiscount = checkedCoupon.amount;
+    } else if (checkedCoupon && checkedCoupon.type === '百分比折扣') {
+      couponDiscount = Math.floor(
+        ((totalProduct + totalCourse) * checkedCoupon.amount) / 100
+      );
+    }
+    amount = totalProduct + totalCourse + totalGroup - couponDiscount;
+  } else {
+    totalProduct = data?.orderProduct?.reduce((acc, product) => {
+      acc += product.price * product.quantity;
+      return acc;
+    }, 0);
+
+    totalCourse = data?.orderCourse?.reduce((acc, course) => {
+      acc += course.price;
+      return acc;
+    }, 0);
+
+    totalGroup = data?.orderGroup?.reduce((acc, group) => {
+      acc += group.price;
+      return acc;
+    }, 0);
+
+    if (checkedCoupon && checkedCoupon.type === '現金折扣') {
+      couponDiscount = checkedCoupon.amount;
+    } else if (checkedCoupon && checkedCoupon.type === '百分比折扣') {
+      couponDiscount = Math.floor(
+        ((totalProduct + totalCourse) * checkedCoupon.amount) / 100
+      );
+    }
+    amount = totalProduct + totalCourse + totalGroup - couponDiscount;
   }
-  amount = totalProduct + totalCourse + totalGroup - couponDiscount;
-
   useEffect(() => {
     cart?.CartCoupon?.forEach((coupon) => {
       if (coupon.checked) {
@@ -105,7 +133,7 @@ export default function Checkout({ isOrder = false }) {
             </div>
             {/* FIXME 抓數量於"結帳"字後 */}
 
-            {!isOrder && (
+            {!isOrder && amount > 0 && (
               <Link
                 href={'/cart/checkout'}
                 className="text-p-tw text-secondary-200"
@@ -117,6 +145,14 @@ export default function Checkout({ isOrder = false }) {
                   結帳
                 </Button>
               </Link>
+            )}
+            {!isOrder && amount === 0 && (
+              <Button
+                className="flex justify-center bg-primary-600 w-full py-5"
+                onClick={handleCheckout}
+              >
+                購買商品後結帳
+              </Button>
             )}
           </div>
         </CardContent>

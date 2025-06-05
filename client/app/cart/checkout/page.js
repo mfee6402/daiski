@@ -47,6 +47,7 @@ export default function CheckoutPage(props) {
       draft.userInfo.phone = data.phone;
       draft.payment = data.payment;
     });
+
     if (data.shippingMethod === 'homeDelivery') {
       nextCart = produce(nextCart, (draft) => {
         draft.shippingInfo.address = data.city + data.district;
@@ -87,6 +88,9 @@ export default function CheckoutPage(props) {
       },
       body: JSON.stringify(orderData),
     });
+    const order = await responseOrder.json();
+
+    localStorage.setItem('summaryOrderId', order.data);
 
     // 揪團付錢
     if (cart.CartGroup[0]?.id) {
@@ -101,18 +105,22 @@ export default function CheckoutPage(props) {
         }
       );
     }
-    // FIXME 使用優惠券時間
-    // const responseCouponUsed = await fetch(
-    //   `http://localhost:3005/api/cart/couponUsed/${cart.couponId}`,
-    //   {
-    //     method: 'PUT',
-    //     credentials: 'include',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify(orderData),
-    //   }
-    // );
+
+    const couponUsedId = cart.CartCoupon.find((item) => item.checked)?.id;
+
+    if (couponUsedId) {
+      const responseCouponUsed = await fetch(
+        `http://localhost:3005/api/cart/couponUsed/${couponUsedId}`,
+        {
+          method: 'PUT',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(orderData),
+        }
+      );
+    }
 
     // 清空購物車
     onClear();

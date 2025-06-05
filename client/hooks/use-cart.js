@@ -36,6 +36,7 @@ export function CartProvider({ children }) {
     CartGroup: [],
     CartCourse: [],
   });
+
   console.log(cart);
   // 代表是否完成第一次渲染呈現的布林狀態值(信號值)
   const [didMount, setDidMount] = useState(false);
@@ -201,7 +202,8 @@ export function CartProvider({ children }) {
   // 處理新增
   const onAdd = (category = '', item = {}) => {
     const categoryOptions = ['CartGroup', 'CartProduct', 'CartCourse'];
-    console.log(item);
+    console.log(category);
+
     //  如果沒有該類別要return
     if (!categoryOptions.includes(category)) {
       return console.log('分類錯誤');
@@ -280,9 +282,11 @@ export function CartProvider({ children }) {
         // 如果傳出的值很多時，建議可以將數值/函式分組，然後依英文字母排序
         value={{
           cart,
+
           // totalAmount,
           totalQty,
           setCart,
+
           onAdd,
           onDecrease,
           onIncrease,

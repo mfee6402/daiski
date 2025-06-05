@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/card';
 
 import CouponCard from '@/app/coupons/_components/coupon-card';
-export default function Coupon({ isOrder = false }) {
+export default function Coupon({ isOrder = false, couponId = null }) {
   const { cart, setCart } = useCart();
   const applyCoupon = (id) => {
     const nextCoupon = cart.CartCoupon.map((coupon) => {
@@ -31,13 +31,14 @@ export default function Coupon({ isOrder = false }) {
     });
     setCart({ ...cart, CartCoupon: nextCoupon });
   };
-  console.log(isOrder);
+
   return (
     <Card className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark  ">
       <CardHeader>
         <CardTitle className="text-lg font-semibold">優惠券</CardTitle>
       </CardHeader>
-      {!isOrder && (
+      {/* {isOrder} */}
+      {!isOrder && cart?.CartCoupon?.length > 0 && (
         <div className="w-full px-15">
           <Carousel opts={{ align: 'start' }}>
             <CarouselContent className="">
@@ -84,6 +85,11 @@ export default function Coupon({ isOrder = false }) {
             <CarouselNext />
           </Carousel>
         </div>
+      )}
+      {cart?.CartCoupon?.length === 0 && (
+        <>
+          <div className="px-5">沒有優惠券</div>
+        </>
       )}
     </Card>
   );
