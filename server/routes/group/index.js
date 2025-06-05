@@ -300,43 +300,38 @@ router.post(
         data.locationId = null; // 非滑雪活動不應有 locationId (除非您的設計允許)
         data.difficulty = null; // 非滑雪活動的 difficulty 應為 null
       }
+      // 1. 建立 Group 記錄
+      const newGroup = await prisma.group.create({ data }); // (Source 1)
 
-      // 1. 建立 Group 記錄 (使用 newGroup 變數名)
-      const newGroup = await prisma.group.create({ data }); // (Source 3 from previous turn)
-
-      // 2. 如果有圖片，建立 GroupImage 記錄
-      if (imageUrl) {
-        // (Source 3 from previous turn)
-        await prisma.groupImage.create({
-          // (Source 3 from previous turn)
-          data: {
-            groupId: newGroup.id, // 使用 newGroup.id
-            imageUrl, // (Source 3 from previous turn)
-            sortOrder: 0, // (Source 3 from previous turn)
-          },
-        });
-      }
-
-      // 3. 自動將開團者加入 GroupMember 表
-      const organizerGroupMember = await prisma.groupMember.create({
+      // 2. 建立 GroupImage 記錄 (因為 imageUrl 現在是必填)
+      await prisma.groupImage.create({
+        // (Source 1)
         data: {
-          groupId: newGroup.id, // 使用 newGroup.id
-          userId: organizerId,
-          joinedAt: new Date(),
-          paidAt: null,
-        },
-        select: {
-          id: true,
+          groupId: newGroup.id, // (Source 1)
+          imageUrl, // (Source 1)
+          sortOrder: 0, // (Source 1)
         },
       });
 
-      // 4. 重新查詢剛建立的揪團，並包含其關聯的圖片資訊
-      //    我們可以用一個新的變數來儲存這個包含完整資訊的物件，或者如果你想覆蓋原來的 newGroup 也可以
+      // 3. 【新增】自動將開團者加入 GroupMember 表
+      const organizerGroupMember = await prisma.groupMember.create({
+        data: {
+          groupId: newGroup.id,
+          userId: organizerId,
+          joinedAt: new Date(),
+          paidAt: null, // 開團者也需支付，所以初始為 null
+        },
+        select: {
+          id: true, // 只選擇新建立的 groupMember 記錄的 ID
+        },
+      });
+
+      // 4. 【修改】重新查詢剛建立的揪團，並包含其關聯的圖片資訊
       const groupWithDetails = await prisma.group.findUnique({
-        where: { id: newGroup.id }, // 依據剛建立的 newGroup.id 查詢
+        where: { id: newGroup.id },
         include: {
           images: {
-            // (Source 5 from previous turn)
+            // 依據你的 Prisma Schema (Source 5 from three turns ago)
             select: {
               imageUrl: true,
             },
@@ -344,23 +339,25 @@ router.post(
               sortOrder: 'asc',
             },
           },
-          // user: { select: { id: true, name: true, avatar: true } }, // 也可以選擇 include user
+          // 如果前端還需要創建者或地點等其他關聯資料，也可以在這裡 include
+          user: { select: { id: true, name: true, avatar: true } }, // 例如，包含開團者基本資訊
+          location: { select: { name: true } }, // 例如，包含地點名稱
         },
       });
 
       if (!groupWithDetails) {
         console.error(
-          `[POST /group] 無法重新查詢剛建立的揪團 ID: ${newGroup.id}`
+          `[POST /group] Critical: Could not re-fetch group ID: ${newGroup.id}`
         );
         return res
           .status(500)
-          .json({ error: '伺服器內部錯誤，無法獲取新建立揪團的完整資訊。' });
+          .json({ error: '建立揪團成功，但獲取詳細資訊時發生錯誤。' });
       }
 
-      // 5. 回傳給前端的物件中，加入 organizerMemberId
+      // 5. 【修改】建構回傳給前端的物件，包含 groupMemberId
       const responsePayload = {
-        ...groupWithDetails, // 這裡面已經有 images 陣列
-        organizerMemberId: organizerGroupMember.id,
+        ...groupWithDetails, // 這裡面已經有揪團的詳細資訊，包括 images 陣列
+        groupMemberId: organizerGroupMember.id, // 將開團者在 group_member 表中的 ID 一併回傳
       };
 
       res.status(201).json(responsePayload);
