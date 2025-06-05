@@ -103,17 +103,15 @@ export default function CheckoutPage(props) {
 
     // 清空購物車
     onClear();
-    console.log(data.payment);
+
     if (data.payment === 'paypal') {
       router.push('/cart/checkout/paypal');
     } else if (data.payment === 'ecpay') {
       // 可傳金額當 query 參數
-      router.push(`http://localhost:3005/api/cart/ecpay-test-only?amount=2500`);
+      router.push(
+        `http://localhost:3005/api/cart/ecpay-test-only?amount=${orderData.amount}`
+      );
     } else {
-      // 假設是貨到付款或信用卡，這裡可以寫訂單建立邏輯
-      // 然後跳轉
-      // await fetch('/api/order', { method: 'POST', body: form });
-
       router.push('/cart/summary');
     }
   };
