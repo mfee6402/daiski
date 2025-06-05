@@ -53,12 +53,7 @@ export function CartProvider({ children }) {
   }
 
   // 將資料傳給後端
-  async function fetchData(
-    category = '',
-    item = {},
-    method = '',
-    quantity = 1
-  ) {
+  async function fetchData(category = '', item = {}, method = '') {
     try {
       let url = '';
       if (method === 'POST') {
@@ -68,7 +63,11 @@ export function CartProvider({ children }) {
       }
       let data = {};
       if (method === 'POST') {
-        data = { itemId: item.id, category: category };
+        data = {
+          itemId: item.id,
+          category: category,
+          quantity: item.quantity ? item.quantity : 1,
+        };
       } else if (method === 'PUT' || method === 'DELETE') {
         data = { category, item };
       }
@@ -94,6 +93,7 @@ export function CartProvider({ children }) {
   // 處理遞增
   const onIncrease = (category, item, quantity = 1) => {
     let nextItem;
+    console.log(quantity);
     const nextList = cart[category].map((v) => {
       if (v.id === item.id) {
         nextItem = { ...v, quantity: v.quantity + quantity };
@@ -108,7 +108,7 @@ export function CartProvider({ children }) {
       [category]: nextList,
     };
     setCart(nextCart);
-    fetchData(category, nextItem, 'PUT', quantity);
+    fetchData(category, nextItem, 'PUT');
   };
 
   // FIXME 處理遞減
@@ -188,8 +188,7 @@ export function CartProvider({ children }) {
   // 處理新增
   const onAdd = (category = '', item = {}, quantity = 1) => {
     const categoryOptions = ['CartGroup', 'CartProduct', 'CartCourse'];
-    console.log(item.id);
-    console.log(category);
+    console.log(quantity);
     //  如果沒有該類別要return
     if (!categoryOptions.includes(category)) {
       return console.log('分類錯誤');

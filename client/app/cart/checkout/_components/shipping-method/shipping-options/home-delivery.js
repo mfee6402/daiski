@@ -12,19 +12,12 @@ export default function HomeDelivery() {
     register,
     formState: { errors },
     control,
-    unregister,
   } = useFormContext();
   const selectedShipping = useWatch({
     control,
     name: 'shippingMethod',
   });
-  useEffect(() => {
-    if (selectedShipping === 'homeDelivery') {
-      unregister('storename');
-      unregister('phone');
-      unregister('name');
-    }
-  }, [selectedShipping]);
+
   return (
     <>
       {selectedShipping === 'homeDelivery' && (

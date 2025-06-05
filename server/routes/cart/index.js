@@ -19,8 +19,8 @@ const foreignKeyMap = {
 
 // 註冊完成時要分配一台購物車給使用者
 router.post('/createCart/:id', async function (req, res) {
-  const userId = +req.body.userId;
-
+  const userId = +req.params.id;
+  // FIXME 要處理使用者有購物車的話則部新增
   try {
     const userCart = await prisma.cart.create({
       data: { userId },
@@ -40,6 +40,7 @@ router.post('/', authenticate, async function (req, res, next) {
     const userId = +req.user.id;
     const category = req.body.category;
     const itemId = +req.body.itemId;
+    const quantity = +req.body.quantity ? +req.body.quantity : 1;
 
     // 檢查分類
     const cartModel = cartCreateMap[category];
@@ -53,10 +54,6 @@ router.post('/', authenticate, async function (req, res, next) {
     const userCart = await prisma.cart.findFirst({
       where: { userId },
     });
-
-    // FIXME檢查是否參加過判斷訂單中有沒有(改為其他人判斷是否參加過)
-
-    // FIXME 要處理使用者如果沒購物車的話，要先新增購物車
 
     // 新增
     try {
@@ -74,7 +71,7 @@ router.post('/', authenticate, async function (req, res, next) {
             data: {
               cartId: userCart.id,
               [foreignKeyName]: itemId,
-              quantity: 1,
+              quantity: quantity,
             },
           });
         } else {
@@ -470,15 +467,15 @@ router.post('/order', authenticate, async function (req, res) {
       },
     });
 
-    const newOrderId = orderResult.id;
+    const newOrderId = +orderResult.id;
 
     // 揪團
     const groupIds = CartGroup.map((item) => item.id);
     const orderGroup = groupIds.map((groupId) => ({
       orderId: newOrderId,
-      groupId,
+      groupMemberId: groupId,
     }));
-
+    console.log(orderGroup);
     const orderGroupResult = await prisma.orderGroup.createMany({
       data: orderGroup,
     });
@@ -487,7 +484,7 @@ router.post('/order', authenticate, async function (req, res) {
     const courseIds = CartCourse.map((item) => item.id);
     const orderCourse = courseIds.map((courseId) => ({
       orderId: newOrderId,
-      courseId,
+      courseVariantId: courseId,
     }));
 
     const orderCourseResult = await prisma.orderCourse.createMany({
