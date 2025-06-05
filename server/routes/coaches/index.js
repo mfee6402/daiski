@@ -63,6 +63,141 @@ const upload = multer({ storage: multer.memoryStorage() });
 //   }
 // });
 
+// 會員中心 已報名/已建立
+router.get('/me/courses', authenticate, async (req, res) => {
+  const userId = req.user.id;
+  const isCoach = req.user.is_coach === 1;
+
+  try {
+    // ----------- 報名課程 -----------
+    const studentRecords = await prisma.courseVariantUser.findMany({
+      where: {
+        user_id: userId,
+        course_variant: {
+          course: { deleted_at: null },
+        },
+      },
+      select: {
+        course_variant: {
+          select: {
+            start_at: true,
+            // coach: { select: { name: true } },
+            course: {
+              select: {
+                id: true,
+                name: true,
+                start_at: true,
+                end_at: true,
+                CourseImg: {
+                  take: 1,
+                  select: { img: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const asStudent = studentRecords
+      .filter((r) => r.course_variant && r.course_variant.course)
+      .map((r) => {
+        const variant = r.course_variant;
+        const course = variant.course;
+        const start = new Date(course.start_at).toLocaleDateString('zh-TW');
+        const end = new Date(
+          course.end_at || variant.start_at
+        ).toLocaleDateString('zh-TW');
+        return {
+          id: course.id,
+          name: course.name,
+          date: `${start} ~ ${end}`,
+          photo: course.CourseImg?.[0]?.img || '/default.jpg',
+          // coachName: variant.coach.name,
+        };
+      });
+
+    // ----------- 教練開課 -----------
+    let asCoach = [];
+    if (isCoach) {
+      const coachCourses = await prisma.courseVariant.findMany({
+        where: {
+          coach_id: userId,
+          course: { deleted_at: null },
+        },
+        orderBy: { start_at: 'asc' },
+        select: {
+          start_at: true,
+          course: {
+            select: {
+              id: true,
+              name: true,
+              start_at: true,
+              end_at: true,
+              CourseImg: {
+                take: 1,
+                select: { img: true },
+              },
+            },
+          },
+        },
+      });
+
+      asCoach = coachCourses
+        .filter((r) => r.course)
+        .map((r) => {
+          const c = r.course;
+          const start = new Date(c.start_at).toLocaleDateString('zh-TW');
+          const end = new Date(c.end_at || r.start_at).toLocaleDateString(
+            'zh-TW'
+          );
+          return {
+            id: c.id,
+            name: c.name,
+            date: `${start} ~ ${end}`,
+            photo: c.CourseImg?.[0]?.img || '/default.jpg',
+          };
+        });
+    }
+
+    return res.json({ asStudent, asCoach });
+  } catch (err) {
+    console.error('取得會員課程錯誤:', err);
+    return res.status(500).json({ message: '伺服器錯誤' });
+  }
+});
+
+// 購物車取消報名
+router.delete('/cancel/:variantId', authenticate, async (req, res) => {
+  const userId = req.user.id;
+  const variantId = Number(req.params.variantId);
+
+  try {
+    const record = await prisma.courseVariantUser.findFirst({
+      where: {
+        user_id: userId,
+        course_variant_id: variantId,
+      },
+    });
+
+    if (!record) {
+      return res.status(404).json({ message: '沒有報名這門課' });
+    }
+
+    // 找到了就刪除
+    await prisma.courseVariantUser.delete({
+      where: {
+        id: record.id,
+      },
+    });
+
+    return res.json({ message: '已成功取消報名' });
+  } catch (err) {
+    console.error('取消報名失敗:', err);
+    return res.status(500).json({ message: '伺服器錯誤' });
+  }
+});
+
 // 抓教練列表
 router.get('/', async function (req, res) {
   try {
@@ -626,4 +761,26 @@ router.put(
     }
   }
 );
+
+//delete 刪除課程（軟刪除）
+router.delete('/:coachId/courses/:courseId', authenticate, async (req, res) => {
+  const coachId = req.user.id;
+  const { courseId } = req.params;
+
+  const variant = await prisma.courseVariant.findFirst({
+    where: { course_id: +courseId, coach_id: +coachId },
+  });
+
+  if (!variant) {
+    return res.status(403).json({ message: '無權限或課程不存在' });
+  }
+
+  await prisma.course.update({
+    where: { id: +courseId },
+    data: { deleted_at: new Date() },
+  });
+
+  return res.json({ message: '課程已刪除' });
+});
+
 export default router;

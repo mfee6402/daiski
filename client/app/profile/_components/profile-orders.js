@@ -22,6 +22,8 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { PiStarThin } from 'react-icons/pi';
+import RateButton from '@/components/rate-button';
+import { Rat } from 'lucide-react';
 /* -------------------- 常數 -------------------- */
 const API_BASE_URL = 'http://localhost:3005/api';
 const ORDERS_API_URL = `${API_BASE_URL}/cart/orders`;
@@ -56,6 +58,7 @@ export default function ProfileOrders() {
   } = useSWR(isAuth ? ORDERS_API_URL : null, fetcher);
 
   const orders = data?.orders ?? [];
+  const base = process.env.NEXT_PUBLIC_API_BASE || '';
 
   /* ---------- 介面狀態 ---------- */
   if (authLoading || isLoading) return <p className="p-4">載入中…</p>;
@@ -104,7 +107,7 @@ export default function ProfileOrders() {
                         <TableRow key={`product-${order.id}-${p.id}`}>
                           <TableCell>
                             <Image
-                              src={`http://localhost:3005/${p.imageUrl}`}
+                              src={`${base}/${p.imageUrl}`}
                               alt={p.name}
                               width={60}
                               height={60}
@@ -116,9 +119,14 @@ export default function ProfileOrders() {
                           </TableCell>
                           <TableCell className="text-center ">
                             {/* 評價的button放這邊 */}
-                            <button className="">
+                            {/* <button className="">
                               <PiStarThin />
-                            </button>
+                            </button> */}
+                            {console.log(p)}
+                            <RateButton
+                              orderId={order.id}
+                              productSkuId={p.id}
+                            />
                           </TableCell>
                           <TableCell className="text-center">
                             {p.quantity}
@@ -146,7 +154,7 @@ export default function ProfileOrders() {
                         <TableRow key={`course-${order.id}-${idx}`}>
                           <TableCell>
                             <Image
-                              src={`http://localhost:3005/${c.imageUrl}`}
+                              src={`${base}/${c.imageUrl}`}
                               alt={c.name}
                               width={60}
                               height={60}
@@ -179,7 +187,7 @@ export default function ProfileOrders() {
                         <TableRow key={`group-${order.id}-${idx}`}>
                           <TableCell>
                             <Image
-                              src={`http://localhost:3005/${g.imageUrl}`}
+                              src={`${base}/${g.imageUrl}`}
                               alt={g.name}
                               width={60}
                               height={60}

@@ -222,7 +222,7 @@ export default function GroupsPage() {
                   transition={{ ...fadeInUp.transition, delay: index * 0.1 }} // 錯開動畫
                 >
                   <Card
-                    className="p-0 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 rounded-xl flex flex-col group bg-white dark:bg-card border border-transparent hover:border-primary-500 dark:border-border dark:hover:border-primary h-full" //確保卡片等高，如果需要
+                    className="p-0 overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 rounded-xl flex flex-col group bg-white dark:bg-card border border-transparent hover:border-primary-500 dark:border-border dark:hover:border-primary h-full gap-1" //確保卡片等高，如果需要
                   >
                     <Link href={`/groups/${group.id}`} className="block">
                       <div className="relative w-full h-56 sm:h-60">
@@ -244,7 +244,7 @@ export default function GroupsPage() {
                         />
                       </div>
                     </Link>
-                    <CardContent className="p-5 flex flex-col flex-grow">
+                    <CardContent className="p-4 flex flex-col flex-grow">
                       <p className="text-xs font-semibold text-primary-500 dark:text-primary mb-1 uppercase tracking-wider">
                         {group.type || '滑雪團'}
                       </p>

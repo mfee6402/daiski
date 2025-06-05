@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default function Card({
   title = '',
@@ -28,12 +30,9 @@ export default function Card({
           .join(' ')}
       >
         <h3 className="md:text-h5-tw text-p-tw  mb-4 font-tw">{title}</h3>
-        <a
-          href={href}
-          className="bg-black text-white md:px-4 md:py-2 p-1  font-tw text-p-tw hover:bg-white hover:text-black border-black border "
-        >
-          了解更多
-        </a>
+        <Button className=" md:px-4 md:py-2 p-1">
+          <Link href={href}>了解更多</Link>
+        </Button>
       </div>
 
       {/* 圖片區塊 */}

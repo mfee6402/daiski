@@ -27,7 +27,7 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 
-export default function CartItemList({ category = '' }) {
+export default function CartItemList({ category = '', order = false }) {
   const { cart } = useCart();
   // NOTE 測試用，等待會員製作完收藏資料庫再修正，用於決定收藏的愛心狀態(實心、空心)
   const tmpWishListLeg = 3;
@@ -71,7 +71,7 @@ export default function CartItemList({ category = '' }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cart[category]?.map((item) => {
+                {cart?.[category]?.map((item) => {
                   const totalPrice = (
                     item.price * (item.quantity ? item.quantity : 1)
                   ).toLocaleString();

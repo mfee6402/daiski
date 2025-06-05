@@ -10,6 +10,8 @@ router.get('/', async function (req, res) {
   const { boardtype, location, difficulty, keyword } = req.query;
 
   const where = {
+    deleted_at: null,
+
     ...(keyword && {
       OR: [
         { name: { contains: keyword } },
@@ -55,8 +57,10 @@ router.get('/', async function (req, res) {
         end_at: true,
         CourseImg: {
           take: 1,
+          orderBy: { id: 'desc' },
           select: { img: true },
         },
+
         CourseVariant: {
           select: {
             id: true,
@@ -133,8 +137,8 @@ router.get('/:id/sign-up', async (req, res) => {
         name: true,
         description: true,
         content: true,
-        start_at: true,
-        end_at: true,
+        // start_at: true,
+        // end_at: true,
         CourseImg: { select: { id: true, img: true } },
         CourseVariant: {
           select: {
@@ -143,17 +147,14 @@ router.get('/:id/sign-up', async (req, res) => {
             price: true,
             duration: true,
             coach_id: true,
+            location: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
-        // location: {
-        //   select: {
-        //     id: true,
-        //     name: true,
-        //     country: true,
-        //     city: true,
-        //     address: true,
-        //   },
-        // },
       },
     });
     // 若找不到資料則回傳 404
@@ -175,7 +176,8 @@ router.get('/:id/sign-up', async (req, res) => {
       name: course.name,
       description: course.description,
       content: course.content,
-      period: `${fmt(course.start_at)} ~ ${fmt(course.end_at)}`,
+      // period: `${fmt(course.start_at)} ~ ${fmt(course.end_at)}`,
+
       images: course.CourseImg.map((i) => i.img),
       variants: course.CourseVariant.map((v) => ({
         id: v.id,
@@ -186,7 +188,12 @@ router.get('/:id/sign-up', async (req, res) => {
         start_at: fmt(v.start_at),
         image: v.courseImg?.img || null,
         coach_id: v.coach_id,
-        location_id: v.location_id,
+        location_id: v.location
+          ? {
+              id: v.location.id,
+              name: v.location.name,
+            }
+          : null,
       })),
     };
 
