@@ -137,8 +137,8 @@ router.get('/:id/sign-up', async (req, res) => {
         name: true,
         description: true,
         content: true,
-        start_at: true,
-        end_at: true,
+        // start_at: true,
+        // end_at: true,
         CourseImg: { select: { id: true, img: true } },
         CourseVariant: {
           select: {
@@ -176,7 +176,8 @@ router.get('/:id/sign-up', async (req, res) => {
       name: course.name,
       description: course.description,
       content: course.content,
-      period: `${fmt(course.start_at)} ~ ${fmt(course.end_at)}`,
+      // period: `${fmt(course.start_at)} ~ ${fmt(course.end_at)}`,
+
       images: course.CourseImg.map((i) => i.img),
       variants: course.CourseVariant.map((v) => ({
         id: v.id,

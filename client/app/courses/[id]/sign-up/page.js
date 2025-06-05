@@ -88,10 +88,11 @@ export default function SignUpPage({ params }) {
       }
       toast.success('報名成功！');
       onAdd('CartCourse', {
-        id: id,
-        price: variant.price,
-        name: course.name,
-        imageUrl: variant.images[0],
+        id: variant.id,
+        // price: variant.price,
+        // name: course.name,
+        // imageUrl: variant.images[0],
+        // duration: variant.duration,
       });
 
       setTimeout(() => {
