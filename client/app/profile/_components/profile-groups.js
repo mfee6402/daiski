@@ -25,6 +25,7 @@ export default function ProfileGroups(props) {
   // 讀取會員ＩＤ
   const { user, isAuth, token } = useAuth(); // 依你的 useAuth 實作
   const { data, isLoading, error } = useGroups(isAuth ? user.id : null, token);
+  const base = process.env.NEXT_PUBLIC_API_BASE || '';
 
   if (!isAuth) return <p className="text-sm">尚未登入</p>;
   if (isLoading) return <p className="text-sm">載入中…</p>;
@@ -53,7 +54,7 @@ export default function ProfileGroups(props) {
               <Image
                 src={
                   g.group.imageUrl
-                    ? `http://localhost:3005${g.group.imageUrl}`
+                    ? `${base}${g.group.imageUrl}`
                     : 'deadicon.png'
                 }
                 // onError={() => setImg('/deadicon.png')}

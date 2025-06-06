@@ -7,6 +7,7 @@ import { PrismaClient } from '@prisma/client';
 import authenticate from '../../middlewares/authenticate.js';
 
 const prisma = new PrismaClient();
+const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3005';
 
 // ---- Multer 設定（memory 儲存，後面自行存檔） ----
 const upload = multer({
@@ -291,8 +292,8 @@ router.get('/', async (req, res, next) => {
             id: p.id,
             name: p.name,
             image: p.product_image[0]
-              ? `http://localhost:3005${p.product_image[0].url}`
-              : 'http://localhost:3005/placeholder.jpg',
+              ? `${base}${p.product_image[0].url}`
+              : `${base}/deadicon.png`,
             price: p.min_price ?? 0,
             category: p.product_category?.name ?? '無分類',
             category_id: p.product_category?.id ?? null,
@@ -749,6 +750,50 @@ router.post(
   }
 );
 
+// GET /api/products/:productId/orders/:orderId/rating
+router.get(
+  '/:productId/orders/:orderId/rating',
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const orderId = parseInt(req.params.orderId, 10);
+      const productId = parseInt(req.params.productId, 10);
+      if (isNaN(orderId) || isNaN(productId)) {
+        return res.status(400).json({ message: 'Invalid IDs' });
+      }
+      // 確認該 user 有此 order，且該訂單裡面確實有買過這個 product
+      // （視你的授權邏輯，這裡可加 authenticate middleware 驗證 user）
+
+      // 查詢 product_rating 表，看看是否已留下評分
+      const existing = await prisma.productRating.findUnique({
+        where: {
+          // 你之前 schema 用 uniq(order_id, product_id)
+          order_id_product_id: {
+            order_id: orderId,
+            product_id: productId,
+          },
+        },
+        select: {
+          rating: true,
+          review_text: true,
+          created_at: true,
+        },
+      });
+      if (!existing) {
+        return res.status(404).json({ message: 'Not rated yet' });
+      }
+      return res.json({
+        orderId,
+        productId,
+        rating: parseFloat(existing.rating.toString()), // Decimal 轉數字
+        reviewText: existing.review_text || '',
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 // --------------------------------------------------
 // GET /api/products/:id — 取得單一商品詳細資料 + 相關商品
 // --------------------------------------------------
@@ -845,8 +890,8 @@ router.get('/:id', async (req, res, next) => {
       id: p.id,
       name: p.name,
       image: p.product_image[0]
-        ? `http://localhost:3005${p.product_image[0].url}`
-        : '/placeholder.jpg',
+        ? `${base}${p.product_image[0].url}`
+        : `/deadicon.png`,
       price: p.product_sku[0]?.price ?? 0,
     });
 
@@ -862,9 +907,7 @@ router.get('/:id', async (req, res, next) => {
         id: product.product_category.id,
         name: product.product_category.name,
       },
-      images: product.product_image.map(
-        (img) => `http://localhost:3005${img.url}`
-      ),
+      images: product.product_image.map((img) => `${base}${img.url}`),
       skus: product.product_sku.map((sku) => ({
         skuId: sku.id,
         sizeId: sku.size_id,

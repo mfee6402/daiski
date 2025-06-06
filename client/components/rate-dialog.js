@@ -11,19 +11,14 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import {
-  Slider,
-  SliderTrack,
-  SliderRange,
-  SliderThumb,
-} from '@/components/ui/slider';
+// 只從 ui/slider 匯入 Slider 即可，因為子組件掛在 Slider 下
+import { Slider } from '@/components/ui/slider';
 
 export default function RateDialog({ orderId, productId, open, onOpenChange }) {
-  // 內部 state：滑桿數值與留言
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState('');
+  const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3005';
 
-  // 當 Dialog 一開啟時，把預設值歸零
   useEffect(() => {
     if (open) {
       setRating(0);
@@ -31,7 +26,6 @@ export default function RateDialog({ orderId, productId, open, onOpenChange }) {
     }
   }, [open]);
 
-  // helper：根據 rating 值 (0～5，step=0.5) 產生 5 顆星星的圖示
   const renderStars = () => {
     const icons = [];
     let remaining = rating;
@@ -49,11 +43,10 @@ export default function RateDialog({ orderId, productId, open, onOpenChange }) {
     return icons;
   };
 
-  // 按下送出時呼叫 API
   const submitRating = async () => {
     try {
       const res = await fetch(
-        `/api/orders/${orderId}/products/${productId}/rate`,
+        `${base}/api/products/${productId}/orders/${orderId}/rate`,
         {
           method: 'POST',
           credentials: 'include',
@@ -70,7 +63,6 @@ export default function RateDialog({ orderId, productId, open, onOpenChange }) {
         alert('錯誤：' + (data.message || '提交失敗'));
         return;
       }
-      // 成功後關閉 Dialog
       onOpenChange(false);
       alert('評分已送出！');
     } catch (error) {
@@ -89,10 +81,9 @@ export default function RateDialog({ orderId, productId, open, onOpenChange }) {
           </DialogDescription>
         </DialogHeader>
 
-        {/* 星星實時顯示區 */}
         <div className="flex gap-1 text-2xl mt-4">{renderStars()}</div>
 
-        {/* shadcn Slider：step=0.5, min=0, max=5 */}
+        {/* Shadcn Slider：step=0.5, min=0, max=5 */}
         <div className="px-2 mt-2">
           <Slider
             defaultValue={[0]}
@@ -100,23 +91,20 @@ export default function RateDialog({ orderId, productId, open, onOpenChange }) {
             step={0.5}
             value={[rating]}
             onValueChange={(val) => {
-              // val 會是数组：[x]
               setRating(val[0]);
             }}
           >
-            <SliderTrack>
-              <SliderRange />
-            </SliderTrack>
-            <SliderThumb />
+            <Slider.Track>
+              <Slider.Range />
+            </Slider.Track>
+            <Slider.Thumb />
           </Slider>
         </div>
 
-        {/* 即時顯示當前分數 */}
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-gray-600 dark:text-white mt-1">
           目前評分：{rating.toFixed(1)}
         </p>
 
-        {/* 留言輸入框 */}
         <textarea
           className="w-full border rounded-md p-2 mt-4 resize-none"
           rows={4}

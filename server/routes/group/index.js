@@ -300,20 +300,67 @@ router.post(
         data.locationId = null; // 非滑雪活動不應有 locationId (除非您的設計允許)
         data.difficulty = null; // 非滑雪活動的 difficulty 應為 null
       }
+      // 1. 建立 Group 記錄
+      const newGroup = await prisma.group.create({ data }); // (Source 1)
 
-      const newGroup = await prisma.group.create({ data });
+      // 2. 建立 GroupImage 記錄 (因為 imageUrl 現在是必填)
+      await prisma.groupImage.create({
+        // (Source 1)
+        data: {
+          groupId: newGroup.id, // (Source 1)
+          imageUrl, // (Source 1)
+          sortOrder: 0, // (Source 1)
+        },
+      });
 
-      if (imageUrl) {
-        await prisma.groupImage.create({
-          data: {
-            groupId: newGroup.id,
-            imageUrl,
-            sortOrder: 0,
+      // 3. 【新增】自動將開團者加入 GroupMember 表
+      const organizerGroupMember = await prisma.groupMember.create({
+        data: {
+          groupId: newGroup.id,
+          userId: organizerId,
+          joinedAt: new Date(),
+          paidAt: null, // 開團者也需支付，所以初始為 null
+        },
+        select: {
+          id: true, // 只選擇新建立的 groupMember 記錄的 ID
+        },
+      });
+
+      // 4. 【修改】重新查詢剛建立的揪團，並包含其關聯的圖片資訊
+      const groupWithDetails = await prisma.group.findUnique({
+        where: { id: newGroup.id },
+        include: {
+          images: {
+            // 依據你的 Prisma Schema (Source 5 from three turns ago)
+            select: {
+              imageUrl: true,
+            },
+            orderBy: {
+              sortOrder: 'asc',
+            },
           },
-        });
+          // 如果前端還需要創建者或地點等其他關聯資料，也可以在這裡 include
+          user: { select: { id: true, name: true, avatar: true } }, // 例如，包含開團者基本資訊
+          location: { select: { name: true } }, // 例如，包含地點名稱
+        },
+      });
+
+      if (!groupWithDetails) {
+        console.error(
+          `[POST /group] Critical: Could not re-fetch group ID: ${newGroup.id}`
+        );
+        return res
+          .status(500)
+          .json({ error: '建立揪團成功，但獲取詳細資訊時發生錯誤。' });
       }
 
-      res.status(201).json(newGroup);
+      // 5. 【修改】建構回傳給前端的物件，包含 groupMemberId
+      const responsePayload = {
+        ...groupWithDetails, // 這裡面已經有揪團的詳細資訊，包括 images 陣列
+        groupMemberId: organizerGroupMember.id, // 將開團者在 group_member 表中的 ID 一併回傳
+      };
+
+      res.status(201).json(responsePayload);
     } catch (err) {
       if (err instanceof multer.MulterError) {
         return res.status(400).json({ error: `圖片上傳錯誤: ${err.message}` });
@@ -415,7 +462,7 @@ router.get('/', async (req, res, next) => {
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
     const groupsFromDb = await prisma.group.findMany({
-      where,
+      where: { deletedAt: null, ...where },
       skip: (Number(page) - 1) * itemsPerPage,
       take: itemsPerPage,
       include: {
@@ -487,7 +534,7 @@ router.get('/:groupId', async (req, res, next) => {
     }
 
     const group = await prisma.group.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
       include: {
         user: { select: { id: true, name: true, avatar: true } },
         images: { orderBy: { sortOrder: 'asc' } },
@@ -927,118 +974,203 @@ router.get('/user/:userId', async (req, res, next) => {
   }
 });
 // DELETE /api/group/:groupId (刪除揪團)
-router.delete('/:groupId', async (req, res, next) => {
+router.delete('/:groupId', authenticate, async (req, res, next) => {
   try {
     const groupId = Number(req.params.groupId);
-    if (isNaN(groupId)) return res.status(400).json({ error: '無效的揪團 ID' });
+    if (isNaN(groupId)) {
+      return res.status(400).json({ error: '無效的揪團 ID' });
+    }
 
-    const userId = req.user?.id; // ** 從 req.user 獲取 **
-    if (!userId)
+    const userId = req.user?.id;
+    if (!userId) {
       return res
         .status(401)
         .json({ error: '未授權操作，請先登入以刪除揪團。' });
+    }
 
-    const groupToDelete = await prisma.group.findUnique({
+    const groupToSoftDelete = await prisma.group.findUnique({
       where: { id: groupId },
     });
-    if (!groupToDelete)
+
+    if (!groupToSoftDelete) {
       return res.status(404).json({ error: '找不到要刪除的揪團' });
-    if (groupToDelete.organizerId !== Number(userId)) {
-      // 確保比較的是數字
+    }
+
+    // 檢查是否已經被軟刪除 (可選，但建議加上)
+    if (groupToSoftDelete.deletedAt) {
+      return res.status(404).json({ error: '此揪團先前已被刪除。' });
+    }
+
+    if (groupToSoftDelete.organizerId !== Number(userId)) {
       console.log(
-        `權限檢查: 資料庫 organizerId (${groupToDelete.organizerId}) !== req.user.id (${userId})`
+        `權限檢查: 資料庫 organizerId (${groupToSoftDelete.organizerId}) !== req.user.id (${userId})`
       );
       return res.status(403).json({ error: '您沒有權限刪除此揪團' });
     }
 
-    await prisma.group.delete({ where: { id: groupId } });
+    // --- 修改為軟刪除 ---
+    const softDeletedGroup = await prisma.group.update({
+      where: { id: groupId },
+      data: {
+        deletedAt: new Date(), // 設定 deletedAt 為當前時間
+      },
+    });
+    // --- 軟刪除修改結束 ---
 
-    res.status(200).json({ message: '揪團已成功刪除' });
+    res
+      .status(200)
+      .json({ message: '揪團已成功標記為刪除。', data: softDeletedGroup }); // 可以選擇回傳更新後的記錄
   } catch (err) {
-    // ... (錯誤處理保持不變)
-    console.error(`刪除揪團 ${req.params.groupId} 失敗:`, err);
-    if (err.code === 'P2025')
-      return res.status(404).json({ error: '找不到要刪除的揪團。' });
-    if (err.code === 'P2003') {
-      return res.status(409).json({
-        error:
-          '無法刪除揪團，可能因為它仍被其他資料引用。請確認資料庫關聯設定。',
-      });
+    console.error(`標記刪除揪團 ${req.params.groupId} 失敗:`, err);
+    if (err.code === 'P2025') {
+      return res.status(404).json({ error: '找不到要標記為刪除的揪團。' });
     }
-    return res.status(500).json({ error: '伺服器內部錯誤，刪除揪團失敗。' });
+    return res
+      .status(500)
+      .json({ error: '伺服器內部錯誤，標記刪除揪團失敗。' });
   }
 });
 // 新增：DELETE /api/group/members/:groupMemberId
-router.delete('/members/:groupMemberId', authenticate, async (req, res, next) => {
-  try {
-    const groupMemberId = parseInt(req.params.groupMemberId, 10);
-    const currentUserId = req.user?.id; // 從 authenticate 中介軟體獲取
+router.delete(
+  '/members/:groupMemberId',
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const groupMemberId = parseInt(req.params.groupMemberId, 10);
+      const currentUserId = req.user?.id; // 從 authenticate 中介軟體獲取
+
+      if (isNaN(groupMemberId)) {
+        return res
+          .status(400)
+          .json({ error: '無效的參與記錄 ID (groupMemberId)。' });
+      }
+
+      if (!currentUserId) {
+        // 理論上 authenticate 會處理，但多一層防護
+        return res.status(401).json({ error: '未授權操作，無法識別用戶。' });
+      }
+
+      // 1. 查找 GroupMember 記錄
+      const groupMemberEntry = await prisma.groupMember.findUnique({
+        where: { id: groupMemberId },
+        include: {
+          // 同時獲取關聯的 group 資訊，以便檢查開團者
+          group: {
+            select: { organizerId: true },
+          },
+        },
+      });
+
+      if (!groupMemberEntry) {
+        return res.status(404).json({ error: '找不到指定的參與記錄。' });
+      }
+
+      // 2. 權限驗證：
+      // 允許的情況：
+      // a) 是該 GroupMember 記錄的擁有者 (userId)
+      // b) 是該揪團的開團者 (organizerId)
+      const isOwner = groupMemberEntry.userId === currentUserId;
+      const isOrganizer = groupMemberEntry.group?.organizerId === currentUserId;
+
+      if (!isOwner && !isOrganizer) {
+        return res.status(403).json({ error: '您沒有權限移除此參與記錄。' });
+      }
+
+      // 3. 檢查 paid_at 狀態 (根據你的業務邏輯決定如何處理已付款的項目)
+      // 如果是開團者移除成員，可能也需要考慮退款。
+      // 如果是成員自己退出已付款的團，也需要考慮退款政策。
+      if (groupMemberEntry.paid_at !== null) {
+        // 範例：如果是已付款的，且不是開團者操作，則不允許直接刪除 (讓使用者走特定退款流程)
+        if (isOwner && !isOrganizer) {
+          // 成員自己想退出已付款的團
+          // 這裡可以根據你的業務邏輯決定是否允許，或提示需要聯繫客服等
+          console.warn(
+            `使用者 ${currentUserId} 嘗試刪除已付款的參與記錄 ${groupMemberId}。需要進一步處理退款事宜。`
+          );
+          // return res.status(400).json({
+          //   error: '此項目已付款，若要退出請聯繫客服或發起退款申請。',
+          //   needsRefund: true // 可以給前端一個標記
+          // });
+          // 目前暫時允許刪除，但實際應用中應有更完整的退款/取消策略
+        }
+        // 如果是開團者移除已付款成員，也應該有相應的退款/通知機制
+        console.log(
+          `操作者 (ID: ${currentUserId}, ${
+            isOrganizer ? '開團者' : '成員本人'
+          }) 正在移除已付款的參與記錄 (ID: ${groupMemberId})。`
+        );
+      }
+
+      // 4. 執行刪除
+      await prisma.groupMember.delete({
+        where: { id: groupMemberId },
+      });
+
+      res.status(200).json({ message: '參與記錄已成功移除。' });
+    } catch (error) {
+      console.error(
+        `刪除 GroupMember ID ${req.params.groupMemberId} 時發生錯誤:`,
+        error
+      );
+      if (error.code === 'P2025') {
+        // Prisma "Record to delete not found."
+        return res
+          .status(404)
+          .json({ error: '找不到要刪除的參與記錄 (可能已被刪除)。' });
+      }
+      next(error);
+    }
+  }
+);
+
+router.put(
+  '/members/:groupMemberId/payment',
+  authenticate, // (Source 3) 請確保此認證機制適合呼叫此API的系統
+  async (req, res, next) => {
+    const { groupMemberId: groupMemberIdString } = req.params;
+    const groupMemberId = parseInt(groupMemberIdString, 10);
 
     if (isNaN(groupMemberId)) {
-      return res.status(400).json({ error: '無效的參與記錄 ID (groupMemberId)。' });
+      return res.status(400).json({ error: '無效的 groupMemberId 格式。' });
     }
+    try {
+      // 1. 查找 group_member 記錄
+      const memberEntry = await prisma.groupMember.findUnique({
+        where: { id: groupMemberId },
+      });
 
-    if (!currentUserId) {
-      // 理論上 authenticate 會處理，但多一層防護
-      return res.status(401).json({ error: '未授權操作，無法識別用戶。' });
-    }
-
-    // 1. 查找 GroupMember 記錄
-    const groupMemberEntry = await prisma.groupMember.findUnique({
-      where: { id: groupMemberId },
-      include: { // 同時獲取關聯的 group 資訊，以便檢查開團者
-        group: {
-          select: { organizerId: true }
-        }
+      if (!memberEntry) {
+        return res
+          .status(404)
+          .json({ error: `找不到 ID 為 ${groupMemberId} 的參與記錄。` });
       }
-    });
 
-    if (!groupMemberEntry) {
-      return res.status(404).json({ error: '找不到指定的參與記錄。' });
-    }
+      // 2. 更新 paid_at 欄位為當前時間
+      const updatedMemberEntry = await prisma.groupMember.update({
+        where: { id: groupMemberId },
+        data: {
+          paidAt: new Date(), // 設定為當前伺服器時間
+        },
+      });
 
-    // 2. 權限驗證：
-    // 允許的情況：
-    // a) 是該 GroupMember 記錄的擁有者 (userId)
-    // b) 是該揪團的開團者 (organizerId)
-    const isOwner = groupMemberEntry.userId === currentUserId;
-    const isOrganizer = groupMemberEntry.group?.organizerId === currentUserId;
-
-    if (!isOwner && !isOrganizer) {
-      return res.status(403).json({ error: '您沒有權限移除此參與記錄。' });
-    }
-    
-    // 3. 檢查 paid_at 狀態 (根據你的業務邏輯決定如何處理已付款的項目)
-    // 如果是開團者移除成員，可能也需要考慮退款。
-    // 如果是成員自己退出已付款的團，也需要考慮退款政策。
-    if (groupMemberEntry.paid_at !== null) {
-      // 範例：如果是已付款的，且不是開團者操作，則不允許直接刪除 (讓使用者走特定退款流程)
-      if (isOwner && !isOrganizer) { // 成員自己想退出已付款的團
-         // 這裡可以根據你的業務邏輯決定是否允許，或提示需要聯繫客服等
-        console.warn(`使用者 ${currentUserId} 嘗試刪除已付款的參與記錄 ${groupMemberId}。需要進一步處理退款事宜。`);
-        // return res.status(400).json({ 
-        //   error: '此項目已付款，若要退出請聯繫客服或發起退款申請。',
-        //   needsRefund: true // 可以給前端一個標記
-        // });
-        // 目前暫時允許刪除，但實際應用中應有更完整的退款/取消策略
+      res.status(200).json({
+        message: `ID 為 ${groupMemberId} 的參與記錄已成功更新付款時間。`,
+        data: updatedMemberEntry,
+      });
+    } catch (error) {
+      console.error(
+        `更新 groupMemberId ${groupMemberId} 的 paid_at 狀態時發生錯誤:`,
+        error
+      );
+      if (error.code === 'P2025') {
+        // Prisma "Record to update not found"
+        // 這個錯誤理論上會被上面的 findUnique 捕獲，但多一層保障
+        return res
+          .status(404)
+          .json({ error: `找不到 ID 為 ${groupMemberId} 的參與記錄來更新。` });
       }
-      // 如果是開團者移除已付款成員，也應該有相應的退款/通知機制
-      console.log(`操作者 (ID: ${currentUserId}, ${isOrganizer ? '開團者' : '成員本人'}) 正在移除已付款的參與記錄 (ID: ${groupMemberId})。`);
+      next(error); // 將其他錯誤交給 Express 錯誤處理中介軟體
     }
-
-    // 4. 執行刪除
-    await prisma.groupMember.delete({
-      where: { id: groupMemberId },
-    });
-
-    res.status(200).json({ message: '參與記錄已成功移除。' });
-
-  } catch (error) {
-    console.error(`刪除 GroupMember ID ${req.params.groupMemberId} 時發生錯誤:`, error);
-    if (error.code === 'P2025') { // Prisma "Record to delete not found."
-      return res.status(404).json({ error: '找不到要刪除的參與記錄 (可能已被刪除)。' });
-    }
-    next(error);
   }
-});
+);
 export default router;

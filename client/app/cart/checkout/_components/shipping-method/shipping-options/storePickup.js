@@ -13,7 +13,14 @@ export default function StorePickup({ checked = false }) {
   const {
     register,
     formState: { errors },
+    setValue,
   } = useFormContext();
+
+  useEffect(() => {
+    if (store711.storename) {
+      setValue('storename', store711.storename, { shouldValidate: true });
+    }
+  }, [store711.storename, setValue]);
   return (
     <>
       {
@@ -59,7 +66,9 @@ export default function StorePickup({ checked = false }) {
           >
             選擇門市
           </Button>
-
+          {errors.storename && (
+            <p className="text-red">{errors.storename.message}</p>
+          )}
           <div className="flex flex-col gap-4">
             <div>
               <span className="whitespace-nowrap">門市名稱 : </span>
@@ -68,6 +77,7 @@ export default function StorePickup({ checked = false }) {
                 className="w-auto"
                 value={store711.storename}
                 disabled
+                {...register('storename', { required: '門市必選' })}
               />
             </div>
             <div className="">

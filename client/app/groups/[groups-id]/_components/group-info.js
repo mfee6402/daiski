@@ -14,7 +14,8 @@ import {
   CalendarPlus,
   Edit3,
   Trash2,
-} from 'lucide-react'; // 新增 Edit3 和 Trash2 圖示
+  MountainSnow, // 假設用於滑雪難易度圖示
+} from 'lucide-react';
 
 // 左側內容區塊 (內部組件) - 基本不變
 function ImageAndMembersSection({
@@ -115,6 +116,22 @@ function InfoAndActionsSection({
   eventDescription,
   eventLocation,
 }) {
+  const difficultyMap = {
+    BEGINNER: '初級',
+    INTER: '中級',
+    ADVANCE: '進階',
+  };
+
+  // 判斷是否應該顯示難易度
+  // 條件：group.type 存在，group.type 不是 "聚餐"，並且 group.difficulty 存在
+  // 您可以根據實際的 group.type 值來調整判斷條件，例如：
+  // const isSkiGroup = group && group.type && (group.type.toLowerCase().includes('ski') || group.type.toLowerCase().includes('滑雪'));
+  const groupTypeStr = String(group?.type || '').toLowerCase();
+  const isRelevantTypeForDifficulty =
+    groupTypeStr.includes('ski') || groupTypeStr.includes('滑雪');
+
+  const shouldShowDifficulty = isRelevantTypeForDifficulty && group?.difficulty;
+
   return (
     <div className="flex flex-col space-y-4">
       <h2 className="flex items-center text-2xl font-semibold text-primary-800 dark:text-white">
@@ -160,6 +177,15 @@ function InfoAndActionsSection({
           <Users className="w-4 h-4 mr-2 text-blue-600 dark:text-blue-400 flex-shrink-0" />
           成團人數：{group.minPeople || '不限'}–{group.maxPeople || '不限'} 人
         </p>
+        {/* 條件渲染難易度 */}
+        {shouldShowDifficulty && (
+          <p className="flex items-center">
+            <MountainSnow className="w-4 h-4 mr-2 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+            難易度：
+            {difficultyMap[String(group.difficulty).toUpperCase()] ||
+              group.difficulty}
+          </p>
+        )}
       </div>
       <div>
         <p className="text-base font-semibold text-slate-800 dark:text-slate-200">
@@ -202,7 +228,7 @@ function InfoAndActionsSection({
       </div>
       <div className="overflow-hidden h-40 rounded-md border border-slate-300 dark:border-slate-700">
         <iframe
-          src={`https://maps.google.com/maps?q=${encodeURIComponent(group.location || group.customLocation || '台灣')}&hl=zh-TW&z=15&output=embed`}
+          src={`https://maps.google.com/maps?q=${encodeURIComponent(group.location || group.customLocation || '台灣')}&hl=zh-TW&z=15&output=embed`} // 修正 Google Maps URL
           className="w-full h-full"
           style={{ border: 0 }}
           allowFullScreen
@@ -278,34 +304,28 @@ export default function GroupMainInfoCard({
 
   return (
     <Card className="w-full max-w-screen-2xl mx-auto shadow-lg p-4 sm:p-6 rounded-lg bg-white dark:bg-slate-800 relative">
-      {' '}
-      {/* 添加 relative 以便絕對定位按鈕 */}
-      {/* 編輯和刪除按鈕 - 僅當 isOrganizer 為 true 時顯示 */}
       {isOrganizer && (
         <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10 flex space-x-2">
-          {' '}
-          {/* 絕對定位到右上角 */}
           <Button
             variant="outline"
-            size="icon" // 使用圖示按鈕尺寸
+            size="icon"
             onClick={onEditGroup}
-            className="text-blue-600 border-blue-600 hover:bg-blue-600/10 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-400/20 h-8 w-8 md:h-9 md:w-9" // 調整尺寸
+            className="text-blue-600 border-blue-600 hover:bg-blue-600/10 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-400/20 h-8 w-8 md:h-9 md:w-9"
             title="編輯揪團"
           >
             <Edit3 className="h-4 w-4 md:h-5 md:w-5" />
           </Button>
           <Button
             variant="destructive"
-            size="icon" // 使用圖示按鈕尺寸
+            size="icon"
             onClick={onDeleteGroup}
-            className="h-8 w-8 md:h-9 md:w-9" // 調整尺寸
+            className="h-8 w-8 md:h-9 md:w-9"
             title="刪除揪團"
           >
             <Trash2 className="h-4 w-4 md:h-5 md:w-5" />
           </Button>
         </div>
       )}
-      {/* 主要內容使用 Grid 佈局 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <ImageAndMembersSection
           groupUser={group.creator}

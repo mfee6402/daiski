@@ -1,140 +1,212 @@
 'use client';
 
 import useSWR from 'swr';
-import { useCallback } from 'react';
 import {
   Table,
   TableHeader,
-  TableRow, // 原始的 TableRow，用於 MotionTableRow 的基礎
+  TableRow,
   TableHead,
   TableBody,
   TableCell,
   TableCaption,
 } from '@/components/ui/table';
+import { useAuth } from '@/hooks/use-auth';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import FavoriteButton from '@/components/favorite-button'; // 確保此路徑正確
-import { useAuth } from '@/hooks/use-auth'; // 確保此路徑正確
-import { motion, AnimatePresence } from 'framer-motion'; // 引入 framer-motion
 import Link from 'next/link';
-
-// API URL 常數
+// import RateButton from '@/components/rate-button';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { PiStarThin } from 'react-icons/pi';
+import RateButton from '@/components/rate-button';
+import { Rat } from 'lucide-react';
+/* -------------------- 常數 -------------------- */
 const API_BASE_URL = 'http://localhost:3005/api';
 const ORDERS_API_URL = `${API_BASE_URL}/cart/orders`;
-// const PRODUCT_API_URL = `${API_BASE_URL}/products`;
 
-// 通用的 fetcher 函數
+/* -------------------- 通用 fetcher -------------------- */
 const fetcher = async (url) => {
-  const res = await fetch(url, {
-    credentials: 'include',
-  });
+  const res = await fetch(url, { credentials: 'include' });
   if (!res.ok) {
-    const error = new Error('請求資料時發生錯誤。');
+    const err = new Error('請求失敗');
+    err.status = res.status;
     try {
-      error.info = await res.json();
-    } catch (error) {
-      error.info = res.statusText;
+      err.info = await res.json();
+    } catch {
+      err.info = res.statusText;
     }
-    error.status = res.status;
-    throw error;
+    throw err;
   }
-  return res.json();
+  return res.json(); // { status, orders }
 };
 
-// 創建一個 motion 版本的 TableRow
-// 這會讓 TableRow 元件能夠接收 Framer Motion 的動畫屬性，同時保留其原有樣式和功能
+/* -------------------- 動畫用 TableRow -------------------- */
 const MotionTableRow = motion(TableRow);
 
+/* -------------------- 元件 -------------------- */
 export default function ProfileOrders() {
-  const { isAuth, isLoading: isLoadingAuth } = useAuth();
+  const { isAuth, isLoading: authLoading } = useAuth();
+
   const {
-    data: orders,
+    data, // { status, orders }
     error,
-    isLoading: ordersLoading,
+    isLoading, // 訂單載入狀態
   } = useSWR(isAuth ? ORDERS_API_URL : null, fetcher);
-  const url = 'http://localhost:3005/api/cart/orders';
-  console.log(orders);
 
+  const orders = data?.orders ?? [];
+  const base = process.env.NEXT_PUBLIC_API_BASE || '';
+
+  /* ---------- 介面狀態 ---------- */
+  if (authLoading || isLoading) return <p className="p-4">載入中…</p>;
+  if (error)
+    return <p className="p-4 text-red-500">載入失敗：{error.message}</p>;
+  if (orders.length === 0) return <p className="p-4">目前沒有訂單紀錄</p>;
+
+  /* ---------- 主畫面 ---------- */
   return (
-    <div className="container mx-0 xl:mx-auto overflow-y-auto h-dvh ">
-      <Table className="table-fixed w-full ">
-        <TableHeader>
-          <TableRow className="">
-            <TableHead className="w-16">訂單編號</TableHead>
-            <TableHead className="w-1/5 sm:w-1/2 md:w-1/5 px-4">
-              課程
-            </TableHead><TableHead className="w-1/5 sm:w-1/2 md:w-1/5 px-4">
-              揪團活動
-            </TableHead>
-            <TableHead className="w-1/5 sm:w-1/2 md:w-3/10 px-4">
-              商品
-            </TableHead>
-            <TableHead className="text-right w-[120px]">商品評分</TableHead>
-            <TableHead className="text-right">消費金額</TableHead>
-          </TableRow>
-        </TableHeader>
+    <div className="container mx-0 xl:mx-auto overflow-y-auto h-dvh p-4">
+      <Accordion type="multiple" className="space-y-4">
+        {orders.map((order) => (
+          <AccordionItem key={order.id} value={`order-${order.id}`}>
+            {/* === 折疊列 – 訂單摘要 === */}
+            <AccordionTrigger className="flex justify-self-start items-center pr-4 text-right">
+              <div className="">
+                <span className="font-semibold">訂單 #{order.id}</span>
+              </div>
+              <div className="">
+                <span className="text-sm text-muted-foreground">
+                  {new Date(order.createdAt).toLocaleString('zh-TW')}
+                </span>
+              </div>
+              <div className="w-[180px]">
+                <span>NT$ {order.amount.toLocaleString()}</span>
+              </div>
+            </AccordionTrigger>
 
-        <TableBody>
-          <AnimatePresence>
-            {/* {orders.map((orders) => ( */}
-              {/* <MotionTableRow
-                key={orders.id}
-                layout
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{
-                  opacity: 0,
-                  transition: { opacity: { duration: 0.2, ease: 'easeOut' } },
-                }}
-              > */}
-              {/* <TableCell className="p-2">
-                  <div className="flex-none h-16 w-16">
-                    {product.image ? (
-                      <Image
-                        src={product.image}
-                        alt={product.name}
-                        width={64}
-                        height={64}
-                        className="h-full w-full object-cover rounded"
-                        priority={false}
-                      />
-                    ) : (
-                      <div className="h-full w-full bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">
-                        無圖片
-                      </div>
-                    )}
-                  </div>
-                </TableCell> */}
-                {/* <TableCell className="font-medium whitespace-normal break-words px-4">
-                  <Link
-                    href={`/product/${product.id}`}
-                    className="hover:text-primary-500 cursor-none"
-                  >
-                    <p className="line-clamp-3">{product.name}</p>
-                  </Link>
-                </TableCell>
-                <TableCell className="text-right">
-                  ${orders.amount?.toLocaleString() ?? 'N/A'}
-                </TableCell> */}
+            {/* === 展開內容 – 三張表格 === */}
+            <AccordionContent className="space-y-8 pt-4">
+              {/* 1️⃣ 商品一覽 */}
+              {order.OrderProduct?.length > 0 && (
+                <section>
+                  <h3 className="mb-2 text-lg font-medium">商品</h3>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-20">預覽</TableHead>
+                        <TableHead>名稱</TableHead>
+                        <TableHead className="w-24 text-center">評價</TableHead>
+                        <TableHead className="w-24 text-center">數量</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {order.OrderProduct.map((p) => (
+                        <TableRow key={`product-${order.id}-${p.id}`}>
+                          <TableCell>
+                            <Image
+                              src={`${base}/${p.imageUrl}`}
+                              alt={p.name}
+                              width={60}
+                              height={60}
+                              className="rounded-md object-cover"
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {p.name}
+                          </TableCell>
+                          <TableCell className="text-center ">
+                            {/* 評價的button放這邊 */}
+                            {/* <button className="">
+                              <PiStarThin />
+                            </button> */}
+                            {console.log(p)}
+                            <RateButton
+                              orderId={order.id}
+                              productSkuId={p.id}
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {p.quantity}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </section>
+              )}
 
-                {/* <TableCell className="text-center">
-                  <FavoriteButton
-                    isFav={favoriteIds.includes(product.id)}
-                    onToggle={() => toggleFavorite(product.id)}
-                    isAuth={isAuth}
-                    variant="circle"
-                  />
-                </TableCell> */}
-              {/* </MotionTableRow> */}
-            {/* ))} */}
-          </AnimatePresence>
-        </TableBody>
-      </Table>
+              {/* 2️⃣ 課程一覽 */}
+              {order.OrderCourse?.length > 0 && (
+                <section>
+                  <h3 className="mb-2 text-lg font-medium">課程</h3>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-20">預覽</TableHead>
+                        <TableHead>名稱</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {order.OrderCourse.map((c, idx) => (
+                        <TableRow key={`course-${order.id}-${idx}`}>
+                          <TableCell>
+                            <Image
+                              src={`${base}/${c.imageUrl}`}
+                              alt={c.name}
+                              width={60}
+                              height={60}
+                              className="rounded-md object-cover"
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {c.name}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </section>
+              )}
 
-      {/* {isAuth && !isLoading && !error && favoriteProducts.length === 0 && (
-        <p className="text-center mt-6 text-gray-500">
-          您的訂單紀錄目前是空的。
-        </p>
-      )} */}
+              {/* 3️⃣ 揪團一覽 */}
+              {order.OrderGroup?.length > 0 && (
+                <section>
+                  <h3 className="mb-2 text-lg font-medium">揪團</h3>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-20">預覽</TableHead>
+                        <TableHead>名稱</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {order.OrderGroup.map((g, idx) => (
+                        <TableRow key={`group-${order.id}-${idx}`}>
+                          <TableCell>
+                            <Image
+                              src={`${base}/${g.imageUrl}`}
+                              alt={g.name}
+                              width={60}
+                              height={60}
+                              className="rounded-md object-cover"
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {g.name}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </section>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
     </div>
   );
 }
