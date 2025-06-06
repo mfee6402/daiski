@@ -21,7 +21,7 @@ const ClubLi = forwardRef(({ src, title, isActive, onSelect }, ref) => (
       <h3
         data-active-text
         className={`
-            absolute top-20 left-4 origin-left -rotate-90 text-lg uppercase
+            absolute top-12 left-4 origin-left -rotate-90 text-lg uppercase
             font-light whitespace-nowrap z-[1]
             transition-opacity duration-600
             ease-[linear(0_0%,_.154_4.1%,_.293_8.3%,_.417_12.6%,_.528_17.1%,_.626_21.8%,_.71_26.6%,_.782_31.7%,_.843_37%,_.889_42.2%,_.926_47.8%,_.954_53.8%,_.975_60.3%,_.988_67.1%,_.996_75%,_1_100%)]
