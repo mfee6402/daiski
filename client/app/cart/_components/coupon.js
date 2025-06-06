@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/card';
 
 import CouponCard from '@/app/coupons/_components/coupon-card';
-export default function Coupon(props) {
+export default function Coupon({ isOrder = false, couponId = null }) {
   const { cart, setCart } = useCart();
   const applyCoupon = (id) => {
     const nextCoupon = cart.CartCoupon.map((coupon) => {
@@ -37,51 +37,63 @@ export default function Coupon(props) {
       <CardHeader>
         <CardTitle className="text-lg font-semibold">優惠券</CardTitle>
       </CardHeader>
-      <div className="w-full px-15">
-        <Carousel opts={{ align: 'start' }}>
-          <CarouselContent className="">
-            {cart.CartCoupon?.map((item) => {
-              const id = item.id;
-              const name = item.name;
-              const type = item.type;
-              const endAt = new Date(item.endAt).toLocaleString();
-              const amount = item.amount;
-              const target = item.target;
-              const canUse = item.canUse;
-              const minPurchase = item.minPurchase;
-              {
-                /* const buttonClass = canUse
+      {/* {isOrder} */}
+      {!isOrder && cart?.CartCoupon?.length > 0 && (
+        <div className="w-full px-15">
+          <Carousel opts={{ align: 'start' }}>
+            <CarouselContent className="">
+              {cart?.CartCoupon?.map((item) => {
+                const id = item.id;
+                const name = item.name;
+                const type = item.type;
+                const endAt = new Date(item.endAt).toLocaleString();
+                const amount = item.amount;
+                const target = item.target;
+                const canUse = item.canUse;
+                const isChecked = item.checked;
+                const minPurchase = item.minPurchase;
+                {
+                  /* const buttonClass = canUse
                 ? 'hover:bg-secondary-800 hover:text-white'
                 : 'bg-secondary-800 text-white cursor-default'; */
-              }
-              return (
-                <CarouselItem
-                  className={`2xl:basis-1/3 lg:basis-1/2 md:basis-1/1  ${item.checked && 'bg-secondary-500 '}`}
-                  key={id}
-                >
-                  <CouponCard
-                    // 原始資料
-                    type={type}
-                    target={target}
-                    amount={amount}
-                    minPurchase={minPurchase}
-                    name={name}
-                    // 時間顯示
-                    displayTime={endAt}
-                    // 狀態
-                    buttonText={canUse ? '使用' : '不滿足'}
-                    // buttonClass={buttonClass}
-                    // 互動
-                    onUse={() => canUse && applyCoupon(id)}
-                  />
-                </CarouselItem>
-              );
-            })}
-          </CarouselContent>
-          <CarouselPrevious />
-          <CarouselNext />
-        </Carousel>
-      </div>
+                }
+                return (
+                  <CarouselItem
+                    className={`2xl:basis-1/2 basis-1/1  ${item.checked && 'bg-secondary-500 '}`}
+                    key={id}
+                  >
+                    <CouponCard
+                      // 原始資料
+                      type={type}
+                      target={target}
+                      amount={amount}
+                      minPurchase={minPurchase}
+                      name={name}
+                      // 時間顯示
+                      displayTime={endAt}
+                      // 狀態
+                      buttonText={canUse ? '使用' : '不滿足'}
+                      isChecked={isChecked}
+                      canUse={canUse}
+                      // buttonClass={buttonClass}
+                      // 互動
+                      onUse={() => canUse && applyCoupon(id)}
+                    />
+                  </CarouselItem>
+                );
+              })}
+            </CarouselContent>
+
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        </div>
+      )}
+      {cart?.CartCoupon?.length === 0 && (
+        <>
+          <div className="px-5">沒有優惠券</div>
+        </>
+      )}
     </Card>
   );
 }

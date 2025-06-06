@@ -20,15 +20,10 @@ export default function TwAddressSelector() {
     setValue,
     watch,
     formState: { errors },
-    unregister,
-    control,
   } = useFormContext();
   const city = watch('city');
   const district = watch('district');
-  const selectedShipping = useWatch({
-    control,
-    name: 'shippingMethod',
-  });
+
   const handleCityChange = (value) => {
     setValue('city', value, { shouldValidate: true });
     setValue('district', '');
@@ -38,12 +33,7 @@ export default function TwAddressSelector() {
     setValue('district', value, { shouldValidate: true });
     setValue('zipCode', twAddress[city][value]);
   };
-  useEffect(() => {
-    if (selectedShipping === 'homeDelivery') {
-      unregister('district');
-      unregister('city');
-    }
-  }, [selectedShipping]);
+
   return (
     <>
       <div className="w-full flex flex-col gap-4 ">
@@ -113,10 +103,13 @@ export default function TwAddressSelector() {
             // className="border-1 border-primary-600 w-full  "
             type="text"
             name="address"
-            {...register('addressDetail', { required: true })}
+            {...register('addressDetail', { required: '詳細地址為必填' })}
           />
         </div>
-        {errors.addressDetail && <p className="text-red">詳細地址為必填</p>}
+
+        {errors.addressDetail && (
+          <p className="text-red">{errors.addressDetail.message}</p>
+        )}
       </div>
     </>
   );

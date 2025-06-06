@@ -623,7 +623,7 @@ import { useAuth } from '@/hooks/use-auth';
 // SWR 的數據獲取函式 (Fetcher)
 // 這個函式負責從指定的 URL 獲取數據並將其解析為 JSON 格式。
 // `credentials: 'include'` 確保在請求中包含憑證（例如 Cookie），用於處理需要驗證的 API。
-const base = process.env.NEXT_PUBLIC_API_BASE || '';
+const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3005';
 const fetcher = (url) =>
   // fetch(`http://localhost:3005${url}`, { credentials: 'include' }).then((r) =>
   //   r.json()
@@ -1154,7 +1154,10 @@ export default function ProductPage() {
                   篩選
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-full p-4 overflow-auto">
+              <SheetContent
+                side="left"
+                className="w-full p-4 overflow-auto z-99999"
+              >
                 <SheetHeader className="flex items-center justify-between">
                   <SheetTitle>篩選條件</SheetTitle>
                 </SheetHeader>
