@@ -300,20 +300,67 @@ router.post(
         data.locationId = null; // 非滑雪活動不應有 locationId (除非您的設計允許)
         data.difficulty = null; // 非滑雪活動的 difficulty 應為 null
       }
+      // 1. 建立 Group 記錄
+      const newGroup = await prisma.group.create({ data }); // (Source 1)
 
-      const newGroup = await prisma.group.create({ data });
+      // 2. 建立 GroupImage 記錄 (因為 imageUrl 現在是必填)
+      await prisma.groupImage.create({
+        // (Source 1)
+        data: {
+          groupId: newGroup.id, // (Source 1)
+          imageUrl, // (Source 1)
+          sortOrder: 0, // (Source 1)
+        },
+      });
 
-      if (imageUrl) {
-        await prisma.groupImage.create({
-          data: {
-            groupId: newGroup.id,
-            imageUrl,
-            sortOrder: 0,
+      // 3. 【新增】自動將開團者加入 GroupMember 表
+      const organizerGroupMember = await prisma.groupMember.create({
+        data: {
+          groupId: newGroup.id,
+          userId: organizerId,
+          joinedAt: new Date(),
+          paidAt: null, // 開團者也需支付，所以初始為 null
+        },
+        select: {
+          id: true, // 只選擇新建立的 groupMember 記錄的 ID
+        },
+      });
+
+      // 4. 【修改】重新查詢剛建立的揪團，並包含其關聯的圖片資訊
+      const groupWithDetails = await prisma.group.findUnique({
+        where: { id: newGroup.id },
+        include: {
+          images: {
+            // 依據你的 Prisma Schema (Source 5 from three turns ago)
+            select: {
+              imageUrl: true,
+            },
+            orderBy: {
+              sortOrder: 'asc',
+            },
           },
-        });
+          // 如果前端還需要創建者或地點等其他關聯資料，也可以在這裡 include
+          user: { select: { id: true, name: true, avatar: true } }, // 例如，包含開團者基本資訊
+          location: { select: { name: true } }, // 例如，包含地點名稱
+        },
+      });
+
+      if (!groupWithDetails) {
+        console.error(
+          `[POST /group] Critical: Could not re-fetch group ID: ${newGroup.id}`
+        );
+        return res
+          .status(500)
+          .json({ error: '建立揪團成功，但獲取詳細資訊時發生錯誤。' });
       }
 
-      res.status(201).json(newGroup);
+      // 5. 【修改】建構回傳給前端的物件，包含 groupMemberId
+      const responsePayload = {
+        ...groupWithDetails, // 這裡面已經有揪團的詳細資訊，包括 images 陣列
+        groupMemberId: organizerGroupMember.id, // 將開團者在 group_member 表中的 ID 一併回傳
+      };
+
+      res.status(201).json(responsePayload);
     } catch (err) {
       if (err instanceof multer.MulterError) {
         return res.status(400).json({ error: `圖片上傳錯誤: ${err.message}` });
@@ -415,10 +462,9 @@ router.get('/', async (req, res, next) => {
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
     const groupsFromDb = await prisma.group.findMany({
-      where: { deletedAt: null,
-         ...where,},
+      where: { deletedAt: null, ...where },
       skip: (Number(page) - 1) * itemsPerPage,
-      take: itemsPerPage, 
+      take: itemsPerPage,
       include: {
         user: {
           // 開團者資訊
@@ -971,14 +1017,17 @@ router.delete('/:groupId', authenticate, async (req, res, next) => {
     });
     // --- 軟刪除修改結束 ---
 
-    res.status(200).json({ message: '揪團已成功標記為刪除。', data: softDeletedGroup }); // 可以選擇回傳更新後的記錄
-
+    res
+      .status(200)
+      .json({ message: '揪團已成功標記為刪除。', data: softDeletedGroup }); // 可以選擇回傳更新後的記錄
   } catch (err) {
     console.error(`標記刪除揪團 ${req.params.groupId} 失敗:`, err);
     if (err.code === 'P2025') {
       return res.status(404).json({ error: '找不到要標記為刪除的揪團。' });
     }
-    return res.status(500).json({ error: '伺服器內部錯誤，標記刪除揪團失敗。' });
+    return res
+      .status(500)
+      .json({ error: '伺服器內部錯誤，標記刪除揪團失敗。' });
   }
 });
 // 新增：DELETE /api/group/members/:groupMemberId

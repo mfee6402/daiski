@@ -33,8 +33,10 @@ import {
 import useSWR from 'swr';
 import useSWRMutation from 'swr/mutation';
 import { Button } from '@/components/ui/button';
+import { useCart } from '@/hooks/use-cart';
 
 export default function CouponsPage(props) {
+  const { fetchSyncData } = useCart();
   // 在 useSWR 呼叫時，就直接傳 inline fetcher
   const {
     data,
@@ -81,6 +83,7 @@ export default function CouponsPage(props) {
       if (!isAuth) return alert('請先登錄');
       await trigger({ couponId: coupon.id }); // 這行才真的 fetch
       mutateCoupons();
+      fetchSyncData();
 
       toast.success('已領取優惠券！');
     } catch (e) {
@@ -113,6 +116,7 @@ export default function CouponsPage(props) {
       await Promise.all(
         claimable.map((c) => trigger({ userId: user.id, couponId: c.id }))
       );
+      fetchSyncData();
 
       mutateCoupons();
       toast.success('已領取優惠券！');
