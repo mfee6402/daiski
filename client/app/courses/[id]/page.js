@@ -4,43 +4,36 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Clock5, MapPin, LocateFixed } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+// import L from 'leaflet';
+// import 'leaflet/dist/leaflet.css';
+import dynamic from 'next/dynamic';
+
 import Image from 'next/image';
 import { memo, useMemo } from 'react';
 import Container from '@/components/container';
 import Link from 'next/link';
-import CourseMap from '../_component/coursemap';
+// import CourseMap from '../_component/coursemap';
 
-// 解決 icon 不顯示的問題
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-  iconUrl: require('leaflet/dist/images/marker-icon.png'),
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+const CourseMap = dynamic(() => import('../_component/coursemap'), {
+  ssr: false,
+  loading: () => <p>地圖載入中…</p>,
 });
-// 修正 Leaflet 預設圖標路徑
-// if (typeof window !== 'undefined') {
-//   delete L.Icon.Default.prototype._getIconUrl;
-//   L.Icon.Default.mergeOptions({
-//     iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-//     iconUrl: require('leaflet/dist/images/marker-icon.png'),
-//     shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
-//   });
-// }
-// function CourseMap({ latitude, longitude, locName }) {
-//   const lat = Number(latitude) || 25.033;
-//   const lng = Number(longitude) || 121.5654;
-//   const center = useMemo(() => [lat, lng], [lat, lng]);
-// }
-
 export default function CoursesIdPage() {
+  // useEffect(() => {
+  //   // 解決 icon 不顯示的問題
+  //   delete L.Icon.Default.prototype._getIconUrl;
+  //   L.Icon.Default.mergeOptions({
+  //     iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  //     iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  //     shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+  //   });
+  // }, []);
+
   const { id } = useParams();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // const variant = course.variants?.[0];
-  // const coach = variant?.coach;
+
   const coaches = () => {
     if (!Array.isArray(course.variants)) return [];
     const map = new Map();
@@ -70,14 +63,6 @@ export default function CoursesIdPage() {
     return <p className="p-8 text-center text-red-600">錯誤：{error}</p>;
   if (!course) return <p className="p-8 text-center">找不到課程資料。</p>;
   const variant = coaches.length ? course.variants[0] : null;
-  // Array.isArray(course.variants) && course.variants.length
-  //   ? course.variants[0]
-  //   : null;
-  // 再安全取 location
-  // const loc = variant?.location || {};
-  // const latitude = loc.latitude;
-  // const longitude = loc.longitude;
-  // const locName = loc.name || '未提供地點名稱';
 
   return (
     <>

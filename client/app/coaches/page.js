@@ -97,17 +97,17 @@ export default function CoachesPage() {
         <CardContent className="p-4">
           <div className="flex flex-wrap items-center justify-center gap-3">
             {/* 板別 下拉多選 */}
-            {/* <DropdownMenu>
-              <SelectTrigger asChild>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
-                  單／雙板{' '}
+                  單/雙板{' '}
                   {tempFilters.boardTypes.length > 0
                     ? `(${tempFilters.boardTypes.length})`
                     : ''}
                 </Button>
-              </SelectTrigger>
+              </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-40">
-                <DropdownMenuLabel>選擇板別</DropdownMenuLabel>
+                <DropdownMenuLabel></DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {['單板', '雙板'].map((bt) => (
                   <DropdownMenuCheckboxItem
@@ -119,8 +119,7 @@ export default function CoachesPage() {
                   </DropdownMenuCheckboxItem>
                 ))}
               </DropdownMenuContent>
-            </DropdownMenu> */}
-
+            </DropdownMenu>
             {/* 語言 下拉多選 */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -190,9 +189,9 @@ export default function CoachesPage() {
             <p className="mt-1 text-sm text-gray-600">
               語言：{t.languages.join('、') || '無'}
             </p>
-            <Link href={`/coaches/${t.id}`}>
+            {/* <Link href={`/coaches/${t.id}`}>
               <Button className="mt-4 w-full">查看課程</Button>
-            </Link>
+            </Link> */}
           </div>
         ))}
       </div>

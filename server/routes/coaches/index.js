@@ -48,21 +48,6 @@ const storage = multer.diskStorage({
 // });
 const upload = multer({ storage: multer.memoryStorage() });
 
-// ckditor
-/* --- 貼在檔尾任何路由之前 (避免與 /:id 衝突)，或乾脆放最上方 --- */
-// router.post('/uploads/ckeditor', upload.single('image'), async (req, res) => {
-//   try {
-//     const dir = 'public/ckeditor';
-//     fs.mkdirSync(dir, { recursive: true });
-//     const fileName = `${Date.now()}-${req.file.originalname}`;
-//     fs.writeFileSync(path.join(dir, fileName), req.file.buffer);
-//     res.json({ url: `/ckeditor/${fileName}` });
-//   } catch (err) {
-//     console.error('CKEditor Upload Error:', err);
-//     res.status(500).json({ message: '上傳失敗' });
-//   }
-// });
-
 // 會員中心 已報名/已建立
 router.get('/me/courses', authenticate, async (req, res) => {
   const userId = req.user.id;
@@ -82,6 +67,8 @@ router.get('/me/courses', authenticate, async (req, res) => {
           select: {
             start_at: true,
             // coach: { select: { name: true } },
+            coach_id: true,
+
             course: {
               select: {
                 id: true,
@@ -120,6 +107,10 @@ router.get('/me/courses', authenticate, async (req, res) => {
     // ----------- 教練開課 -----------
     let asCoach = [];
     if (isCoach) {
+      // const isCoach = await prisma.coach.findUnique({
+
+      // })
+
       const coachCourses = await prisma.courseVariant.findMany({
         where: {
           coach_id: userId,
@@ -128,9 +119,11 @@ router.get('/me/courses', authenticate, async (req, res) => {
         orderBy: { start_at: 'asc' },
         select: {
           start_at: true,
+          coach_id: true,
           course: {
             select: {
               id: true,
+
               name: true,
               start_at: true,
               end_at: true,
@@ -156,11 +149,13 @@ router.get('/me/courses', authenticate, async (req, res) => {
             name: c.name,
             date: `${start} ~ ${end}`,
             photo: c.CourseImg?.[0]?.img || '/default.jpg',
+            coach_id: r.coach_id,
           };
         });
     }
 
     return res.json({ asStudent, asCoach });
+    // return res.json({ coachCourses });
   } catch (err) {
     console.error('取得會員課程錯誤:', err);
     return res.status(500).json({ message: '伺服器錯誤' });
