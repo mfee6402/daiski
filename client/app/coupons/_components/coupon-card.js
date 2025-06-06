@@ -18,6 +18,8 @@ export default function CouponCard({
   isUpcoming,
   isExpired,
   isUsed,
+  isChecked,
+  canUse,
 
   onUse, // 點擊「領取」時觸發
   // torn, // 這張券已被領（要撕票）
@@ -50,7 +52,9 @@ export default function CouponCard({
   };
 
   // 按鈕狀況判斷
-  const isDisabled = _used || isExpired || isUpcoming || isUsed;
+  const isDisabled = _used || isExpired || isUpcoming || isUsed || !canUse;
+
+  const checked = isChecked;
 
   // 背景圖片
   const getBgClass = (target) => {
@@ -142,6 +146,11 @@ export default function CouponCard({
                 ${
                   isDisabled
                     ? 'bg-gray-400 opacity-60 cursor-default'
+                    : 'bg-primary-600 hover:bg-primary-700 text-white'
+                }
+                ${
+                  checked
+                    ? 'bg-primary-500  cursor-default'
                     : 'bg-primary-600 hover:bg-primary-700 text-white'
                 }
               `}
