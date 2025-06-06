@@ -50,6 +50,7 @@ export default function Coupon({ isOrder = false, couponId = null }) {
                 const amount = item.amount;
                 const target = item.target;
                 const canUse = item.canUse;
+                const isChecked = item.checked;
                 const minPurchase = item.minPurchase;
                 {
                   /* const buttonClass = canUse
@@ -72,6 +73,8 @@ export default function Coupon({ isOrder = false, couponId = null }) {
                       displayTime={endAt}
                       // 狀態
                       buttonText={canUse ? '使用' : '不滿足'}
+                      isChecked={isChecked}
+                      canUse={canUse}
                       // buttonClass={buttonClass}
                       // 互動
                       onUse={() => canUse && applyCoupon(id)}
