@@ -30,7 +30,7 @@ export default function SignUpPage({ params }) {
     name: '',
     phone: '',
     email: '',
-    birthday: '',
+    birthday: '2000-01-01',
     terms: false,
   });
   const { onAdd } = useCart();
