@@ -112,7 +112,7 @@ export default function CoachIdPage(props) {
           {coach.courses.map((c) => (
             <div
               key={c.id}
-              className="flex flex-col sm:flex-row items-center bg-white  border border-gray-200 rounded-lg shadow-sm overflow-hidden"
+              className="flex flex-col sm:flex-row items-center bg-white  border border-gray-200 rounded-lg shadow-sm overflow-hidden mb-6"
             >
               {/* 課程封面 */}
               <div className=" sm:w-1/4 h-40 relative">
@@ -136,7 +136,7 @@ export default function CoachIdPage(props) {
               </div>
               <div className="p-4">
                 <button className="m-8 px-4 py-2 bg-gray-800 text-white rounded-full hover:bg-gray-700">
-                  <Link href={`/courses/${c.id}`}>立即報名</Link>
+                  <Link href={`/courses/${c.id}`}>查看課程</Link>
                 </button>
               </div>
             </div>
