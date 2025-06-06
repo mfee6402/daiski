@@ -249,7 +249,7 @@ export default function GroupDetailPage() {
         // 顯示成功訊息
         // 加入購物車 byCart
         onAdd('CartGroup', {
-          id: group.id,
+          id: newMemberEntry,
           price: group.price,
           title: group.title,
           imageUrl: group.images[0].imageUrl,

@@ -16,53 +16,59 @@ router.get('/', authenticate, async function (req, res) {
   try {
     const userId = req.user.id;
     const now = new Date();
-    const coupon = await prisma.coupon.findMany({
-      where: {
-        // 只撈 已開始 尚未過期
-
-        endAt: { gte: now },
-        id: {
-          not: 5,
-        },
-
-        // 還沒領取
-        UserCoupon: {
-          none: {
-            userId: userId,
-          },
-        },
-
-        // 遊戲用
+    const commonWhere = {
+      // 只撈 已開始 尚未過期
+      endAt: { gte: now },
+      id: {
+        not: 5,
       },
-      select: {
-        // 想顯示的 scalar 欄位
-        id: true,
-        name: true,
-        startAt: true,
-        endAt: true,
-        usageLimit: true,
-        minPurchase: true,
-        // 關聯欄位也放進 select
-        couponType: {
-          select: {
-            type: true,
-            amount: true,
-          },
-        },
-        couponTarget: {
-          select: {
-            target: true,
-          },
+
+      // 還沒領取
+      UserCoupon: {
+        none: {
+          userId: userId,
         },
       },
-    });
+    };
+
+    const [coupon, total] = await Promise.all([
+      prisma.coupon.findMany({
+        where: commonWhere,
+        select: {
+          // 想顯示的 scalar 欄位
+          id: true,
+          name: true,
+          startAt: true,
+          endAt: true,
+          usageLimit: true,
+          minPurchase: true,
+          // 關聯欄位也放進 select
+          couponType: {
+            select: {
+              type: true,
+              amount: true,
+            },
+          },
+          couponTarget: {
+            select: {
+              target: true,
+            },
+          },
+        },
+      }),
+    ]);
+
     const coupons = coupon.map(({ couponType, couponTarget, ...rest }) => ({
       ...rest,
       type: couponType.type,
       amount: couponType.amount,
       target: couponTarget.target,
     }));
-    res.status(200).json({ status: 'success', coupons });
+
+    res.status(200).json({
+      status: 'success',
+      coupons,
+    });
   } catch (error) {
     res.status(200).json({ error });
   }

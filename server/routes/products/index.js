@@ -7,6 +7,7 @@ import { PrismaClient } from '@prisma/client';
 import authenticate from '../../middlewares/authenticate.js';
 
 const prisma = new PrismaClient();
+const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3005';
 
 // ---- Multer 設定（memory 儲存，後面自行存檔） ----
 const upload = multer({
@@ -291,8 +292,8 @@ router.get('/', async (req, res, next) => {
             id: p.id,
             name: p.name,
             image: p.product_image[0]
-              ? `http://localhost:3005${p.product_image[0].url}`
-              : 'http://localhost:3005/placeholder.jpg',
+              ? `${base}${p.product_image[0].url}`
+              : `${base}/deadicon.png`,
             price: p.min_price ?? 0,
             category: p.product_category?.name ?? '無分類',
             category_id: p.product_category?.id ?? null,
@@ -889,8 +890,8 @@ router.get('/:id', async (req, res, next) => {
       id: p.id,
       name: p.name,
       image: p.product_image[0]
-        ? `http://localhost:3005${p.product_image[0].url}`
-        : '/placeholder.jpg',
+        ? `${base}${p.product_image[0].url}`
+        : `/deadicon.png`,
       price: p.product_sku[0]?.price ?? 0,
     });
 
@@ -906,9 +907,7 @@ router.get('/:id', async (req, res, next) => {
         id: product.product_category.id,
         name: product.product_category.name,
       },
-      images: product.product_image.map(
-        (img) => `http://localhost:3005${img.url}`
-      ),
+      images: product.product_image.map((img) => `${base}${img.url}`),
       skus: product.product_sku.map((sku) => ({
         skuId: sku.id,
         sizeId: sku.size_id,
