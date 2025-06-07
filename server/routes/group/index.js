@@ -147,16 +147,11 @@ router.get('/summary', async (req, res, next) => {
     const potentialFormedGroups = await prisma.group.findMany({
       where: {
         deletedAt: null,
-        startDate: {
-          lte: currentDate, // lte (less than or equal to) 表示小於等於
-        },
-        endDate: {
-          gt: currentDate,
-        },
       },
-      include: {
+      select: {
+        minPeople: true, // 只需要 minPeople 欄位
         _count: {
-          select: { members: true }, // 計算每個揪團的成員數量
+          select: { members: true }, // 和成員數量
         },
       },
     });
@@ -540,6 +535,17 @@ router.get('/:groupId', async (req, res, next) => {
         images: { orderBy: { sortOrder: 'asc' } },
         location: true,
         _count: { select: { members: true } },
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatar: true,
+              },
+            },
+          },
+        },
         comments: {
           orderBy: { createdAt: 'desc' },
           include: {
