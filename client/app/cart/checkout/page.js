@@ -26,7 +26,7 @@ import { useCart } from '@/hooks/use-cart';
 import PaymentOption from './_components/paymentOption';
 import { produce } from 'immer';
 
-export default function CheckoutPage(props) {
+export default function CheckoutPage() {
   const { cart, setCart, onClear } = useCart();
   const router = useRouter();
 
@@ -66,6 +66,9 @@ export default function CheckoutPage(props) {
     // 設定到狀態
     setCart(nextCart);
 
+    console.log('更新後的車車:');
+    console.log(nextCart);
+
     const orderData = {
       shipping: nextCart.shippingInfo.shippingMethod,
       payment: nextCart.payment,
@@ -78,7 +81,8 @@ export default function CheckoutPage(props) {
       CartCourse: nextCart.CartCourse,
       CartProduct: nextCart.CartProduct,
     };
-
+    console.log('訂單:');
+    console.log(orderData);
     // 建立訂單
     const responseOrder = await fetch('http://localhost:3005/api/cart/order', {
       method: 'POST',
@@ -108,6 +112,7 @@ export default function CheckoutPage(props) {
 
     const couponUsedId = cart.CartCoupon.find((item) => item.checked)?.id;
 
+    // 寫入已使用優惠券時間
     if (couponUsedId) {
       const responseCouponUsed = await fetch(
         `http://localhost:3005/api/cart/couponUsed/${couponUsedId}`,
@@ -122,17 +127,18 @@ export default function CheckoutPage(props) {
       );
     }
 
-    // 清空購物車
-    onClear();
-
     if (data.payment === 'paypal') {
       router.push('/cart/checkout/paypal');
     } else if (data.payment === 'ecpay') {
+      // 清空購物車
+      onClear();
       // 可傳金額當 query 參數
       router.push(
         `http://localhost:3005/api/cart/ecpay-test-only?amount=${orderData.amount}`
       );
     } else {
+      // 清空購物車
+      onClear();
       router.push('/cart/summary');
     }
   };
