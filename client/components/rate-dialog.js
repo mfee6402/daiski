@@ -17,7 +17,7 @@ import { Slider } from '@/components/ui/slider';
 export default function RateDialog({ orderId, productId, open, onOpenChange }) {
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState('');
-  const base = process.env.NEXT_PUBLIC_API_BASE || '';
+  const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3005';
 
   useEffect(() => {
     if (open) {

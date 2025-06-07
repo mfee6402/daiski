@@ -30,7 +30,7 @@ export default function SignUpPage({ params }) {
     name: '',
     phone: '',
     email: '',
-    birthday: '',
+    birthday: '2000-01-01',
     terms: false,
   });
   const { onAdd } = useCart();
@@ -88,10 +88,7 @@ export default function SignUpPage({ params }) {
       }
       toast.success('報名成功！');
       onAdd('CartCourse', {
-        id: id,
-        price: variant.price,
-        name: course.name,
-        // imageUrl: variant.images[0],
+        id: variant.id,
       });
 
       setTimeout(() => {

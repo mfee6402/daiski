@@ -20,21 +20,23 @@ export default function HomeCard() {
           <Card
             title="滑雪教學"
             imgSrc="/home-images/img_ins.x.png"
+            className="xl:mb-[-5rem]"
             href="/courses"
           />
           <Card
             title="教練一覽"
             imgSrc="/home-images/img_ins.png"
             reverse /* 文字右 / 圖片左 */
-            className=""
-            textClassName="sm:mb-[15rem] mb-[8rem] text-center"
+            className="xl:mt-[10rem]"
+            textClassName="sm:mb-[15rem] mb-[5rem] text-center"
             href="/coaches"
           />
 
           <Card
             title="揪團滑雪"
             imgSrc="/home-images/img_ins.3.png"
-            className="sm:mt-[-5rem] md:mt-[-8rem] lg:mt-[-12rem] mt-[-4rem] mb-[5rem]"
+            className="sm:mt-[-5rem] md:mt-[-8rem] lg:mt-[-12rem] mt-[-3.5rem] mb-[5rem]"
+            textClassName="mt-[2rem] sm:mt-[5rem] text-center"
             href="/groups"
           />
         </ul>

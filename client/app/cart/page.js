@@ -14,6 +14,7 @@ import { useCart } from '@/hooks/use-cart';
 
 export default function CartPage({ setProcess }) {
   const { user, isAuth, isLoading } = useAuth();
+  const { cart } = useCart();
 
   // useEffect(() => {
   //   async function fetchData() {
@@ -31,25 +32,6 @@ export default function CartPage({ setProcess }) {
   //   fetchData();
   // }, []);
 
-  // const groups = data?.data.cart.CartGroup ? cart.CartGroup : [];
-  // FIXME收藏未做
-  //   // 定義收藏用狀態
-  // const [wishList, setWishList] = useState(false)
-  // // 處理收藏布林值切換(toggle)
-  // const onToggleWish = (wishList) => {
-  //   const nextWishList = books.map((v, i) => {
-  //     if (v.isbn === wishList) {
-  //       // 如果比對出isbn=bookIsbn的成員，則進行再拷貝物件，並且作修改`bookmark: !v.bookmark`
-  //       return { ...v, wishList: !v.wishList }
-  //     } else {
-  //       // 否則回傳原本物件
-  //       return v
-  //     }
-  //   })
-  //   // 3 設定到狀態
-  //   setBooks(wishList)
-  // }
-
   // 以上測試區
   // if (loading) {
   // return <p>載入中</p>;
@@ -64,9 +46,18 @@ export default function CartPage({ setProcess }) {
             <CartItemList
               key="CartProduct"
               category="CartProduct"
+              data={cart}
             ></CartItemList>
-            <CartItemList key="CartCourse" category="CartCourse"></CartItemList>
-            <CartItemList key="CartGroup" category="CartGroup"></CartItemList>
+            <CartItemList
+              key="CartCourse"
+              category="CartCourse"
+              data={cart}
+            ></CartItemList>
+            <CartItemList
+              key="CartGroup"
+              category="CartGroup"
+              data={cart}
+            ></CartItemList>
             <Coupon></Coupon>
           </div>
           <div className="">

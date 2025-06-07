@@ -11,7 +11,7 @@ export default function QuantityButton({
   type = '',
 }) {
   const url = `http://localhost:3005/api/cart/${item.id}`;
-  const { cart, setCart, onIncrease, onDecrease } = useCart();
+  const { cart, setCart, onAdd, onDecrease } = useCart();
 
   // FIXME 使用useCart鉤子，避免程式碼重複
   // 將更新傳回後端
@@ -30,7 +30,9 @@ export default function QuantityButton({
   //     console.log(err);
   //   }
   // }
-
+  // console.log(object);
+  const nextItem = { ...item };
+  nextItem.quantity = 1;
   return (
     <>
       <Button
@@ -47,11 +49,11 @@ export default function QuantityButton({
                   if (product.quantity === 1) {
                     return product.quantity;
                   } else {
-                    onDecrease('CartProduct', item);
+                    onDecrease('CartProduct', nextItem);
                     return product.quantity--;
                   }
                 } else if (type === 'plus') {
-                  onIncrease('CartProduct', item);
+                  onAdd('CartProduct', nextItem);
                   return product.quantity++;
                 }
               }

@@ -148,8 +148,8 @@ export default function ProfileCoupons(props) {
         <CardTitle>已領取的優惠券</CardTitle>
         <CardDescription>共 {usercoupon.length} 筆</CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-row gap-6 p-5 justify-between ">
-        <div className="flex flex-row gap-6">
+      <CardContent className="flex flex-row sm:gap-6 gap-2 p-5 sm:justify-between flex-wrap">
+        <div className="flex flex-row sm:gap-6 gap-2 flex-wrap">
           {/* 分類 */}
           <Select
             value={selectedTarget || ''}
@@ -161,7 +161,7 @@ export default function ProfileCoupons(props) {
               }
             }}
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="sm:w-[180px] w-[150px] ">
               <SelectValue placeholder="請選擇分類" />
             </SelectTrigger>
             <SelectContent>
@@ -185,7 +185,7 @@ export default function ProfileCoupons(props) {
               }
             }}
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="sm:w-[180px] w-[150px]">
               <SelectValue placeholder="請選擇分類" />
             </SelectTrigger>
             <SelectContent>

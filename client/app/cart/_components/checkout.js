@@ -12,41 +12,70 @@ import {
 } from '@/components/ui/card';
 
 import { Button } from '@/components/ui/button';
-import { set } from 'date-fns';
-export default function Checkout() {
+
+export default function Checkout({ isOrder = false, data = {} }) {
   const { cart, setCart } = useCart();
+  console.log(data);
+
   const [checkedCoupon, setCheckedCoupon] = useState(null);
-  const totalProduct = cart?.CartProduct?.reduce((acc, product) => {
-    acc += product.price * product.quantity;
-    return acc;
-  }, 0);
-
-  const totalCourse = cart?.CartCourse?.reduce((acc, course) => {
-    acc += course.price;
-    return acc;
-  }, 0);
-
-  const totalGroup = cart?.CartGroup?.reduce((acc, group) => {
-    acc += group.price;
-    return acc;
-  }, 0);
-
   // couponDiscount
   let couponDiscount = 0;
   let amount = 0;
+  let totalProduct = 0;
+  let totalCourse = 0;
+  let totalGroup = 0;
 
-  if (checkedCoupon && checkedCoupon.type === '現金折扣') {
-    couponDiscount = checkedCoupon.amount;
-  } else if (checkedCoupon && checkedCoupon.type === '百分比折扣') {
-    couponDiscount = Math.floor(
-      ((totalProduct + totalCourse) * checkedCoupon.amount) / 100
-    );
+  if (!isOrder) {
+    totalProduct = cart?.CartProduct?.reduce((acc, product) => {
+      acc += product.price * product.quantity;
+      return acc;
+    }, 0);
+
+    totalCourse = cart?.CartCourse?.reduce((acc, course) => {
+      acc += course.price;
+      return acc;
+    }, 0);
+
+    totalGroup = cart?.CartGroup?.reduce((acc, group) => {
+      acc += group.price;
+      return acc;
+    }, 0);
+
+    if (checkedCoupon && checkedCoupon.type === '現金折扣') {
+      couponDiscount = checkedCoupon.amount;
+    } else if (checkedCoupon && checkedCoupon.type === '百分比折扣') {
+      couponDiscount = Math.floor(
+        ((totalProduct + totalCourse) * checkedCoupon.amount) / 100
+      );
+    }
+    amount = totalProduct + totalCourse + totalGroup - couponDiscount;
+  } else {
+    totalProduct = data?.orderProduct?.reduce((acc, product) => {
+      acc += product.price * product.quantity;
+      return acc;
+    }, 0);
+
+    totalCourse = data?.orderCourse?.reduce((acc, course) => {
+      acc += course.price;
+      return acc;
+    }, 0);
+
+    totalGroup = data?.orderGroup?.reduce((acc, group) => {
+      acc += group.price;
+      return acc;
+    }, 0);
+
+    if (checkedCoupon && checkedCoupon.type === '現金折扣') {
+      couponDiscount = checkedCoupon.amount;
+    } else if (checkedCoupon && checkedCoupon.type === '百分比折扣') {
+      couponDiscount = Math.floor(
+        ((totalProduct + totalCourse) * checkedCoupon.amount) / 100
+      );
+    }
+    amount = totalProduct + totalCourse + totalGroup - couponDiscount;
   }
-
-  amount = totalProduct + totalCourse + totalGroup - couponDiscount;
-
   useEffect(() => {
-    cart.CartCoupon?.forEach((coupon) => {
+    cart?.CartCoupon?.forEach((coupon) => {
       if (coupon.checked) {
         setCheckedCoupon(coupon);
       }
@@ -60,7 +89,7 @@ export default function Checkout() {
       couponId: checkedCoupon?.id ? checkedCoupon.id : null,
     });
   };
-  console.log(cart);
+
   return (
     <>
       <Card
@@ -74,27 +103,27 @@ export default function Checkout() {
           <div className="flex flex-col gap-3  ">
             <div className="flex justify-between">
               <p className="text-p-tw">商品原價總金額</p>
-              <p className="text-p-tw">${totalProduct.toLocaleString()}</p>
+              <p className="text-p-tw">${totalProduct?.toLocaleString()}</p>
             </div>
 
             <div className="flex justify-between">
               <p className="text-p-tw">課程原價總金額</p>
-              <p className="text-p-tw">${totalCourse.toLocaleString()}</p>
+              <p className="text-p-tw">${totalCourse?.toLocaleString()}</p>
             </div>
 
             <div className="flex justify-between">
               <p className="text-p-tw">揪團總金額</p>
-              <p className="text-p-tw">${totalGroup.toLocaleString()}</p>
+              <p className="text-p-tw">${totalGroup?.toLocaleString()}</p>
             </div>
 
             <div className="flex justify-between">
               <p className="text-p-tw">折扣金額(不含揪團)</p>
-              {/* FIXME 待寫入金額 */}
+
               <p className="text-p-tw">
                 -
                 {checkedCoupon?.type === '百分比折扣'
                   ? `${checkedCoupon.amount}%($${couponDiscount})`
-                  : `${couponDiscount}`}
+                  : `$${couponDiscount}`}
               </p>
             </div>
 
@@ -102,19 +131,28 @@ export default function Checkout() {
               <h6 className="text-h6-tw font-bold">結帳金額</h6>
               <p className="text-red">${amount.toLocaleString()}</p>
             </div>
-            {/* FIXME 抓數量於"結帳"字後 */}
 
-            <Link
-              href={'/cart/checkout'}
-              className="text-p-tw text-secondary-200"
-            >
+            {!isOrder && amount > 0 && (
+              <Link
+                href={'/cart/checkout'}
+                className="text-p-tw text-secondary-200"
+              >
+                <Button
+                  className="flex justify-center bg-primary-600 w-full py-5"
+                  onClick={handleCheckout}
+                >
+                  結帳
+                </Button>
+              </Link>
+            )}
+            {!isOrder && amount === 0 && (
               <Button
                 className="flex justify-center bg-primary-600 w-full py-5"
                 onClick={handleCheckout}
               >
-                結帳
+                購買商品後結帳
               </Button>
-            </Link>
+            )}
           </div>
         </CardContent>
       </Card>

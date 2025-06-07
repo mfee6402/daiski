@@ -11,8 +11,10 @@ export default function authenticate(req, res, next) {
   // const token = req.headers['authorization']
 
   // 從cookie中取得存取令牌
-  const token = req.cookies.accessToken;
-
+  let token = req.cookies.accessToken;
+  if (!token && req.headers.authorization?.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
   // 如果沒有存取令牌，回傳錯誤訊息
   if (!token) {
     return res.json({
@@ -32,6 +34,7 @@ export default function authenticate(req, res, next) {
 
     // 將user資料加到req中
     req.user = user;
+    req.token = token;
     next();
   });
 }

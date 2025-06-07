@@ -18,6 +18,8 @@ export default function CouponCard({
   isUpcoming,
   isExpired,
   isUsed,
+  isChecked,
+  canUse,
 
   onUse, // 點擊「領取」時觸發
   // torn, // 這張券已被領（要撕票）
@@ -50,7 +52,13 @@ export default function CouponCard({
   };
 
   // 按鈕狀況判斷
-  const isDisabled = _used || isExpired || isUpcoming || isUsed;
+
+  const checked = isChecked;
+
+  let isDisabled =
+    _used || isExpired || isUpcoming || isUsed || checked === false
+      ? !canUse
+      : false;
 
   // 背景圖片
   const getBgClass = (target) => {
@@ -69,11 +77,11 @@ export default function CouponCard({
   return (
     <>
       {/* 單一卡片 (item) */}
-      <div className="relative flex group" onMouseEnter={handleEnter}>
+      <div className="relative flex group " onMouseEnter={handleEnter}>
         {/* 左側日期 (date) */}
         <div
           className={
-            'relative flex w-1/3 md:w-1/4 sm:w-1/5 flex-col items-center justify-center p-8 ' +
+            'relative flex w-1/5 sm:w-1/4 md:w-1/3 flex-col items-center justify-center sm:p-8  p-2' +
             'border-r-2 border-dotted border-gray-400 bg-secondary-200 ' +
             (_used
               ? tearAnim
@@ -88,13 +96,12 @@ export default function CouponCard({
           <span className="absolute -bottom-3 -right-4 h-6 w-6 rounded-full dark:bg-background bg-white"></span>
 
           <RiCoupon2Line className="text-[35px] dark:text-background" />
-          {/* <h2 className="text-5xl font-extrabold leading-none">23</h2> */}
-          <p className="mt-1 text-xl text-gray-700">{target}</p>
+          <p className="mt-1 sm:text-tw-h6 text-gray-700">{target}</p>
         </div>
 
         {/* 右側內容 (content) */}
         <div
-          className={`relative w-2/3 md:w-3/4 sm:w-4/5 p-6 ${bgClass} bg-cover`}
+          className={`relative w-4/5 sm:w-3/4 md:w-2/3 sm:p-6 p-2 ${bgClass} bg-cover`}
         >
           {/* 反光 */}
           <div
@@ -125,12 +132,12 @@ export default function CouponCard({
             </div>
 
             {/* 按鈕 (button) */}
-            <div className="flex justify-between mt-5">
+            <div className="flex justify-between flex-wrap sm:mt-5">
               <p
                 className={
                   isUpcoming
-                    ? 'text-h6-tw text-white truncate '
-                    : 'text-h6-tw text-white truncate '
+                    ? 'sm:text-h6-tw text-white truncate '
+                    : 'sm:text-h6-tw text-white truncate '
                 }
               >
                 {displayTime} {timeLabel}
@@ -142,6 +149,11 @@ export default function CouponCard({
                 ${
                   isDisabled
                     ? 'bg-gray-400 opacity-60 cursor-default'
+                    : 'bg-primary-600 hover:bg-primary-700 text-white'
+                }
+                ${
+                  checked
+                    ? 'bg-primary-500 '
                     : 'bg-primary-600 hover:bg-primary-700 text-white'
                 }
               `}
