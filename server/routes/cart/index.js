@@ -563,6 +563,9 @@ router.get('/orders', authenticate, async function (req, res) {
       where: {
         userId: userId,
       },
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
 
     const toUTC8 = (utcString) => {

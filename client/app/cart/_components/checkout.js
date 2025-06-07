@@ -128,9 +128,10 @@ export default function Checkout({ isOrder = false, data = {} }) {
               (checkedCoupon?.type === '百分比折扣'
                 ? `${checkedCoupon.amount}%($${couponDiscount})`
                 : `$${couponDiscount}`)}
-            {isOrder && data?.orderCoupon?.type === '百分比折扣'
-              ? `${data?.orderCoupon.amount}%($${couponDiscount})`
-              : `$${couponDiscount}`}
+            {isOrder &&
+              (data?.orderCoupon?.type === '百分比折扣'
+                ? `${data?.orderCoupon.amount}%($${couponDiscount})`
+                : `$${couponDiscount}`)}
           </p>
         </div>
         <div className="flex justify-between">
