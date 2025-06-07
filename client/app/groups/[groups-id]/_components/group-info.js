@@ -106,6 +106,7 @@ function InfoAndActionsSection({
   onJoinGroup,
   onJoinChat,
   isAlreadyMember,
+  isOrganizer,
   hasPaid,
 
   // 新增的 props for add-to-calendar-button
@@ -258,7 +259,7 @@ function InfoAndActionsSection({
         <Button
           variant="outline"
           onClick={onJoinChat}
-          disabled={!isAlreadyMember || !hasPaid}
+          disabled={!isOrganizer &&(!isAlreadyMember || !hasPaid)}
           className="flex-1 py-3 border-blue-600 text-blue-600 font-semibold text-base hover:bg-blue-600/10 transition active:scale-95 active:shadow-sm rounded-md disabled:opacity-50 dark:border-blue-500 dark:text-blue-400 dark:hover:bg-blue-500/20"
         >
           加入聊天室
@@ -344,6 +345,7 @@ export default function GroupMainInfoCard({
           isAlreadyMember={isAlreadyMember}
           hasPaid={hasPaid}
           calendarButtonLoaded={calendarButtonLoaded}
+          isOrganizer={isOrganizer}
           eventName={eventName}
           eventStartDate={eventStartDate}
           eventEndDate={eventEndDate}

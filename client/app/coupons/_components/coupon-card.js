@@ -120,14 +120,14 @@ export default function CouponCard({
           {/* 內容文字 */}
           <div className="relative text-white ">
             <div className="space-y-1 pr-2 flex flex-col">
+              <p className="font-tw leading-p-tw text-white line-clamp-2">
+                {name}
+              </p>
               <p className=" leading-p-tw text-white truncate ">
                 {type} {amount.toLocaleString()}
               </p>
               <p className="font-tw leading-p-tw text-white truncate ">
                 結帳金額滿 {minPurchase.toLocaleString()} 使用
-              </p>
-              <p className="font-tw leading-p-tw text-white line-clamp-2">
-                {name}
               </p>
             </div>
 
