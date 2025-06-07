@@ -52,11 +52,10 @@ export default function CartItemList({
 
   return (
     <>
-      <Card className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark">
+      {/* 電腦版 */}
+      <Card className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark hidden md:block">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">
-            {titleMap[category]}
-          </CardTitle>
+          <CardTitle className="">{titleMap[category]}</CardTitle>
         </CardHeader>
 
         <CardContent>
@@ -113,7 +112,9 @@ export default function CartItemList({
                         category === 'orderProduct') && (
                         <TableCell>
                           <div className="w-full flex justify-center items-center ">
-                            <p className="text-p-tw">{item?.size}</p>
+                            <p className="text-p-tw">
+                              {item?.size ? item.size : ''}
+                            </p>
                           </div>
                         </TableCell>
                       )}
@@ -186,6 +187,99 @@ export default function CartItemList({
               </TableBody>
             </Table>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* 手機版 */}
+      <Card className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark block md:hidden">
+        <CardHeader>
+          <CardTitle className="">{titleMap[category]}</CardTitle>
+        </CardHeader>
+
+        <CardContent className="py-4">
+          {data?.[category]?.map((item) => {
+            const totalPrice = (
+              item?.price * (item.quantity ? item.quantity : 1)
+            ).toLocaleString();
+
+            return (
+              <div
+                key={item.id}
+                className="flex flex-col border rounded-xl p-4 gap-2"
+              >
+                {/* 圖片與名稱 */}
+                <div className="flex gap-4 items-center">
+                  <div
+                    className={`relative shrink-0 ${category === 'CartProduct' || category === 'orderProduct' ? 'h-[72px] w-[72px]' : 'h-[72px] w-[120px]'}`}
+                  >
+                    <Image
+                      fill
+                      src={
+                        item?.imageUrl
+                          ? `http://localhost:3005${item.imageUrl}`
+                          : ''
+                      }
+                      alt={item.imageUrl}
+                      className="rounded object-cover"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <p className="  line-clamp-2">{item.name}</p>
+                    {(category === 'CartProduct' ||
+                      category === 'orderProduct') && (
+                      <p className="">尺寸：{item.size}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* 價格 / 日期 */}
+                <div className="flex justify-between ">
+                  {category === 'CartProduct' || category === 'orderProduct' ? (
+                    <>
+                      <span>單價：${item.price.toLocaleString()}</span>
+                      <span>總價：${totalPrice}</span>
+                    </>
+                  ) : (
+                    <span>
+                      時間：{toUTC8(item?.startAt)} ～ {toUTC8(item?.endAt)}
+                    </span>
+                  )}
+                </div>
+
+                {/* 數量控制 */}
+                {(category === 'CartProduct' ||
+                  category === 'orderProduct') && (
+                  <div className="flex justify-between items-center">
+                    <span className="">數量：</span>
+                    <div className="flex items-center gap-3">
+                      {category === 'CartProduct' && (
+                        <QuantityButton
+                          item={item}
+                          category={category}
+                          type="minus"
+                        />
+                      )}
+                      <span>{item.quantity}</span>
+                      {category === 'CartProduct' && (
+                        <QuantityButton
+                          item={item}
+                          category={category}
+                          type="plus"
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* 刪除按鈕 */}
+                {category.startsWith('Cart') && (
+                  <div className="flex justify-end">
+                    <Delete name={item.name} category={category} item={item} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </CardContent>
       </Card>
     </>

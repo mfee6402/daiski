@@ -4,12 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
+import { useCart } from '@/hooks/use-cart';
 
-export default function PaypalPage(props) {
+export default function PaypalPage() {
   const router = useRouter();
+  const { cart, onClear } = useCart();
 
   // FIXME 根據結帳金額 設定為變數
-  const amount = 3000;
+  const amount = cart?.amount ? cart.amount : 3000;
 
   const initialOptions = {
     // 使用NEXT_PUBLIC_開頭的環境變數，瀏覽器才看的到
@@ -45,6 +47,7 @@ export default function PaypalPage(props) {
 
   const onApprove = async (data) => {
     try {
+      onClear();
       if (!data?.orderID) throw new Error('無效的訂單ID');
       const url = `http://localhost:3005/api/paypal/${data.orderID}`;
       const response = await fetch(url, {
@@ -54,10 +57,11 @@ export default function PaypalPage(props) {
         },
       });
       const result = await response.json();
-      console.log(result);
+
       router.push('/cart/summary');
     } catch (error) {
       console.log(error);
+
       router.push('/cart/checkout/paypal/cancel');
     }
   };
@@ -69,8 +73,8 @@ export default function PaypalPage(props) {
 
   return (
     <>
-      <p>{'帳號:sb-7idsw42487819@personal.example.com'}</p>
-      <p>{'密碼:bF]TT4/a'}</p>
+      <p>{'帳號:sb-mfooi42868363@personal.example.com'}</p>
+      <p>{'密碼:w<_0X%tv'}</p>
       <PayPalScriptProvider options={initialOptions}>
         <PayPalButtons
           style={styles}
