@@ -118,12 +118,12 @@ export default function Checkout({ isOrder = false, data = {} }) {
 
             <div className="flex justify-between">
               <p className="text-p-tw">折扣金額(不含揪團)</p>
-              {/* FIXME 待寫入金額 */}
+
               <p className="text-p-tw">
                 -
                 {checkedCoupon?.type === '百分比折扣'
                   ? `${checkedCoupon.amount}%($${couponDiscount})`
-                  : `${couponDiscount}`}
+                  : `$${couponDiscount}`}
               </p>
             </div>
 
@@ -131,7 +131,6 @@ export default function Checkout({ isOrder = false, data = {} }) {
               <h6 className="text-h6-tw font-bold">結帳金額</h6>
               <p className="text-red">${amount.toLocaleString()}</p>
             </div>
-            {/* FIXME 抓數量於"結帳"字後 */}
 
             {!isOrder && amount > 0 && (
               <Link
