@@ -155,10 +155,7 @@ export default function CheckoutPage() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col w-full p-12 gap-5  ">
-                <ShippingMethod
-                // selectedShipping={selectedShipping}
-                // setSelectedShipping={setSelectedShipping}
-                ></ShippingMethod>
+                <ShippingMethod></ShippingMethod>
               </div>
             </CardContent>
             {/* 付款方式 */}

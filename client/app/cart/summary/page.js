@@ -38,7 +38,7 @@ export default function SummaryPage() {
   }, []);
 
   const shippingMap = {
-    cashOnDelivery: '宅配',
+    homeDelivery: '宅配',
     storePickup: '超商取貨',
   };
   const payMentMap = {
@@ -46,6 +46,7 @@ export default function SummaryPage() {
     cashOnDelivery: '貨到付款',
     ecpay: 'ECPay',
   };
+  console.log(order);
 
   return (
     <>

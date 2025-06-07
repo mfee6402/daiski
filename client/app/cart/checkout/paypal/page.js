@@ -10,8 +10,17 @@ export default function PaypalPage() {
   const router = useRouter();
   const { cart, onClear } = useCart();
 
+  const [rate, setRate] = useState(0);
+  useEffect(() => {
+    fetch('https://open.er-api.com/v6/latest/TWD')
+      .then((response) => response.json())
+      .then((data) => {
+        setRate(data.rates.USD);
+      });
+  }, []);
+
   // FIXME 根據結帳金額 設定為變數
-  const amount = cart?.amount ? cart.amount : 3000;
+  const amount = cart?.amount ? (cart.amount * rate).toFixed(2) : 3000;
 
   const initialOptions = {
     // 使用NEXT_PUBLIC_開頭的環境變數，瀏覽器才看的到
@@ -38,7 +47,7 @@ export default function PaypalPage() {
         }),
       });
       const data = await response.json();
-      console.log(data);
+
       return data.orderId;
     } catch (error) {
       console.log(error);
