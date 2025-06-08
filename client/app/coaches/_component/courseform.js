@@ -512,7 +512,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
 
   /* ---- JSX ---- */
   return (
-    <Container className="min-h-screen bg-slate-50 py-8 px-4 dark:bg-slate-900">
+    <Container className="min-h-screen bg-white py-8 px-4 dark:bg-slate-900">
       <div className="max-w-screen-2xl mx-auto">
         {/* Stepper */}
         <HorizontalStepper steps={STEPS} current={step} setCurrent={setStep} />
