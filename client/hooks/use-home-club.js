@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
-
+// 首頁
 /* 讓父層自由展開 N 張卡片 & 計算 CSS 變數 */
 export default function UseHomeClub(itemCount, wideSpan = 10) {
   const [activeIdx, setActiveIdx] = useState(0); // 0 = 預設第一張

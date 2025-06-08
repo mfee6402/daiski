@@ -26,8 +26,8 @@ import { useCart } from '@/hooks/use-cart';
 import PaymentOption from './_components/paymentOption';
 import { produce } from 'immer';
 
-export default function CheckoutPage(props) {
-  const { cart, setCart } = useCart();
+export default function CheckoutPage() {
+  const { cart, setCart, onClear } = useCart();
   const router = useRouter();
 
   const methods = useForm({
@@ -36,6 +36,7 @@ export default function CheckoutPage(props) {
       district: '',
       zipCode: '',
       addressDetail: '',
+      shouldUnregister: true,
     },
   });
 
@@ -46,6 +47,7 @@ export default function CheckoutPage(props) {
       draft.userInfo.phone = data.phone;
       draft.payment = data.payment;
     });
+
     if (data.shippingMethod === 'homeDelivery') {
       nextCart = produce(nextCart, (draft) => {
         draft.shippingInfo.address = data.city + data.district;
@@ -64,7 +66,9 @@ export default function CheckoutPage(props) {
     // 設定到狀態
     setCart(nextCart);
 
-    // FIXME 資料庫沒有送貨方式
+    console.log('更新後的車車:');
+    console.log(nextCart);
+
     const orderData = {
       shipping: nextCart.shippingInfo.shippingMethod,
       payment: nextCart.payment,
@@ -77,7 +81,10 @@ export default function CheckoutPage(props) {
       CartCourse: nextCart.CartCourse,
       CartProduct: nextCart.CartProduct,
     };
-    const response = await fetch('http://localhost:3005/api/cart/order', {
+    console.log('訂單:');
+    console.log(orderData);
+    // 建立訂單
+    const responseOrder = await fetch('http://localhost:3005/api/cart/order', {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -85,24 +92,57 @@ export default function CheckoutPage(props) {
       },
       body: JSON.stringify(orderData),
     });
-    const amount = await response.json();
+    const order = await responseOrder.json();
 
-    console.log('測試' + amount);
+    localStorage.setItem('summaryOrderId', order.data);
+
+    // 揪團付錢
+    if (cart.CartGroup[0]?.id) {
+      const responseGroupPaid = await fetch(
+        `http://localhost:3005/api/group/members/${cart.CartGroup[0].id}/payment`,
+        {
+          method: 'PUT',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    }
+
+    const couponUsedId = cart.CartCoupon.find((item) => item.checked)?.id;
+
+    // 寫入已使用優惠券時間
+    if (couponUsedId) {
+      const responseCouponUsed = await fetch(
+        `http://localhost:3005/api/cart/couponUsed/${couponUsedId}`,
+        {
+          method: 'PUT',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(orderData),
+        }
+      );
+    }
 
     if (data.payment === 'paypal') {
       router.push('/cart/checkout/paypal');
     } else if (data.payment === 'ecpay') {
+      // 清空購物車
+      onClear();
       // 可傳金額當 query 參數
-      router.push(`http://localhost:3005/api/cart/ecpay-test-only?amount=2500`);
+      router.push(
+        `http://localhost:3005/api/cart/ecpay-test-only?amount=${orderData.amount}`
+      );
     } else {
-      // 假設是貨到付款或信用卡，這裡可以寫訂單建立邏輯
-      // 然後跳轉
-      // await fetch('/api/order', { method: 'POST', body: form });
-
+      // 清空購物車
+      onClear();
       router.push('/cart/summary');
     }
   };
-  console.log(cart);
+
   return (
     <>
       <FormProvider {...methods}>
@@ -115,10 +155,7 @@ export default function CheckoutPage(props) {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col w-full p-12 gap-5  ">
-                <ShippingMethod
-                // selectedShipping={selectedShipping}
-                // setSelectedShipping={setSelectedShipping}
-                ></ShippingMethod>
+                <ShippingMethod></ShippingMethod>
               </div>
             </CardContent>
             {/* 付款方式 */}
