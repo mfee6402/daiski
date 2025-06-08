@@ -14,15 +14,33 @@ const cartCreateMap = {
 const foreignKeyMap = {
   CartGroup: 'groupMemberId',
   CartProduct: 'productSkuId',
-  CartCourse: 'courseId',
+  CartCourse: 'courseVariantId',
 };
+
+// 註冊完成時要分配一台購物車給使用者
+router.post('/createCart/:id', async function (req, res) {
+  const userId = +req.params.id;
+  // FIXME 要處理使用者有購物車的話則部新增
+  try {
+    const userCart = await prisma.cart.create({
+      data: { userId },
+    });
+
+    return res
+      .status(200)
+      .json({ status: 'success', message: '建立購物車成功' });
+  } catch (error) {
+    return res.status(200).json({ status: 'fail', message: '建立購物車失敗' });
+  }
+});
 
 // 新增
 router.post('/', authenticate, async function (req, res, next) {
   try {
     const userId = +req.user.id;
     const category = req.body.category;
-    const itemId = req.body.itemId;
+    const itemId = +req.body.itemId;
+    const quantity = +req.body.quantity ? +req.body.quantity : 1;
 
     // 檢查分類
     const cartModel = cartCreateMap[category];
@@ -37,10 +55,6 @@ router.post('/', authenticate, async function (req, res, next) {
       where: { userId },
     });
 
-    // FIXME檢查是否參加過判斷訂單中有沒有(改為其他人判斷是否參加過)
-
-    // FIXME 要處理使用者如果沒購物車的話，要先新增購物車
-
     // 新增
     try {
       // 判斷是否存在，若不存在才新增，否則用PUT增加
@@ -50,13 +64,14 @@ router.post('/', authenticate, async function (req, res, next) {
           [foreignKeyName]: itemId,
         },
       });
+
       if (!existingItem) {
         if (category === 'CartProduct') {
           await cartModel.create({
             data: {
               cartId: userCart.id,
               [foreignKeyName]: itemId,
-              quantity: 1,
+              quantity: quantity,
             },
           });
         } else {
@@ -86,7 +101,7 @@ router.get('/', authenticate, async function (req, res) {
   try {
     const userId = +req.user.id;
 
-    const data = await prisma.cart.findUnique({
+    const data = await prisma.cart.findFirst({
       select: {
         CartProduct: {
           select: {
@@ -140,6 +155,30 @@ router.get('/', authenticate, async function (req, res) {
             },
           },
         },
+        CartGroup: {
+          include: {
+            groupMember: {
+              select: {
+                group: {
+                  select: {
+                    id: true,
+                    title: true,
+                    startDate: true,
+                    endDate: true,
+                    price: true,
+                    location: { select: { name: true } },
+                    customLocation: true,
+                    images: {
+                      select: { imageUrl: true },
+                      orderBy: { sortOrder: 'asc' },
+                      take: 1,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
 
       where: {
@@ -147,14 +186,14 @@ router.get('/', authenticate, async function (req, res) {
       },
     });
 
-    // 商品、課程攤平
+    // 商品、課程、揪團攤平
     const CartProduct = data.CartProduct.map((item) => ({
       id: item.productSku.id,
       quantity: item.quantity,
       price: item.productSku.price,
       name: item.productSku.product.name,
       imageUrl: item.productSku.product.product_image[0].url,
-      size: item.productSku.product_size.name,
+      size: item.productSku.product_size?.name,
     }));
 
     const CartCourse = data.CartCourse.map((item) => {
@@ -174,6 +213,18 @@ router.get('/', authenticate, async function (req, res) {
       };
     });
 
+    const CartGroup = data.CartGroup.map((item) => ({
+      id: item.groupMemberId,
+      name: item.groupMember.group.title,
+      startAt: item.groupMember.group.startDate,
+      endAt: item.groupMember.group.endDate,
+      price: item.groupMember.group.price,
+      // FIXME若無照片則回傳預設
+      imageUrl: item.groupMember.group.images[0].imageUrl
+        ? item.groupMember.group.images[0].imageUrl
+        : '',
+    }));
+
     const totalCartProduct = CartProduct.reduce((acc, product) => {
       acc += product.price * product.quantity;
       return acc;
@@ -183,59 +234,34 @@ router.get('/', authenticate, async function (req, res) {
       return acc;
     }, 0);
 
-    // 調用後端API獲得Group資料
-    const url = `http://localhost:3005/api/group/user/${userId}`;
-
-    let resGroup = await fetch(url);
-    let CartGroup = (await resGroup.json()).memberships;
-
-    CartGroup = CartGroup.map((item) => ({
-      id: item.groupMemberId,
-      name: item.group.title,
-      startAt: item.group.time.split(' —')[0],
-      endAt: item.group.time.split('— ')[1],
-      price: item.group.price,
-      // FIXME若無照片則回傳預設
-      imageUrl: item.group.imageUrl ? item.group.imageUrl : '',
-    }));
+    // 調用後端API獲得Group資料;
+    // let resGroup = await fetch(
+    //   `http://localhost:3005/api/group/user/${userId}`
+    // );
+    // let CartGroup = (await resGroup.json()).memberships;
 
     // 優惠券
-    const couponData = await prisma.userCoupon.findMany({
-      select: {
-        couponId: true,
-        coupon: {
-          select: {
-            minPurchase: true,
-            endAt: true,
-            name: true,
-            couponTarget: {
-              select: {
-                target: true,
-              },
-            },
-            couponType: {
-              select: {
-                amount: true,
-                type: true,
-              },
-            },
-          },
-        },
-      },
-      where: {
-        userId: userId,
-      },
-    });
+    const token = req.token;
 
-    // FIXME 要判斷過期跟已使用(問+1要不要做)
-    const CartCoupon = couponData.map((item) => {
-      const id = item.couponId;
-      const name = item.coupon.name;
-      const target = item.coupon.couponTarget.target;
-      const amount = item.coupon.couponType.amount;
-      const type = item.coupon.couponType.type;
-      const endAt = item.coupon.endAt;
-      const minPurchase = item.coupon.minPurchase;
+    let resCoupon = await fetch(
+      `http://localhost:3005/api/coupons/cartcoupon`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    let CartCoupon = (await resCoupon.json()).cartcoupon;
+
+    CartCoupon = CartCoupon.map((item) => {
+      const id = item.id;
+      const name = item.name;
+      const target = item.target;
+      const amount = item.amount;
+      const type = item.type;
+      const endAt = item.endAt;
+      const minPurchase = item.minPurchase;
       let canUse = false;
       const checked = false;
       // totalCartCourse
@@ -272,6 +298,17 @@ router.get('/', authenticate, async function (req, res) {
       CartCourse,
       CartGroup,
       CartCoupon,
+      userInfo: {
+        name: '',
+        phone: '',
+      },
+      shippingInfo: {
+        zipCode: '',
+        address: '',
+        shippingMethod: '',
+        storename: '',
+      },
+      payment: '',
     };
 
     return res.status(200).json({ status: 'success', cart });
@@ -316,8 +353,39 @@ router.put('/:itemId', authenticate, async function (req, res) {
     res.status(200).json({ status: 'fail', message: '更新商品失敗' });
   }
 });
+// 清空購物車
+router.delete('/items', authenticate, async function (req, res) {
+  try {
+    const userId = +req.user.id;
+    // 查詢使用者對應的購物車
+    const userCart = await prisma.cart.findFirst({
+      where: { userId },
+    });
 
-// 刪除
+    await prisma.cartCourse.deleteMany({
+      where: {
+        cartId: +userCart.id,
+      },
+    });
+    await prisma.cartProduct.deleteMany({
+      where: {
+        cartId: +userCart.id,
+      },
+    });
+    await prisma.cartGroup.deleteMany({
+      where: {
+        cartId: +userCart.id,
+      },
+    });
+
+    return res.status(200).json({ status: 'success', message: '購物車已清空' });
+  } catch (error) {
+    return res
+      .status(200)
+      .json({ status: 'fail', message: `查詢失敗:${error}` });
+  }
+});
+// 刪除特定商品
 router.delete('/:itemId', authenticate, async function (req, res) {
   try {
     const category = req.body.category;
@@ -350,20 +418,441 @@ router.delete('/:itemId', authenticate, async function (req, res) {
   }
 });
 
-// router.get('/coupon', authenticate, async function (req, res) {
-//   try {
-//     const userId = +req.user.id;
-//     const data = await prisma.userCoupon.findMany({
-//       where: {
-//         userId: userId,
-//       },
-//     });
-//     return res.status(200).json({ status: 'success', data: data });
-//   } catch (error) {
-//     res
-//       .status(200)
-//       .json({ status: 'fail', message: '優惠券選擇失敗:', error: { error } });
-//   }
-// });
+// 新增單筆訂單紀錄
+router.post('/order', authenticate, async function (req, res) {
+  try {
+    const userId = +req.user.id;
+    const orderInput = req.body;
+    console.log(orderInput);
+    const {
+      shipping,
+      payment,
+      name,
+      phone,
+      address,
+      amount,
+      couponId,
+      CartGroup,
+      CartCourse,
+      CartProduct,
+    } = orderInput;
 
+    const orderResult = await prisma.order.create({
+      data: {
+        userId,
+        amount,
+        couponId,
+        payment,
+        address,
+        phone,
+        name,
+        shipping,
+      },
+    });
+
+    const newOrderId = +orderResult.id;
+
+    // 揪團
+    const groupIds = CartGroup.map((item) => item.id);
+    const orderGroup = groupIds.map((groupId) => ({
+      orderId: newOrderId,
+      groupMemberId: groupId,
+    }));
+
+    const orderGroupResult = await prisma.orderGroup.createMany({
+      data: orderGroup,
+    });
+
+    // 課程
+    const courseIds = CartCourse.map((item) => item.id);
+    const orderCourse = courseIds.map((courseId) => ({
+      orderId: newOrderId,
+      courseVariantId: courseId,
+    }));
+
+    const orderCourseResult = await prisma.orderCourse.createMany({
+      data: orderCourse,
+    });
+
+    // 商品
+    const orderProduct = CartProduct.map((product) => ({
+      orderId: newOrderId,
+      productSkuId: product.id,
+      quantity: product.quantity,
+    }));
+
+    const orderProductResult = await prisma.orderProduct.createMany({
+      data: orderProduct,
+    });
+
+    return res.status(200).json({ status: 'success', data: newOrderId });
+  } catch (error) {
+    res
+      .status(200)
+      .json({ status: 'fail', message: '訂單失敗:', error: { error } });
+  }
+});
+
+// 會員訂單紀錄
+router.get('/orders', authenticate, async function (req, res) {
+  try {
+    const userId = +req.user.id;
+
+    const ordersResult = await prisma.order.findMany({
+      select: {
+        id: true,
+        amount: true,
+        createdAt: true,
+        orderProduct: {
+          select: {
+            quantity: true,
+            productSku: {
+              select: {
+                id: true,
+                product: {
+                  select: {
+                    name: true,
+                    product_image: {
+                      select: {
+                        url: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderCourse: {
+          select: {
+            courseVariant: {
+              select: {
+                course: {
+                  select: {
+                    name: true,
+                    CourseImg: {
+                      select: {
+                        img: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderGroup: {
+          select: {
+            groupMember: {
+              select: {
+                group: {
+                  select: {
+                    title: true,
+                    images: {
+                      select: {
+                        imageUrl: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      where: {
+        userId: userId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const toUTC8 = (utcString) => {
+      const date = new Date(utcString);
+      date.setHours(date.getHours() + 8); // 加上 8 小時
+      const [d, t] = date.toISOString().split('T');
+      return `${d} ${t.split('.')[0].slice(0, 5)}`;
+    };
+
+    const orders = ordersResult.map((order) => {
+      return {
+        id: order.id,
+        amount: order.amount,
+        createdAt: toUTC8(order.createdAt),
+
+        // 商品名稱陣列
+        OrderProduct: order.orderProduct.map((item) => {
+          return {
+            id: item.productSku.id,
+            quantity: item.quantity,
+            name: item.productSku.product.name,
+            imageUrl: item.productSku.product.product_image[0].url,
+          };
+        }),
+
+        OrderCourse: order.orderCourse.map((item) => {
+          return {
+            name: item.courseVariant.course.name,
+            imageUrl: item.courseVariant.course.CourseImg[0]?.img,
+          };
+        }),
+
+        OrderGroup: order.orderGroup.map((item) => {
+          return {
+            name: item.groupMember.group.title,
+            imageUrl: item.groupMember.group.images[0].imageUrl,
+          };
+        }),
+      };
+    });
+
+    return res.status(200).json({ status: 'success', orders });
+  } catch (error) {
+    return res
+      .status(200)
+      .json({ status: 'fail', message: `查詢失敗:${error}` });
+  }
+});
+
+// 寫入使用的優惠券時間
+router.put('/couponUsed/:id', authenticate, async function (req, res) {
+  const couponId = +req.params.id;
+  const userId = +req.user.id;
+
+  try {
+    // 1. 查找領取記錄
+    const couponEntry = await prisma.userCoupon.findFirst({
+      where: { userId, couponId },
+    });
+
+    if (!couponEntry) {
+      return res
+        .status(404)
+        .json({ error: `找不到 ID 為 ${couponId} 的領取記錄。` });
+    }
+
+    // 2. 更新 usedAt 欄位為當前時間
+    const updatedCouponEntry = await prisma.userCoupon.update({
+      where: {
+        uniq_user_coupon: {
+          userId,
+          couponId,
+        },
+      },
+
+      data: {
+        usedAt: new Date(), // 設定為當前伺服器時間
+      },
+    });
+
+    res.status(200).json({
+      message: `ID 為 ${couponId} 的參與記錄已成功更新付款時間。`,
+      data: updatedCouponEntry,
+    });
+  } catch (error) {
+    console.error(
+      `更新 groupMemberId ${couponId} 的 paid_at 狀態時發生錯誤:`,
+      error
+    );
+  }
+});
+
+// 單筆訂單紀錄(結帳後、會員查詢單筆訂單紀錄)
+router.get('/order/:id', authenticate, async function (req, res) {
+  try {
+    const userId = +req.user.id;
+    const orderId = +req.params.id;
+    // console.log(typeof req.params.id);
+
+    const data = await prisma.order.findUnique({
+      select: {
+        id: true,
+        couponId: true,
+        amount: true,
+        payment: true,
+        address: true,
+        phone: true,
+        name: true,
+        shipping: true,
+        createdAt: true,
+
+        orderProduct: {
+          select: {
+            id: true,
+            quantity: true,
+            productSku: {
+              select: {
+                id: true,
+                price: true,
+                product_size: {
+                  select: {
+                    name: true,
+                  },
+                },
+                product: {
+                  select: {
+                    name: true,
+                    product_image: {
+                      select: {
+                        url: true,
+                      },
+                      where: {
+                        sort_order: 0,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderCourse: {
+          select: {
+            courseVariant: {
+              select: {
+                id: true,
+                price: true,
+                duration: true,
+                start_at: true,
+                course: {
+                  select: {
+                    name: true,
+                    CourseImg: {
+                      select: {
+                        img: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderGroup: {
+          include: {
+            groupMember: {
+              select: {
+                group: {
+                  select: {
+                    id: true,
+                    title: true,
+                    startDate: true,
+                    endDate: true,
+                    price: true,
+                    location: { select: { name: true } },
+                    customLocation: true,
+                    images: {
+                      select: { imageUrl: true },
+                      orderBy: { sortOrder: 'asc' },
+                      take: 1,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+
+      where: {
+        // userId: userId,
+        id: orderId,
+      },
+    });
+
+    let couponData = {};
+    if (data?.couponId) {
+      couponData = await prisma.coupon.findUnique({
+        select: {
+          id: true,
+          name: true,
+          endAt: true,
+          minPurchase: true,
+          couponType: {
+            select: {
+              type: true,
+              amount: true,
+            },
+          },
+          couponTarget: {
+            select: {
+              target: true,
+            },
+          },
+        },
+
+        where: {
+          id: data?.couponId,
+        },
+      });
+    }
+    const orderCoupon = couponData?.id
+      ? {
+          id: couponData.id,
+          name: couponData.name,
+          endAt: couponData.endAt,
+          minPurchase: couponData.minPurchase,
+          type: couponData.couponType.type,
+          amount: couponData.couponType.amount,
+          target: couponData.couponTarget.target,
+        }
+      : {};
+    // console.log('優惠券購買後:');
+    // console.log(orderCoupon);
+
+    // 商品、課程、揪團攤平
+    const orderProduct = data.orderProduct.map((item) => ({
+      id: item.productSku.id,
+      quantity: item.quantity,
+      price: item.productSku.price,
+      name: item.productSku.product.name,
+      imageUrl: item.productSku.product.product_image[0].url,
+      size: item.productSku.product_size?.name,
+    }));
+
+    const orderCourse = data.orderCourse.map((item) => {
+      const start_at = item.courseVariant.start_at;
+      const duration = item.courseVariant.duration;
+      const date = new Date(start_at);
+      date.setHours(date.getHours() + duration);
+      const end_at = date.toISOString();
+      return {
+        id: item.courseVariant.id,
+        price: item.courseVariant.price,
+        name: item.courseVariant.course.name,
+        imageUrl: item.courseVariant.course.CourseImg[0].img,
+        startAt: start_at,
+        endAt: end_at,
+        duration: duration,
+      };
+    });
+
+    const orderGroup = data.orderGroup.map((item) => ({
+      id: item.groupMemberId,
+      name: item.groupMember.group.title,
+      startAt: item.groupMember.group.startDate,
+      endAt: item.groupMember.group.endDate,
+      price: item.groupMember.group.price,
+      // FIXME若無照片則回傳預設
+      imageUrl: item.groupMember.group.images[0].imageUrl
+        ? item.groupMember.group.images[0].imageUrl
+        : '',
+    }));
+
+    const order = {
+      ...data,
+      orderProduct,
+      orderCourse,
+      orderGroup,
+      orderCoupon,
+    };
+
+    return res.status(200).json({ status: 'success', order });
+  } catch (error) {
+    return res
+      .status(200)
+      .json({ status: 'fail', message: `查詢失敗:${error}` });
+  }
+});
 export default router;

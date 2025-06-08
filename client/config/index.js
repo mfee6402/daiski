@@ -42,6 +42,7 @@ export const protectedRoutes = [
   '/coupons',
   // '/groups/create',
   '/profile',
+  '/game',
 ];
 
 export const protectedRoutesPatterns = [

@@ -24,18 +24,9 @@
   animation: block 1s linear infinite;
 }
 
-/* @keyframes block {
-  0% {
-    left: 580px;
-  }
-  100% {
-    left: -5px;
-  }
-} */
-
 @keyframes move {
   from {
-    left: 580px;
+    left: 1000px;
   }
   to {
     left: -50px;

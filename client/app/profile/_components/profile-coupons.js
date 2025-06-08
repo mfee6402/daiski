@@ -1,11 +1,27 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import CouponCard from '@/app/coupons/_components/coupon-card';
-import CouponSelected from '@/app/coupons/_components/coupon-selected';
-import CouponSelectedStates from '@/app/coupons/_components/coupon-selected-states';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+
 import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
 
@@ -33,10 +49,9 @@ export default function ProfileCoupons(props) {
   );
   const usercoupon = data?.usercoupon || [];
 
-  console.log(usercoupon);
-
   // 讀取會員ＩＤ
   const { user, isAuth } = useAuth();
+  const router = useRouter();
 
   // 管理每張卡的 已領取 狀態
   // const [used, setUsed] = useState([]);
@@ -44,8 +59,10 @@ export default function ProfileCoupons(props) {
   // 格式化時間
   const formatDateTime = (d) => {
     new Date(d.setHours(d.getHours() + 8));
-    const [date, time] = d.toISOString().split('T');
-    return `${date} ${time.split('.')[0]}`;
+    const [date, timeWithMs] = d.toISOString().split('T');
+    const time = timeWithMs.split('.')[0]; // "HH:mm:ss"
+    const hhmm = time.slice(0, 5); // 取前 5 個字 => "HH:mm"
+    return `${date} ${hhmm}`;
   };
 
   // 狀態的判斷
@@ -54,7 +71,8 @@ export default function ProfileCoupons(props) {
     // const start = new Date(coupon.startAt).getTime();
     const end = new Date(coupon.endAt).getTime();
 
-    // if (coupon._used) return '使用';
+    console.log(coupon);
+    if (coupon.usedAt !== null) return '已使用';
     if (now > end) return '已過期';
     return '使用';
   }
@@ -81,7 +99,6 @@ export default function ProfileCoupons(props) {
   // 算出每張券的最低保證折抵值;
   const values = usercoupon.map(getValue);
   const maxValue = Math.max(...values);
-  console.log(maxValue);
 
   // 用 filter 寫出對狀態和分類的篩選
   const filteredData = couponsWithStatus
@@ -118,14 +135,6 @@ export default function ProfileCoupons(props) {
     })
     .sort((a, b) => getValue(b) - getValue(a));
 
-  const targets = ['全部', '全站', '商品', '課程'];
-  const states = ['最高折扣', '即將到期', '已使用', '已過期'];
-
-  // 讓第二行的篩選可以按第二次取消
-  const toggleState = (state) => {
-    setSelectedStates((prev) => (prev === state ? undefined : state));
-  };
-
   // loading / error 處理
   if (isLoading) return <p className="text-center py-4">載入中…</p>;
   if (error)
@@ -134,61 +143,77 @@ export default function ProfileCoupons(props) {
     );
 
   return (
-    <div className="overflow-y-auto h-dvh">
-      <section className="flex flex-col gap-6 px-5">
-        {/* 開頭 */}
-        <a
-          href="http://localhost:3000/coupons"
-          className="font-tw leading-p-tw cursor-pointer hover:underline decoration-red decoration-2 underline-offset-4 text-right"
-        >
-          領取更多優惠卷
-        </a>
+    <section className="overflow-y-auto h-dvh ">
+      <CardHeader>
+        <CardTitle>已領取的優惠券</CardTitle>
+        <CardDescription>共 {usercoupon.length} 筆</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-row sm:gap-6 gap-2 p-5 sm:justify-between flex-wrap">
+        <div className="flex flex-row sm:gap-6 gap-2 flex-wrap">
+          {/* 分類 */}
+          <Select
+            value={selectedTarget || ''}
+            onValueChange={(val) => {
+              if (val === '' || val === '全部') {
+                setSelectedTarget(undefined);
+              } else {
+                setSelectedTarget(val);
+              }
+            }}
+          >
+            <SelectTrigger className="sm:w-[180px] w-[150px] ">
+              <SelectValue placeholder="請選擇分類" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="全部">全部</SelectItem>
+                <SelectItem value="全站">全站</SelectItem>
+                <SelectItem value="商品">商品</SelectItem>
+                <SelectItem value="課程">課程</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
 
-        {/* 分類 */}
-        <div className="flex flex-row gap-6">
-          {targets.map((target) => {
-            return (
-              <CouponSelected
-                key={target}
-                target={target}
-                // filteredData={filteredData}
-                selectedTarget={selectedTarget}
-                setSelectedTarget={setSelectedTarget}
-                // state={state}
-                selectedStates={selectedStates}
-                setSelectedStates={setSelectedStates}
-              />
-            );
-          })}
+          {/* 狀態分類 */}
+          <Select
+            value={selectedStates || ''}
+            onValueChange={(val) => {
+              if (val === '' || val === '不限') {
+                setSelectedStates(undefined);
+              } else {
+                setSelectedStates(val);
+              }
+            }}
+          >
+            <SelectTrigger className="sm:w-[180px] w-[150px]">
+              <SelectValue placeholder="請選擇分類" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="不限">不限</SelectItem>
+                <SelectItem value="最高折扣">最高折扣</SelectItem>
+                <SelectItem value="即將到期">即將到期</SelectItem>
+                <SelectItem value="已使用">已使用</SelectItem>
+                <SelectItem value="已過期">已過期</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
 
-        <hr />
-
-        {/* 狀態分類 */}
-        <div className="flex flex-row gap-6">
-          {states.map((state) => {
-            return (
-              <CouponSelectedStates
-                key={state}
-                state={state}
-                selectedStates={selectedStates}
-                setSelectedStates={setSelectedStates}
-                onClick={() => toggleState(state)}
-              />
-            );
-          })}
-        </div>
-      </section>
+        <Button className="font-tw leading-p-tw cursor-pointer">
+          <Link href="http://localhost:3000/coupons">領取更多優惠卷</Link>
+        </Button>
+      </CardContent>
 
       {/* 優惠劵 */}
       {filteredData.length === 0 ? (
-        <div className="flex flex-col justify-center items-center mt-15">
+        <div className="flex flex-col justify-center items-center mt-5">
           <Image src="/coupon.png" alt="沒卷" width={140} height={113} />
-          <p className="text-h6-tw">目前沒有更多的優惠券可以領取</p>
+          <p className="text-h6-tw">目前沒有更多的優惠券可以使用</p>
           <p className="color-primary-800">多多關注我們隨時領取優惠券</p>
         </div>
       ) : (
-        <ul className="grid grid-cols-1 justify-items-center gap-x-25 gap-y-6 lg:grid-cols-2 my-10">
+        <ul className="grid gap-5 lg:grid-cols-2  lg:mx-0 mx-2 px-5">
           {filteredData?.map((c) => {
             // 顯示狀態
             const isExpired = c.status === '已過期';
@@ -200,20 +225,13 @@ export default function ProfileCoupons(props) {
 
             // 按鈕文字 & disabled
             let buttonText = '使用';
-            {
-              /* if (isUsed) buttonText = '已領取'; */
-            }
+            if (isUsed) buttonText = '已使用';
             if (isExpired) buttonText = '已過期';
-            const disabled = isExpired || isUsed;
 
             // 卡片與按鈕樣式
             let statusClass = '';
             if (isUsed) statusClass = 'bg-[#404040]/10';
             else if (isExpired) statusClass = 'bg-[#404040]/10';
-
-            const buttonClass = disabled
-              ? 'bg-secondary-800 text-white cursor-default'
-              : 'hover:bg-secondary-800 hover:text-white';
 
             return (
               <li key={c.id}>
@@ -229,11 +247,16 @@ export default function ProfileCoupons(props) {
                   timeLabel={timeLabel}
                   // 狀態
                   statusClass={statusClass}
-                  buttonClass={buttonClass}
                   buttonText={buttonText}
-                  disabled={disabled}
+                  isUsed={isUsed}
                   // 互動
-                  // onUse={() => handleClaim(c)}
+                  onUse={() => {
+                    if (c.target === '課程') {
+                      router.push(`/courses`);
+                    } else {
+                      router.push(`/product`);
+                    }
+                  }}
                 />
               </li>
             );
@@ -241,6 +264,6 @@ export default function ProfileCoupons(props) {
         </ul>
       )}
       <Toaster position="bottom-right" richColors />
-    </div>
+    </section>
   );
 }
