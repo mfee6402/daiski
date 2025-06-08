@@ -102,7 +102,7 @@ export default function CoursesIdPage() {
               <h1 className="text-2xl mb-2 font-bold">{course.name}</h1>
               <ul className="flex flex-col w-full">
                 {/* 課程日期 */}
-                <li className="flex items-center justify-star">
+                <li className="flex items-center justify-start mb-2">
                   <Clock5
                     size={20}
                     className="min-w-[20px] inline-block pr-0.5"
@@ -110,7 +110,7 @@ export default function CoursesIdPage() {
                   {course.period}
                 </li>
                 {/* 課程地點 */}
-                <li className="flex lg:items-center justify-start">
+                <li className="flex lg:items-center justify-start mb-2">
                   <MapPin size={20} className="min-w-[20px] inline-block " />
                   {course.variants[0]?.location.city}
                   {course.variants[0]?.location.country &&
@@ -118,7 +118,7 @@ export default function CoursesIdPage() {
                   {course.variants[0]?.location.address &&
                     `,${course.variants[0].location.address}`}
                 </li>
-                <li className="flex lg:items-center justify-start">
+                <li className="flex lg:items-center justify-start mb-2">
                   <LocateFixed size={20} />
                   {course.variants[0]?.location.name}
                 </li>
