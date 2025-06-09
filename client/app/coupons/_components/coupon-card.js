@@ -132,7 +132,7 @@ export default function CouponCard({
             </div>
 
             {/* 按鈕 (button) */}
-            <div className="flex justify-between flex-wrap sm:mt-5">
+            <div className="flex justify-between  sm:mt-5">
               <p
                 className={
                   isUpcoming
