@@ -408,8 +408,8 @@ model LicenseCoach {
 model Course {
   id            Int             @id @default(autoincrement())
   name          String
-  description   String          @db.Text
-  content       String          @db.Text
+  description   String
+  content       String
   created_at    DateTime        @default(now()) @map("created_at")
   updated_at    DateTime        @updatedAt @map("updated_at")
   deleted_at    DateTime?       @map("deleted_at")
