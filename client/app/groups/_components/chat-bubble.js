@@ -416,6 +416,7 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
     const content = text.trim();
     if (!content || !currentUser) return;
     const msg = {
+      id: `temp-${Date.now()}`,
       user: {
         id: currentUser.id,
         name: currentUser.name,
@@ -424,7 +425,9 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
       type: 'text',
       content: content,
       time: Date.now(),
+      groupId: activeGroup?.id,
     };
+    setMsgs((prev) => [...prev, msg]);
     sendMessage(msg);
     setText('');
   };
@@ -463,7 +466,9 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
         type: 'image',
         imageUrl: data.url,
         time: Date.now(),
+        groupId: activeGroup.id,
       };
+      setMsgs((prev) => [...prev, msg]);
       sendMessage(msg);
     } catch (err) {
       console.error('[uploadImage] Failed:', err); // 保留錯誤日誌
@@ -634,7 +639,11 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
                       <div className="flex items-end gap-1.5">
                         {m.user.id !== currentUser.id && (
                           <Image
-                            src={m.user.avatar || '/deadicon.png'}
+                            src={
+                              m.user.avatar
+                                ? `http://localhost:3005${m.user.avatar}`
+                                : '/deadicon.png'
+                            }
                             alt={m.user.name || '用戶'}
                             width={24}
                             height={24}
