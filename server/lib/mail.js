@@ -1,9 +1,9 @@
-import nodemailer from 'nodemailer'
-import { serverConfig } from '../config/server.config.js'
-import { isDev } from './utils.js'
+import nodemailer from 'nodemailer';
+import { serverConfig } from '../config/server.config.js';
+import { isDev } from './utils.js';
 
 // 取得config檔案中的smtp設定
-const { host, user, pass, provider } = serverConfig.smtp
+const { host, user, pass, provider } = serverConfig.smtp;
 
 // 使用gmail寄送
 const gmail = {
@@ -19,7 +19,7 @@ const gmail = {
     servername: 'smtp.gmail.com',
     rejectUnauthorized: false,
   },
-}
+};
 
 // 使用 https://ethereal.email/
 const ethereal = {
@@ -29,10 +29,10 @@ const ethereal = {
     user,
     pass,
   },
-}
+};
 
 // 定義所有email的寄送伺服器位置
-const transport = provider === 'gmail' ? gmail : ethereal
+const transport = provider === 'gmail' ? gmail : ethereal;
 
 const otpMailHtml = (otpToken, secret) => `<!DOCTYPE html>
 <html lang="en">
@@ -102,7 +102,7 @@ const otpMailHtml = (otpToken, secret) => `<!DOCTYPE html>
 
 </body>
 </html>
-`
+`;
 // 電子郵件文字訊息樣版
 const otpMailText = (otpToken, secret) => `親愛的網站會員 您好，
 通知重設密碼所需要的驗証碼，
@@ -118,12 +118,20 @@ ${otpToken}
 
 敬上
 
-台灣 NextJS Inc. 網站`
+台灣 NextJS Inc. 網站`;
 
 // 測試用一般寄送
 export const sendOtpMail = async (to, otpToken, secret = '') => {
-  if (isDev) console.log(otpToken)
+  if (isDev) console.log(otpToken);
   // 寄送email
+  // const mailOptions = {
+  //   // 這裡要改寄送人
+  //   from: user, // sender address
+  //   to: 'artemismoon0804@gmail.com', // list of receivers
+  //   subject: '重設登入密碼的一次性驗証碼(OTP)',
+  //   text: otpMailText(otpToken, secret),
+  //   html: otpMailHtml(otpToken, secret),
+  // };
   const mailOptions = {
     // 這裡要改寄送人
     from: user, // sender address
@@ -131,17 +139,17 @@ export const sendOtpMail = async (to, otpToken, secret = '') => {
     subject: '重設登入密碼的一次性驗証碼(OTP)',
     text: otpMailText(otpToken, secret),
     html: otpMailHtml(otpToken, secret),
-  }
+  };
 
   // 呼叫transport函式
-  const transporter = nodemailer.createTransport(transport)
+  const transporter = nodemailer.createTransport(transport);
 
   // 寄送email
   try {
-    const info = await transporter.sendMail(mailOptions)
-    if (isDev) console.log('Message sent: ', info.messageId)
+    const info = await transporter.sendMail(mailOptions);
+    if (isDev) console.log('Message sent: ', info.messageId);
   } catch (err) {
-    console.log(err)
-    throw new Error('無法寄送email')
+    console.log(err);
+    throw new Error('無法寄送email');
   }
-}
+};

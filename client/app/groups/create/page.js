@@ -13,13 +13,13 @@ import {
 } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
+import { useCart } from '@/hooks/use-cart'; // 確保你已經引入 useCart
 
 const STEPS_CONFIG = [
   { id: 'step1', name: '步驟 1', description: '基本資訊' },
   { id: 'step2', name: '步驟 2', description: '預覽與發佈' },
 ];
 
-// 預設表單值，用於創建時的初始狀態
 const DEFAULT_CREATE_VALUES = {
   type: '',
   title: '',
@@ -33,11 +33,12 @@ const DEFAULT_CREATE_VALUES = {
   price: 0,
   allowNewbie: true,
   description: '',
-  coverFile: null,
-  id: 0, // 標識為新創建
-  coverPreview: '',
+  coverFile: null, // 用於 GroupForm 的 File Object
+  id: 0, // 標識為新創建，後端不需要
+  coverPreview: '', // 用於即時預覽
 };
 
+// 水平步驟條組件 (內容與你提供的一致)
 const HorizontalStepper = ({ steps, currentStepId, setCurrentStep }) => {
   const currentStepIndex = steps.findIndex((s) => s.id === currentStepId);
   return (
@@ -53,7 +54,7 @@ const HorizontalStepper = ({ steps, currentStepId, setCurrentStep }) => {
               onClick={() =>
                 stepIdx <= currentStepIndex && setCurrentStep(step.id)
               }
-              className={`flex flex-col items-center text-center group w-full ${stepIdx <= currentStepIndex ? 'cursor-none' : 'cursor-default'}`}
+              className={`flex flex-col items-center text-center group w-full ${stepIdx <= currentStepIndex ? 'cursor-pointer' : 'cursor-default'}`}
               disabled={stepIdx > currentStepIndex}
             >
               <span
@@ -102,6 +103,7 @@ const HorizontalStepper = ({ steps, currentStepId, setCurrentStep }) => {
   );
 };
 
+// 即時預覽卡片組件 (內容與你提供的一致，略作調整以確保圖片錯誤處理)
 const LivePreviewCard = ({
   formData,
   typeOptions,
@@ -152,15 +154,16 @@ const LivePreviewCard = ({
       <CardContent>
         {coverPreview ? (
           <Image
-            width={1024} // 你預估的一個寬
-            height={960} // 依比例算出高
+            width={600}
+            height={400}
             src={coverPreview}
             alt="封面預覽"
             className="w-full h-48 object-cover rounded-md mb-4 bg-muted dark:bg-muted-dark border border-border dark:border-border-dark"
-            onError={(e) =>
-              (e.target.src =
-                'https://placehold.co/600x400/E2E8F0/A0AEC0?text=圖片預覽失敗')
-            }
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src =
+                'https://placehold.co/600x400/E2E8F0/A0AEC0?text=圖片預覽失敗';
+            }}
           />
         ) : (
           <div className="w-full h-48 bg-muted dark:bg-muted-dark rounded-md mb-4 flex flex-col items-center justify-center text-muted-foreground dark:text-muted-foreground-dark border border-dashed border-border dark:border-border-dark">
@@ -221,7 +224,9 @@ const LivePreviewCard = ({
               <p className="font-medium text-foreground dark:text-foreground-dark">
                 描述：
               </p>
-              <p className="whitespace-pre-wrap truncate h-16">{description}</p>
+              <p className="whitespace-pre-wrap break-words h-16 overflow-y-auto">
+                {description}
+              </p>
             </div>
           )}
         </div>
@@ -239,18 +244,16 @@ export default function CreateGroupPageWithAuth() {
     isLoading: authIsLoading,
     didAuthMount,
   } = useAuth();
+  const { onAdd } = useCart(); // 從 useCart hook 獲取 onAdd 方法
 
   const [currentStep, setCurrentStep] = useState('step1');
   const [typeOptions, setTypeOptions] = useState([]);
   const [locationOptions, setLocationOptions] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
-
-  // Parent component holds the form data for preview and final submission
   const [previewFormData, setPreviewFormData] = useState(DEFAULT_CREATE_VALUES);
   const [previewCover, setPreviewCover] = useState('');
 
-  // Load type options and set initial type for the form (via initialFormValues)
   useEffect(() => {
     async function loadTypes() {
       try {
@@ -259,9 +262,8 @@ export default function CreateGroupPageWithAuth() {
         const labels = await res.json();
         const opts = labels.map((label) => ({ value: label, label: label }));
         setTypeOptions(opts);
-        // Set initial type in previewFormData if not already set by GroupForm's defaults
+        // 確保在類型選項載入後，如果表單中尚未選擇類型，則設定一個預設類型
         if (opts.length > 0 && !previewFormData.type) {
-          // This will be used by initialFormValues for GroupForm
           setPreviewFormData((prev) => ({ ...prev, type: opts[0].value }));
         }
       } catch (err) {
@@ -270,12 +272,12 @@ export default function CreateGroupPageWithAuth() {
       }
     }
     loadTypes();
-  }, [API_BASE]); // Run once
+  }, [API_BASE]); // 移除 previewFormData.type 作為依賴，除非你有特定理由在類型改變時重新載入所有類型
 
-  // Load location options based on type selected in previewFormData
   useEffect(() => {
     if (previewFormData.type !== '滑雪') {
       setLocationOptions([]);
+      setPreviewFormData((prev) => ({ ...prev, locationId: '' })); // 清除已選的滑雪場
       return;
     }
     async function loadLocations() {
@@ -291,11 +293,12 @@ export default function CreateGroupPageWithAuth() {
     loadLocations();
   }, [previewFormData.type, API_BASE]);
 
-  // Callback for GroupForm to update parent's preview state
   const handleFormChange = useCallback(
     (formDataFromChild, coverPreviewFromChild) => {
       setPreviewFormData(formDataFromChild);
-      setPreviewCover(coverPreviewFromChild);
+      if (coverPreviewFromChild !== undefined) {
+        setPreviewCover(coverPreviewFromChild);
+      }
     },
     []
   );
@@ -308,6 +311,11 @@ export default function CreateGroupPageWithAuth() {
     }
     if (!formData.title?.trim()) {
       setFormError('請輸入揪團標題');
+      return false;
+    }
+    // **確保圖片已上傳**
+    if (!formData.coverFile) {
+      setFormError('請上傳封面圖片');
       return false;
     }
     if (!formData.startDate || !formData.endDate) {
@@ -331,7 +339,9 @@ export default function CreateGroupPageWithAuth() {
       Number(formData.maxPeople) < 1 ||
       Number(formData.minPeople) > Number(formData.maxPeople)
     ) {
-      setFormError('請輸入有效的人數範圍');
+      setFormError(
+        '請輸入有效的人數範圍 (最少1人，且最少人數不能超過最多人數)'
+      );
       return false;
     }
     if (Number(formData.price) < 0) {
@@ -357,40 +367,71 @@ export default function CreateGroupPageWithAuth() {
   };
 
   const handleFinalSubmit = async () => {
-    if (currentStep === 'step1' && !validateStep1(previewFormData)) return;
+    if (!validateStep1(previewFormData)) {
+      if (currentStep === 'step2') {
+        setCurrentStep('step1');
+      }
+      return;
+    }
     if (!isAuth) {
       setFormError('請先登入才能建立揪團。');
       return;
     }
+
     setIsSubmitting(true);
     setFormError('');
     const formDataToSend = new FormData();
+
     Object.keys(previewFormData).forEach((key) => {
-      if (key === 'coverFile' && previewFormData[key] instanceof File) {
-        formDataToSend.append('cover', previewFormData[key]);
+      const value = previewFormData[key];
+      if (key === 'coverFile' && value instanceof File) {
+        formDataToSend.append('cover', value);
+      } else if (key === 'startDate' || key === 'endDate') {
+        if (
+          value &&
+          typeof value === 'string' &&
+          /^\d{4}-\d{2}-\d{2}$/.test(value)
+        ) {
+          formDataToSend.append(
+            key === 'startDate' ? 'start_date' : 'end_date',
+            value
+          );
+        } else if (value instanceof Date && !isNaN(value)) {
+          const year = value.getFullYear();
+          const month = (value.getMonth() + 1).toString().padStart(2, '0');
+          const day = value.getDate().toString().padStart(2, '0');
+          formDataToSend.append(
+            key === 'startDate' ? 'start_date' : 'end_date',
+            `${year}-${month}-${day}`
+          );
+        }
+      } else if (key === 'locationId' && previewFormData.type === '滑雪') {
+        if (value) formDataToSend.append('location', String(value));
+      } else if (key === 'customLocation' && previewFormData.type !== '滑雪') {
+        if (value) formDataToSend.append('customLocation', value);
       } else if (
-        key !== 'coverFile' &&
+        key === 'minPeople' ||
+        key === 'maxPeople' ||
+        key === 'price'
+      ) {
+        formDataToSend.append(
+          key === 'minPeople'
+            ? 'min_people'
+            : key === 'maxPeople'
+              ? 'max_people'
+              : key,
+          String(value)
+        );
+      } else if (key === 'allowNewbie') {
+        formDataToSend.append('allow_newbie', value ? '1' : '0');
+      } else if (
         key !== 'id' &&
         key !== 'coverPreview' &&
-        previewFormData[key] !== null &&
-        previewFormData[key] !== undefined
+        value !== null &&
+        value !== undefined &&
+        typeof value !== 'object'
       ) {
-        if (key === 'startDate')
-          formDataToSend.append('start_date', previewFormData[key]);
-        else if (key === 'endDate')
-          formDataToSend.append('end_date', previewFormData[key]);
-        else if (key === 'locationId' && previewFormData.type === '滑雪')
-          formDataToSend.append('location', previewFormData[key]);
-        else if (key === 'minPeople')
-          formDataToSend.append('min_people', String(previewFormData[key]));
-        else if (key === 'maxPeople')
-          formDataToSend.append('max_people', String(previewFormData[key]));
-        else if (key === 'allowNewbie')
-          formDataToSend.append(
-            'allow_newbie',
-            previewFormData[key] ? '1' : '0'
-          );
-        else formDataToSend.append(key, previewFormData[key]);
+        formDataToSend.append(key, value);
       }
     });
 
@@ -400,39 +441,68 @@ export default function CreateGroupPageWithAuth() {
         body: formDataToSend,
         credentials: 'include',
       });
+
       if (!res.ok) {
         const errorData = await res
           .json()
-          .catch(() => ({ error: '發生未知錯誤' }));
-        throw new Error(errorData.error || `伺服器錯誤: ${res.status}`);
+          .catch(() => ({ error: '建立揪團時發生未知錯誤' }));
+        throw new Error(errorData.error || `伺服器錯誤 (${res.status})`);
       }
-      const newGroup = await res.json();
-      if (newGroup && newGroup.id) {
-        alert('揪團建立成功！');
-        router.push(`/groups/${newGroup.id}`);
+
+      const responseData = await res.json(); // 後端應回傳包含 groupMemberId 的完整揪團資訊
+      console.log(responseData);
+      // **關鍵：檢查後端是否回傳了 groupMemberId**
+      if (responseData && responseData.id && responseData.groupMemberId) {
+        const imageUrlForCart =
+          responseData.images?.[0]?.imageUrl || '/default-group-image.png'; // 提供預設圖片
+
+        // **使用後端回傳的 groupMemberId 加入購物車**
+        onAdd('CartGroup', {
+          id: responseData.groupMemberId, // 使用開團者在 group_member 表中的 ID
+          price: responseData.price,
+          title: responseData.title,
+          imageUrl: imageUrlForCart,
+          startDate: responseData.startDate, // 確保後端回傳這些
+          endDate: responseData.endDate, // 確保後端回傳這些
+          groupId: responseData.id, // 原始揪團 ID
+        });
+        
+        alert('揪團建立成功！您的參與資格已加入購物車，請完成付款。');
+        console.log(`揪團建立成功，已加入購物車：`, responseData);
+        router.push(`/groups/${responseData.id}`); // 導向新揪團的詳細頁面
       } else {
-        console.error('後端未返回有效的揪團 ID:', newGroup);
-        setFormError('建立成功，但無法獲取新揪團的 ID，請稍後在列表中查看。');
-        router.push('/groups');
+        // 如果後端沒有回傳 groupMemberId，表示後端邏輯可能有問題，或回傳格式不符預期
+        console.error(
+          '後端 API 回應中缺少揪團 ID 或開團者成員 ID (groupMemberId):',
+          responseData
+        );
+        setFormError(
+          '建立揪團成功，但加入購物車資訊不完整。請檢查您的揪團或聯繫客服。'
+        );
+        // 即使加入購物車流程出錯，揪團本身可能已建立，仍嘗試導向
+        if (responseData && responseData.id) {
+          router.push(`/groups/${responseData.id}`);
+        } else {
+          router.push('/groups');
+        }
       }
     } catch (err) {
       console.error('建立揪團失敗:', err);
-      setFormError('建立失敗：' + err.message);
+      setFormError(`建立失敗：${err.message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // initialValues for GroupForm, memoized and stable for "create" mode
   const initialFormValuesForCreate = useMemo(() => {
     return {
-      ...DEFAULT_CREATE_VALUES, // Start with defined defaults
-      type: typeOptions[0]?.value || DEFAULT_CREATE_VALUES.type, // Set default type from options if available
+      ...DEFAULT_CREATE_VALUES,
+      type: typeOptions[0]?.value || DEFAULT_CREATE_VALUES.type,
     };
-  }, [typeOptions]); // Only depends on typeOptions for initial setup
+  }, [typeOptions]);
 
+  // --- Loading 和 Auth 檢查 UI (保持不變) ---
   if (authIsLoading || !didAuthMount) {
-    /* ... loading UI ... */
     return (
       <div className="min-h-screen flex items-center justify-center p-8 text-center text-xl bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300">
         <svg
@@ -460,7 +530,6 @@ export default function CreateGroupPageWithAuth() {
     );
   }
   if (!isAuth) {
-    /* ... login prompt UI ... */
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-slate-50 dark:bg-slate-900">
         <Card className="w-full max-w-md shadow-lg bg-white dark:bg-slate-800">
@@ -485,6 +554,7 @@ export default function CreateGroupPageWithAuth() {
     );
   }
 
+  // --- 主要 JSX 結構 (保持不變) ---
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-50 py-8 px-4">
       <div className="max-w-screen-2xl mx-auto">
@@ -493,7 +563,7 @@ export default function CreateGroupPageWithAuth() {
           currentStepId={currentStep}
           setCurrentStep={setCurrentStep}
         />
-        {formError /* ... error display ... */ && (
+        {formError && (
           <div
             role="alert"
             className="mb-6 p-4 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-500 text-red-700 dark:text-red-200 rounded-md"
@@ -517,7 +587,7 @@ export default function CreateGroupPageWithAuth() {
           <div className="lg:w-7/12 xl:w-2/3">
             {currentStep === 'step1' && (
               <GroupForm
-                initialValues={initialFormValuesForCreate} // Use stable initial values
+                initialValues={initialFormValuesForCreate}
                 onSubmit={() => {}}
                 isLoading={isSubmitting}
                 typeOptions={typeOptions}
@@ -525,35 +595,40 @@ export default function CreateGroupPageWithAuth() {
                 formError={formError}
                 setFormError={setFormError}
                 onFormDataChange={handleFormChange}
+                isEditMode={false}
               />
             )}
-            {currentStep === 'step2' /* ... confirmation card ... */ && (
-              <Card className="shadow-xl bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-50 border border-slate-200 dark:border-slate-700">
+            {currentStep === 'step2' && (
+              <Card className="shadow-xl bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark">
                 <CardHeader>
                   <CardTitle className="text-2xl font-bold">
                     確認揪團資訊
                   </CardTitle>
-                  <CardDescription className="text-slate-500 dark:text-slate-400">
+                  <CardDescription className="text-muted-foreground dark:text-muted-foreground-dark">
                     請仔細核對以下資訊，確認無誤後即可發佈揪團！
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3 text-sm text-slate-700 dark:text-slate-300">
+                <CardContent className="space-y-3 text-sm text-secondary-foreground dark:text-secondary-foreground-dark">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
                     <p>
                       <strong>活動類型：</strong>
-                      {previewFormData.type || '未選擇'}
+                      {typeOptions.find(
+                        (opt) => opt.value === previewFormData.type
+                      )?.label ||
+                        previewFormData.type ||
+                        '未選擇'}
                     </p>
                     <p>
                       <strong>揪團標題：</strong>
-                      {previewFormData.title}
+                      {previewFormData.title || '未填寫'}
                     </p>
                     <p>
                       <strong>開始日期：</strong>
-                      {previewFormData.startDate}
+                      {previewFormData.startDate || '未填寫'}
                     </p>
                     <p>
                       <strong>結束日期：</strong>
-                      {previewFormData.endDate}
+                      {previewFormData.endDate || '未填寫'}
                     </p>
                     <p className="md:col-span-2">
                       <strong>活動地點：</strong>
@@ -562,8 +637,8 @@ export default function CreateGroupPageWithAuth() {
                             (l) =>
                               String(l.id) ===
                               String(previewFormData.locationId)
-                          )?.name || '未選擇'
-                        : previewFormData.customLocation}
+                          )?.name || '未選擇滑雪場'
+                        : previewFormData.customLocation || '未填寫自訂地點'}
                     </p>
                     {previewFormData.type === '滑雪' &&
                       previewFormData.difficulty && (
@@ -589,11 +664,30 @@ export default function CreateGroupPageWithAuth() {
                       {previewFormData.allowNewbie ? '是' : '否'}
                     </p>
                   </div>
-                  <div className="pt-2">
+                  {previewCover && (
+                    <div className="mt-4">
+                      <p className="font-medium">
+                        <strong>封面圖片預覽：</strong>
+                      </p>
+                      <Image
+                        width={400}
+                        height={240}
+                        src={previewCover}
+                        alt="已選封面預覽"
+                        className="w-full max-w-sm h-auto object-cover rounded-md mt-1 border border-border dark:border-border-dark"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src =
+                            'https://placehold.co/400x240/E2E8F0/A0AEC0?text=圖片預覽失敗';
+                        }}
+                      />
+                    </div>
+                  )}
+                  <div className="pt-2 mt-2 border-t border-border dark:border-border-dark">
                     <p className="font-medium">
                       <strong>活動描述：</strong>
                     </p>
-                    <p className="whitespace-pre-wrap pl-1 mt-1 text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-700/50 p-3 rounded-md min-h-[60px]">
+                    <p className="whitespace-pre-wrap break-words pl-1 mt-1 bg-muted dark:bg-muted-dark p-3 rounded-md min-h-[60px]">
                       {previewFormData.description || '無描述內容'}
                     </p>
                   </div>
@@ -611,7 +705,7 @@ export default function CreateGroupPageWithAuth() {
                     放棄
                   </Button>
                   <Button onClick={handleNextStep} type="button">
-                    下一步
+                    下一步 <span aria-hidden="true">→</span>
                   </Button>
                 </>
               )}
@@ -623,7 +717,7 @@ export default function CreateGroupPageWithAuth() {
                     type="button"
                     disabled={isSubmitting}
                   >
-                    上一步
+                    <span aria-hidden="true">←</span> 上一步
                   </Button>
                   <Button
                     onClick={handleFinalSubmit}
@@ -644,27 +738,27 @@ export default function CreateGroupPageWithAuth() {
                 locationOptions={locationOptions}
                 coverPreview={previewCover}
               />
-              {currentStep === 'step2' /* ... tip cards ... */ && (
-                <Card className="shadow-lg bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-50 border border-slate-200 dark:border-slate-700">
+              {currentStep === 'step2' && (
+                <Card className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark">
                   <CardHeader>
-                    <CardTitle className="text-base font-semibold flex items-center text-sky-600 dark:text-sky-400">
+                    <CardTitle className="text-base font-semibold flex items-center text-primary">
                       <span className="text-xl mr-2">💡</span> 發佈後小提醒
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
+                  <CardContent className="text-sm text-muted-foreground dark:text-muted-foreground-dark space-y-2">
                     <p>✓ 揪團發佈後，您可以在「我的揪團」頁面管理。</p>
                     <p>✓ 記得將揪團連結分享給朋友或相關社群！</p>
                     <p>✓ 留意系統通知，即時掌握報名與留言互動。</p>
                   </CardContent>
                 </Card>
               )}
-              <Card className="bg-red-50 dark:bg-red-900/30 border-red-300 dark:border-red-500/70 shadow-md">
+              <Card className="bg-destructive/10 border-destructive/30 shadow-md">
                 <CardHeader>
-                  <CardTitle className="text-base font-semibold flex items-center text-red-600 dark:text-red-300">
+                  <CardTitle className="text-base font-semibold flex items-center text-destructive">
                     <span className="text-xl mr-2">⚠️</span> 注意事項
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="text-sm text-red-700 dark:text-red-300/90 space-y-1">
+                <CardContent className="text-sm text-destructive/80 space-y-1">
                   <p>• 請確保揪團資訊真實、準確，避免誤導。</p>
                   <p>• 禁止發佈任何違反平台社群守則的內容。</p>
                   <p>• 揪團涉及費用時，請明確說明收退款規則。</p>

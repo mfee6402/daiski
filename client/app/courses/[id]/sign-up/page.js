@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -19,7 +19,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import { useParams, useRouter } from 'next/navigation';
 // import { json } from 'stream/consumers';
 import { useAuth } from '@/hooks/use-auth';
-
+import { useCart } from '@/hooks/use-cart';
 export default function SignUpPage({ params }) {
   const { user } = useAuth();
   const { id } = useParams();
@@ -30,9 +30,10 @@ export default function SignUpPage({ params }) {
     name: '',
     phone: '',
     email: '',
-    birthday: '',
+    birthday: '2000-01-01',
     terms: false,
   });
+  const { onAdd } = useCart();
 
   // 載入課程資料
   useEffect(() => {
@@ -57,6 +58,14 @@ export default function SignUpPage({ params }) {
       [e.target.id]: e.target.value,
     }));
   };
+  const editorRef = useRef(null);
+  const handleInput = () => {
+    if (!editorRef.current) return;
+    setForm((prev) => ({
+      ...prev,
+      content: editorRef.current.innerHTML,
+    }));
+  };
 
   // 送出報名
   const handleSubmit = async (e) => {
@@ -76,8 +85,8 @@ export default function SignUpPage({ params }) {
             phone: form.phone,
             email: form.email,
             birthday: form.birthday,
-            // user_id: 後端可從 session 拿，如果開發階段就先塞一個測試 id
             user_id: user.id,
+            course_variant_id: variant.id,
           }),
         }
       );
@@ -86,6 +95,10 @@ export default function SignUpPage({ params }) {
         throw new Error(json.message || '報名失敗');
       }
       toast.success('報名成功！');
+      onAdd('CartCourse', {
+        id: variant.id,
+      });
+
       setTimeout(() => {
         router.push(`/courses/${id}`);
       }, 1200);
@@ -115,7 +128,10 @@ export default function SignUpPage({ params }) {
                 日期: {course.period}
               </CardDescription>
               {/* 上課地點 */}
-              <CardDescription className="mt-4">地點:</CardDescription>
+              <CardDescription className="mt-4">
+                上課地點:
+                {variant.location_id.name ? variant.location_id.name : '未提供'}
+              </CardDescription>
               {/* 售價 */}
               <CardDescription className="mt-4">
                 費用:{' '}
@@ -185,13 +201,27 @@ export default function SignUpPage({ params }) {
             <CardContent>
               <p>課程內容</p>
             </CardContent>
-            <div className=" sm:grid-cols-2 gap-6 px-6 space-y-3">
+            {/* <div className=" sm:grid-cols-2 gap-6 px-6 space-y-3">
               {course.content &&
                 course.content.split('\n').map((line, idx) => (
                   <div key={idx}>
                     <p className="text-sm text-gray-600">{line}</p>
                   </div>
                 ))}
+            </div> */}
+            <div>
+              <Label htmlFor="content">詳細內容</Label>
+              {/* 這才是真正的 contenteditable 區塊 */}
+              <div
+                ref={editorRef}
+                onInput={handleInput}
+                className="min-h-[200px] w-full border p-2 rounded focus:outline-none"
+                style={{ whiteSpace: 'pre-wrap' }}
+                // 下面這屬性只是讓 React 不再警告
+                suppressContentEditableWarning
+                // 初次 render 時放進 innerHTML
+                dangerouslySetInnerHTML={{ __html: course.content }}
+              />
             </div>
             <hr />
             <CardContent className="flex justify-center px-6">

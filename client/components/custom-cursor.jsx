@@ -168,7 +168,8 @@ const CustomCursor = () => {
       }
       // --- [結束 代碼解釋區塊 G] ---
     };
-    window.addEventListener('mousemove', moveCursor);
+    // window.addEventListener('mousemove', moveCursor);
+    window.addEventListener('pointermove', moveCursor);
     return () => window.removeEventListener('mousemove', moveCursor);
   }, [isTouchDevice, isMounted, cursorX, cursorY, theme]); // cursorX, cursorY 作為依賴
 

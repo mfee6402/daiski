@@ -33,8 +33,10 @@ export function MobileAccountMenu() {
               size-6 
               rounded-full 
               border-2 
-              border-black 
-              hover:bg-gray-100 
+              border-black
+              dark:border-white 
+              hover:bg-gray-100
+              dark:hover:bg-gray-700 
               transition 
               cursor-pointer
               flex 
@@ -43,7 +45,7 @@ export function MobileAccountMenu() {
             "
           >
             <div className="flex items-center justify-between text-base gap-3">
-              <User className="size-4 text-black" />
+              <User className="size-4 text-black dark:text-white" />
               <span>會員</span>
             </div>
           </AccordionTrigger>
@@ -53,24 +55,24 @@ export function MobileAccountMenu() {
               <>
                 <Link
                   href="/profile"
-                  className="w-full block text-left px-2 py-1 rounded hover:bg-gray-100 text-base"
+                  className="w-full block text-left px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700  text-base"
                 >
                   個人資料
                 </Link>
                 <Link
                   href="/coupons"
-                  className="w-full block text-left px-2 py-1 rounded hover:bg-gray-100 text-base"
+                  className="w-full block text-left px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700  text-base"
                 >
                   優惠券
                 </Link>
                 <Link
                   href="/groups"
-                  className="w-full block text-left px-2 py-1 rounded hover:bg-gray-100 text-base"
+                  className="w-full block text-left px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700  text-base"
                 >
                   揪團
                 </Link>
                 <button
-                  className="w-full text-left px-2 py-1 rounded hover:bg-gray-100 text-base"
+                  className="w-full text-left px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700  text-base"
                   onClick={handleLogout}
                 >
                   登出
@@ -79,7 +81,7 @@ export function MobileAccountMenu() {
             ) : (
               <Link
                 href="/auth/login"
-                className="w-full block text-left px-2 py-1 rounded hover:bg-gray-100 text-base"
+                className="w-full block text-left px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700  text-base"
               >
                 登入
               </Link>

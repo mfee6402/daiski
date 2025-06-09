@@ -175,8 +175,8 @@ export default function CommentSection({
   }
 
   return (
-    <Card className="w-full max-w-screen-2xl mx-auto shadow-lg p-6 rounded-lg border-t border-border bg-card text-foreground mt-8">
-      <h3 className="text-lg font-semibold mb-4 text-primary-800">
+    <Card className="w-full max-w-screen-2xl mx-auto shadow-lg p-6 rounded-lg border-t border-border bg-card text-foreground mt-8 dark:bg-primary-800">
+      <h3 className="text-lg font-semibold mb-4 text-primary-800 dark:text-white">
         留言區 ({comments?.length || 0})
       </h3>
 

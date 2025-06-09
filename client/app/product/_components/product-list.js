@@ -128,6 +128,7 @@ import {
 } from '@/components/ui/card';
 import Image from 'next/image';
 import FavoriteButton from '@/components/favorite-button';
+import { FaStar } from 'react-icons/fa';
 
 export default function ProductList({
   products,
@@ -296,9 +297,22 @@ export default function ProductList({
                   </p>
                 </CardContent>
                 <CardFooter>
-                  <p className="text-sm text-black dark:text-white">
-                    評價：{p.rating || '尚無評價'}
-                  </p>
+                  {p.totalRatings > 0 ? (
+                    <p className="flex items-center text-sm text-black dark:text-white">
+                      {/* 黃色星星 */}
+                      <FaStar className="text-yellow-500 mr-1" />
+                      {/* 平均分數 */}
+                      <span>{p.averageRating}</span>
+                      {/* 括號裡顯示總筆數 */}
+                      <span className="ml-1 text-gray-500 dark:text-white">
+                        ({p.totalRatings})
+                      </span>
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-500 dark:text-white">
+                      尚無評價
+                    </p>
+                  )}
                 </CardFooter>
               </Card>
             </motion.div>

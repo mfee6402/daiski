@@ -105,7 +105,7 @@ export const verifyOtp = async (email, token) => {
   const otp = await prisma.otp.findFirst({
     where: { AND: [{ email }, { token }, { expiredAt: { gte: new Date() } }] },
   });
-
+console.log(otp);
   return !!otp;
 };
 

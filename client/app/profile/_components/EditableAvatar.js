@@ -21,6 +21,7 @@ export default function EditableAvatar({
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
   };
+  const base = process.env.NEXT_PUBLIC_API_BASE || '';
 
   /* ⬇︎ 2. 選檔案後：先本地預覽，再上傳至後端 */
   const handleFileChange = async (e) => {
@@ -36,13 +37,10 @@ export default function EditableAvatar({
       const formData = new FormData();
       formData.append('avatar', file);
 
-      const res = await fetch(
-        `http://localhost:3005/api/profile/avatar/${userId}`,
-        {
-          method: 'POST',
-          body: formData,
-        }
-      );
+      const res = await fetch(`${base}/api/profile/avatar/${userId}`, {
+        method: 'POST',
+        body: formData,
+      });
 
       if (!res.ok) throw new Error('Upload failed');
 
@@ -51,7 +49,6 @@ export default function EditableAvatar({
       setSrc(url);
       toast.success('頭像更新成功!');
       setFresh(!fresh);
-      
     } catch (err) {
       toast.error('上傳失敗，請重試' + err);
       setSrc(src); // 還原舊頭像

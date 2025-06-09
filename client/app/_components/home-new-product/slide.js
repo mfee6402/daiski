@@ -62,7 +62,7 @@ export default function Slide() {
           fill
         />
       </SwiperSlide>
-      <div className="absolute inset-0 bg-[#D2E1EA]/30 z-[1] pointer-events: none" />
+      <div className="absolute inset-0 bg-[#D2E1EA]/60 z-[1] pointer-events: none" />
     </Swiper>
   );
 }

@@ -30,7 +30,8 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
   // --- 群組列表與選擇相關狀態 ---
   const [joinedGroups, setJoinedGroups] = useState([]);
   const [isLoadingGroups, setIsLoadingGroups] = useState(false);
-  const [activeChatGroupId, setActiveChatGroupId] = useState(null);
+  // const [activeChatGroupId, setActiveChatGroupId] = useState(null);
+  const [activeGroup, setActiveGroup] = useState(null);
   const [showGroupList, setShowGroupList] = useState(true);
   // --- 歷史訊息相關狀態 ---
   const [isLoadingHistory, setIsLoadingHistory] = useState(false); // 是否正在載入歷史訊息
@@ -95,6 +96,7 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
+          console.log('從 API 獲取的群組列表:', data.groups);
           setJoinedGroups(data.groups || []);
         } else {
           console.error('後端 API (my-joined-list) 返回失敗:', data.message);
@@ -170,20 +172,28 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
     async (groupId) => {
       if (!groupId || !currentUser || !socketRef.current || !apiBase) return;
 
-      // 如果是同一個群組且已經授權，則不重複執行 (除非強制刷新)
+      const selectedGroup = joinedGroups.find(
+        (g) => g.id.toString() === groupId.toString()
+      );
+      // 如果找不到對應的群組，就中斷執行
+      if (!selectedGroup) {
+        // console.error(`在 joinedGroups 中找不到 ID 為 ${groupId} 的群組。`);
+        return;
+      }
+      // 🔄 2. 如果是同一個群組，判斷條件要改成比較 ID
       if (
-        activeChatGroupId === groupId &&
+        activeGroup?.id === selectedGroup.id &&
         isChatAllowedForActiveGroup &&
         !isCheckingGroupAuth
       ) {
-        setShowGroupList(false); // 確保顯示訊息界面
+        setShowGroupList(false);
         return;
       }
 
       // 重設狀態，準備進入新的聊天室
       if (socketRef.current.connected) socketRef.current.disconnect(); // 先斷開舊的 socket 連接
       setMsgs([]); // 清空舊訊息
-      setActiveChatGroupId(groupId); // 設定當前活躍的群組 ID
+      setActiveGroup(selectedGroup);
       setShowGroupList(false); // 隱藏群組列表，準備顯示訊息界面
       setIsCheckingGroupAuth(true); // 開始檢查授權
       setIsChatAllowedForActiveGroup(false); // 重設授權狀態
@@ -247,7 +257,8 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
       apiBase,
       socketRef,
       fetchHistoryMessages,
-      activeChatGroupId,
+      joinedGroups, // ✅ 新增 joinedGroups
+      activeGroup, // 🔄 將 activeChatGroupId 改為 activeGroup
       isChatAllowedForActiveGroup,
     ]
   );
@@ -257,12 +268,12 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
       fetchJoinedGroups();
       const groupIdFromUrl = getGroupIdFromUrl();
       if (groupIdFromUrl) {
-        if (activeChatGroupId !== groupIdFromUrl) {
+        if (activeGroup?.id !== groupIdFromUrl) {
           selectGroupAndEnterChat(groupIdFromUrl);
         }
       } else {
         setShowGroupList(true);
-        setActiveChatGroupId(null);
+        setActiveGroup(null);
         setIsChatAllowedForActiveGroup(false);
         if (socketRef.current?.connected) socketRef.current.disconnect();
       }
@@ -270,7 +281,7 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
       if (socketRef.current?.connected) {
         socketRef.current.disconnect();
       }
-      setActiveChatGroupId(null);
+      setActiveGroup(null);
       setIsChatAllowedForActiveGroup(false);
       setShowGroupList(true);
       setMsgs([]);
@@ -282,17 +293,17 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
     const groupIdFromUrl = getGroupIdFromUrl();
     if (open && currentUser?.id) {
       if (groupIdFromUrl) {
-        if (groupIdFromUrl !== activeChatGroupId) {
+        if (groupIdFromUrl !== activeGroup?.id) {
           selectGroupAndEnterChat(groupIdFromUrl);
         }
       } else {
-        if (activeChatGroupId && !showGroupList) {
+        if (activeGroup?.id && !showGroupList) {
           setShowGroupList(true);
           if (socketRef.current?.connected) socketRef.current.disconnect();
-          setActiveChatGroupId(null);
+          setActiveGroup(null);
           setIsChatAllowedForActiveGroup(false);
           setMsgs([]);
-        } else if (!activeChatGroupId) {
+        } else if (!activeGroup?.id) {
           setShowGroupList(true);
         }
       }
@@ -303,7 +314,7 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
     const currentSocket = socketRef.current;
     if (
       !currentSocket ||
-      !activeChatGroupId ||
+      !activeGroup?.id ||
       !isChatAllowedForActiveGroup ||
       !currentUser?.id
     ) {
@@ -320,33 +331,33 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
 
     const handleConnect = () => {
       setIsConnected(true);
-      currentSocket.emit('joinGroupChat', activeChatGroupId, currentUser.id);
+      currentSocket.emit('joinGroupChat', activeGroup?.id, currentUser.id);
     };
     const handleDisconnect = () => {
       setIsConnected(false);
     };
     const handleChatMessage = (m) => {
       if (
-        m.groupId === activeChatGroupId ||
-        (m.room && m.room.toString() === activeChatGroupId)
+        m.groupId === activeGroup?.id ||
+        (m.room && m.room.toString() === activeGroup?.id)
       ) {
         setMsgs((prev) => [...prev, m]);
         if (!open) setUnread((u) => u + 1);
       }
     };
     const handleJoinedRoomSuccess = (data) => {
-      if (data.groupId === activeChatGroupId)
+      if (data.groupId === activeGroup?.id)
         console.log(`[Socket] Joined room ${data.groupId} successfully.`);
     }; // 保留一個成功日誌
     const handleJoinRoomError = (data) => {
-      if (data.groupId === activeChatGroupId) {
+      if (data.groupId === activeGroup?.id) {
         console.error(
           `[Socket] Join room ${data.groupId} error:`,
           data.message
         );
         setIsChatAllowedForActiveGroup(false);
         setShowGroupList(true);
-        setActiveChatGroupId(null);
+        setActiveGroup(null);
         if (currentSocket.connected) currentSocket.disconnect();
       }
     };
@@ -366,7 +377,7 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
     };
   }, [
     socketRef,
-    activeChatGroupId,
+    activeGroup?.id,
     currentUser?.id,
     isChatAllowedForActiveGroup,
   ]);
@@ -387,7 +398,7 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
     if (
       !socketRef.current ||
       !isConnected ||
-      !activeChatGroupId ||
+      !activeGroup?.id ||
       !isChatAllowedForActiveGroup
     ) {
       console.error('[sendMessage] Aborted: Conditions not met.'); // 保留錯誤日誌
@@ -397,7 +408,7 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
     socketRef.current.emit(
       'sendMessage',
       messageData,
-      activeChatGroupId.toString()
+      activeGroup?.id.toString()
     );
   };
 
@@ -405,6 +416,7 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
     const content = text.trim();
     if (!content || !currentUser) return;
     const msg = {
+      id: `temp-${Date.now()}`,
       user: {
         id: currentUser.id,
         name: currentUser.name,
@@ -413,7 +425,9 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
       type: 'text',
       content: content,
       time: Date.now(),
+      groupId: activeGroup?.id,
     };
+    setMsgs((prev) => [...prev, msg]);
     sendMessage(msg);
     setText('');
   };
@@ -423,7 +437,7 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
     if (
       !file ||
       !currentUser ||
-      !activeChatGroupId ||
+      !activeGroup?.id ||
       !isChatAllowedForActiveGroup
     )
       return;
@@ -452,7 +466,9 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
         type: 'image',
         imageUrl: data.url,
         time: Date.now(),
+        groupId: activeGroup.id,
       };
+      setMsgs((prev) => [...prev, msg]);
       sendMessage(msg);
     } catch (err) {
       console.error('[uploadImage] Failed:', err); // 保留錯誤日誌
@@ -464,18 +480,18 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
 
   const canInteractWithChat =
     isConnected &&
-    activeChatGroupId &&
+    activeGroup?.id &&
     isChatAllowedForActiveGroup &&
     !isCheckingGroupAuth;
   const displayTitle =
-    activeChatGroupId && isChatAllowedForActiveGroup && !showGroupList
-      ? `群組 ${activeChatGroupId}`
+    activeGroup?.id && isChatAllowedForActiveGroup && !showGroupList
+      ? `${activeGroup?.title}`
       : showGroupList
         ? '選擇聊天群組'
         : isCheckingGroupAuth
           ? '檢查權限中...'
-          : activeChatGroupId
-            ? `群組 ${activeChatGroupId} (無法進入)`
+          : activeGroup?.id
+            ? `群組 ${activeGroup?.id} (無法進入)`
             : '聊天室';
   const handleChatHeadClick = () => {
     if (!currentUser) {
@@ -495,14 +511,14 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
   };
 
   const shouldShowGroupList = !isLoadingGroups && showGroupList;
-  const shouldShowCheckingAuth = activeChatGroupId && isCheckingGroupAuth;
+  const shouldShowCheckingAuth = activeGroup?.id && isCheckingGroupAuth;
   const shouldShowNotAllowed =
-    activeChatGroupId &&
+    activeGroup?.id &&
     !isCheckingGroupAuth &&
     !isChatAllowedForActiveGroup &&
     !showGroupList;
   const shouldShowChatContent =
-    activeChatGroupId &&
+    activeGroup?.id &&
     isChatAllowedForActiveGroup &&
     !isCheckingGroupAuth &&
     !showGroupList;
@@ -530,11 +546,14 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
       {open && currentUser && (
         <div className="fixed bottom-20 right-6 w-80 h-[500px] max-h-[70vh] bg-white border border-gray-300 shadow-xl rounded-lg flex flex-col z-40 overflow-hidden">
           <div className="flex items-center justify-between p-3 border-b bg-slate-100 rounded-t-lg flex-shrink-0">
-            <h4 className="font-semibold text-slate-800 text-sm truncate pr-2">
+            <h4
+              className="font-semibold text-slate-800 text-sm truncate pr-2"
+              title={displayTitle}
+            >
               {displayTitle}
             </h4>
             <div>
-              {activeChatGroupId &&
+              {activeGroup?.id &&
                 isChatAllowedForActiveGroup &&
                 !showGroupList && (
                   <Button
@@ -544,7 +563,7 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
                       setShowGroupList(true);
                       if (socketRef.current?.connected)
                         socketRef.current.disconnect();
-                      setActiveChatGroupId(null);
+                      setActiveGroup(null);
                       setIsChatAllowedForActiveGroup(false);
                       setMsgs([]);
                     }}
@@ -598,12 +617,12 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
             )}
             {shouldShowCheckingAuth && (
               <div className="p-3 text-sm text-center text-gray-500">
-                正在檢查群組 {activeChatGroupId} 的權限...
+                正在檢查群組 {activeGroup?.id} 的權限...
               </div>
             )}
             {shouldShowNotAllowed && (
               <div className="flex-1 p-3 flex items-center justify-center text-sm text-red-600">
-                您目前無法進入群組 {activeChatGroupId} 的聊天室。
+                您目前無法進入群組 {activeGroup?.id} 的聊天室。
               </div>
             )}
             {shouldShowChatContent && (
@@ -620,7 +639,11 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
                       <div className="flex items-end gap-1.5">
                         {m.user.id !== currentUser.id && (
                           <Image
-                            src={m.user.avatar || '/deadicon.png'}
+                            src={
+                              m.user.avatar
+                                ? `http://localhost:3005${m.user.avatar}`
+                                : '/deadicon.png'
+                            }
                             alt={m.user.name || '用戶'}
                             width={24}
                             height={24}

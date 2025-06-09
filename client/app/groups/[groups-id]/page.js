@@ -77,7 +77,6 @@ export default function GroupDetailPage() {
       }
       const data = await response.json();
       setGroup(data);
-
       if (currentUser && data.creator && data.creator.id === currentUser.id) {
         setIsOrganizer(true);
       } else {
@@ -96,14 +95,14 @@ export default function GroupDetailPage() {
       } else {
         setProgressWidth('0%');
       }
-      if (isAuth && currentUser?.id && group?.id) {
+      if (isAuth && currentUser?.id && data?.id) {
         try {
           // 假設後端有一個 API /api/group/:groupId/member-status?userId=:userId
           // 或者在獲取揪團資料時，後端就一併檢查並返回 isCurrentUserMember 欄位
           // 為了簡化，我們先假設後端 /api/group/:groupId 回應中包含了成員列表，前端來判斷
           // 實際上，更好的做法是後端直接提供一個 boolean 值
-          const member = group.members?.find(
-            (m) => m.userId === currentUser.id && m.groupId === group.id
+          const member = data.members?.find(
+            (m) => m.userId === currentUser.id && m.groupId === data.id
           );
           if (member) {
             setIsAlreadyMember(true);
@@ -249,22 +248,14 @@ export default function GroupDetailPage() {
         // 顯示成功訊息
         // 加入購物車 byCart
         onAdd('CartGroup', {
-          id: group.id,
+          id: newMemberEntry,
           price: group.price,
           title: group.title,
           imageUrl: group.images[0].imageUrl,
           startDate: group.startDate,
           endDate: group.endDate,
         });
-        alert(`已成功參加揪團！
-
-          加入揪團 ${group?.title || groupId}
-    group_id：${group.id}
-    揪團名稱：${group.title}
-    時間為：${group.startDate}~${group.endDate}
-    價格：${group.price}
-    圖片：${group.images[0].imageUrl}
-    groupMemberId：${newMemberEntry}`);
+        alert(`已成功參加揪團！`);
       } else {
         setJoinError(data.message || `加入揪團失敗: ${response.status}`);
         alert(data.message || `加入揪團失敗: ${response.status}`);
@@ -277,22 +268,28 @@ export default function GroupDetailPage() {
       setIsJoining(false);
     }
   };
-  // --- 「我要參加」按鈕的處理函數結束 ---
   const handleJoinChat = () => {
     if (!isAuth || !currentUser?.id) {
       alert('請先登入才能使用聊天功能。');
       return;
     }
-    if (!isAlreadyMember) {
-      alert('請先參加此揪團才能進入聊天室。');
-      return;
-    }
-    if (!hasPaidForThisGroup) {
-      alert('您尚未完成付款，無法進入此揪團的聊天室。');
-      return;
+    // 建立一個變數來判斷是否為「已付款的成員」
+    const isPaidMember = isAlreadyMember && hasPaidForThisGroup;
+
+    // 如果「是開團者」或者「是已付款的成員」，則允許進入
+    if (isOrganizer || isPaidMember) {
+      // 在這裡放置進入聊天室的實際邏輯
+      alert(`您已成功加入聊天室！`);
+      // 例如: router.push(`/chat/${group.chatRoom.id}`);
+    } else {
+      // 如果不符合上述任一條件，則根據情況給出提示
+      if (!isAlreadyMember || !hasPaidForThisGroup) {
+        alert('請先參加此揪團才能進入聊天室。');
+      } else {
+        alert('您尚未完成付款，無法進入此揪團的聊天室。');
+      }
     }
   };
-  // alert(`功能待開發：加入 ${group?.title || groupId} 的聊天室`);
   const handleEditGroup = () => router.push(`/groups/${groupId}/edit`);
   const handleDeleteGroup = async () => {
     if (
@@ -303,7 +300,10 @@ export default function GroupDetailPage() {
       try {
         const response = await fetch(`${API_BASE}/api/group/${groupId}`, {
           method: 'DELETE',
-          // headers: { 'Authorization': `Bearer ${your_token_variable}` }, // 如果需要
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}));
@@ -416,7 +416,7 @@ export default function GroupDetailPage() {
   );
 
   return (
-    <div className="bg-secondary-200 text-secondary-800 min-h-screen">
+    <div className="bg-secondary-200 text-secondary-800 min-h-screen dark:bg-background">
       <main className="w-full max-w-[1920px] mx-auto px-4 py-8 space-y-8">
         <PageLevelError />
         <div className="flex justify-between items-center mb-6">
@@ -432,6 +432,7 @@ export default function GroupDetailPage() {
           onJoinChat={handleJoinChat}
           onEditGroup={handleEditGroup}
           onDeleteGroup={handleDeleteGroup}
+          isAlreadyMember={isAlreadyMember}
           hasPaid={hasPaidForThisGroup}
           isOrganizer={isOrganizer}
           calendarButtonLoaded={calendarButtonLoaded}

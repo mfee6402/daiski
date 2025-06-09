@@ -50,6 +50,7 @@ router.post('/', async (req, res) => {
       },
       select: { id: true, name: true, email: true, account: true, phone: true }, // 不回傳 hash
     });
+    await fetch(`http://localhost:3005/api/cart/createCart/${user.id}`,{method:'POST'});
 
     return res.status(201).json({ status: 'success', data: { user } });
   } catch (err) {

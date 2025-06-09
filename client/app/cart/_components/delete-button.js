@@ -16,6 +16,7 @@ import { useCart } from '@/hooks/use-cart';
 
 export default function Delete({ category = '', item = {}, name = '' }) {
   const { onRemove } = useCart();
+
   return (
     <>
       <AlertDialog>

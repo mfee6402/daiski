@@ -7,6 +7,7 @@ uploads
 coachAvatar
 courseImages
 upload
+ckeditor
 # misc
 .DS_Store
 .cache

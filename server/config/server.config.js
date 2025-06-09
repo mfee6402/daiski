@@ -17,15 +17,15 @@ export const serverConfig = {
   smtp: {
     provider: 'ethereal',
     host: 'smtp.ethereal.email',
-    user: 'mittie.daniel91@ethereal.email',
-    pass: 'b6en9s7EqjP9EPVKkd',
+    user: 'davin.willms8@ethereal.email',
+    pass: 'A6MFgv7Zk17Gcxkjkf',
   },
   // gmail
   // smtp: {
   //   provider: 'gmail',
   //   host: 'smtp.gmail.com',
-  //   user: 'xxxxxx@gmail.com',
-  //   pass: 'xxxxxxxx',
+  //   user: '',
+  //   pass: ‘',
   // },
   jwt: {
     secret: 'access_token_secret',
