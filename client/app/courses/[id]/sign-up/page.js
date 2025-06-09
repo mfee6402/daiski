@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -56,6 +56,14 @@ export default function SignUpPage({ params }) {
     setForm((prev) => ({
       ...prev,
       [e.target.id]: e.target.value,
+    }));
+  };
+  const editorRef = useRef(null);
+  const handleInput = () => {
+    if (!editorRef.current) return;
+    setForm((prev) => ({
+      ...prev,
+      content: editorRef.current.innerHTML,
     }));
   };
 
@@ -193,13 +201,27 @@ export default function SignUpPage({ params }) {
             <CardContent>
               <p>課程內容</p>
             </CardContent>
-            <div className=" sm:grid-cols-2 gap-6 px-6 space-y-3">
+            {/* <div className=" sm:grid-cols-2 gap-6 px-6 space-y-3">
               {course.content &&
                 course.content.split('\n').map((line, idx) => (
                   <div key={idx}>
                     <p className="text-sm text-gray-600">{line}</p>
                   </div>
                 ))}
+            </div> */}
+            <div>
+              <Label htmlFor="content">詳細內容</Label>
+              {/* 這才是真正的 contenteditable 區塊 */}
+              <div
+                ref={editorRef}
+                onInput={handleInput}
+                className="min-h-[200px] w-full border p-2 rounded focus:outline-none"
+                style={{ whiteSpace: 'pre-wrap' }}
+                // 下面這屬性只是讓 React 不再警告
+                suppressContentEditableWarning
+                // 初次 render 時放進 innerHTML
+                dangerouslySetInnerHTML={{ __html: course.content }}
+              />
             </div>
             <hr />
             <CardContent className="flex justify-center px-6">

@@ -529,45 +529,45 @@ router.post(
         // ]
 
         // 建立兩個映射：舊有 tagName[]、舊有 courseTagIdByTagName
-        const oldTagNames = existingCourseTags.map((ct) => ct.tag.name);
-        const courseTagIdByTagName = {};
-        existingCourseTags.forEach((ct) => {
-          courseTagIdByTagName[ct.tag.name] = ct.id;
-        });
+        // const oldTagNames = existingCourseTags.map((ct) => ct.tag.name);
+        // const courseTagIdByTagName = {};
+        // existingCourseTags.forEach((ct) => {
+        //   courseTagIdByTagName[ct.tag.name] = ct.id;
+        // });
 
-        // 2.2 算出要刪除的標籤名稱：oldTagNames 中有但 new tagIds 裡沒有的
-        const toDeleteNames = oldTagNames.filter(
-          (name) => !tagList.includes(name)
-        );
-        // 2.3 算出要新增的標籤名稱：new tagIds 中有但 oldTagNames 裡沒有的
-        const toAddNames = tagList.filter(
-          (name) => !oldTagNames.includes(name)
-        );
+        // // 2.2 算出要刪除的標籤名稱：oldTagNames 中有但 new tagIds 裡沒有的
+        // const toDeleteNames = oldTagNames.filter(
+        //   (name) => !tagList.includes(name)
+        // );
+        // // 2.3 算出要新增的標籤名稱：new tagIds 中有但 oldTagNames 裡沒有的
+        // const toAddNames = tagList.filter(
+        //   (name) => !oldTagNames.includes(name)
+        // );
 
-        // 2.4 處理刪除：把 toDeleteNames 對應的 courseTag 紀錄刪除
-        if (toDeleteNames.length) {
-          // 先拿到要刪除的 courseTag id 清單
-          const idsToDel = toDeleteNames.map(
-            (name) => courseTagIdByTagName[name]
-          );
-          await tx.courseTag.deleteMany({
-            where: { id: { in: idsToDel } },
-          });
-        }
+        // // 2.4 處理刪除：把 toDeleteNames 對應的 courseTag 紀錄刪除
+        // if (toDeleteNames.length) {
+        //   // 先拿到要刪除的 courseTag id 清單
+        //   const idsToDel = toDeleteNames.map(
+        //     (name) => courseTagIdByTagName[name]
+        //   );
+        //   await tx.courseTag.deleteMany({
+        //     where: { id: { in: idsToDel } },
+        //   });
+        // }
 
-        // 2.5 處理新增：對於每個 toAddNames
-        for (const t of toAddNames) {
-          // 先用 findFirst 查有沒有同名的 Tag
-          let tag = await tx.tag.findFirst({ where: { name: t } });
-          if (!tag) {
-            // 如果不存在，就 create 一筆新的 Tag
-            tag = await tx.tag.create({ data: { name: t } });
-          }
-          // 然後再在 CourseTag 建立關聯
-          await tx.courseTag.create({
-            data: { course_id: +courseId, tag_id: tag.id },
-          });
-        }
+        // // 2.5 處理新增：對於每個 toAddNames
+        // for (const t of toAddNames) {
+        //   // 先用 findFirst 查有沒有同名的 Tag
+        //   let tag = await tx.tag.findFirst({ where: { name: t } });
+        //   if (!tag) {
+        //     // 如果不存在，就 create 一筆新的 Tag
+        //     tag = await tx.tag.create({ data: { name: t } });
+        //   }
+        //   // 然後再在 CourseTag 建立關聯
+        //   await tx.courseTag.create({
+        //     data: { course_id: +courseId, tag_id: tag.id },
+        //   });
+        // }
         return course;
         // transaction 回傳
       });
