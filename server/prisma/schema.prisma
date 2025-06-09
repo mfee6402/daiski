@@ -17,7 +17,7 @@ model User {
   phone     String
   // String->DateTime
   birthday  DateTime?
-  email     String   
+  email     String
   // 更改為與資料庫相同
   is_coach  Int
   avatar    String?
@@ -46,6 +46,7 @@ model Otp {
   hash      String
   createdAt DateTime @default(now()) @map("created_at")
   expiredAt DateTime @map("expired_at")
+
   @@map("otp")
 }
 

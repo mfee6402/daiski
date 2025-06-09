@@ -66,10 +66,10 @@ export default function CoursesIdPage() {
 
   return (
     <>
-      <main className=" py-8 bg-gray-100  min-h-screen">
+      <main className=" py-8 bg-gray-100 dark:bg-background  min-h-screen">
         {/* 主卡片 */}
         <Container>
-          <div className="bg-white md:grid md:grid-cols-[3fr_1fr] gap-8 rounded-2xl shadow-lg mb-8">
+          <div className="bg-white dark:bg-background md:grid md:grid-cols-[3fr_1fr] gap-8 rounded-2xl shadow-lg mb-8">
             {/* hero圖片 */}
             <div className="relative md:col-span-2 ">
               <Image
@@ -102,7 +102,7 @@ export default function CoursesIdPage() {
               <h1 className="text-2xl mb-2 font-bold">{course.name}</h1>
               <ul className="flex flex-col w-full">
                 {/* 課程日期 */}
-                <li className="flex items-center justify-star">
+                <li className="flex items-center justify-start mb-2">
                   <Clock5
                     size={20}
                     className="min-w-[20px] inline-block pr-0.5"
@@ -110,7 +110,7 @@ export default function CoursesIdPage() {
                   {course.period}
                 </li>
                 {/* 課程地點 */}
-                <li className="flex lg:items-center justify-start">
+                <li className="flex lg:items-center justify-start mb-2">
                   <MapPin size={20} className="min-w-[20px] inline-block " />
                   {course.variants[0]?.location.city}
                   {course.variants[0]?.location.country &&
@@ -118,12 +118,12 @@ export default function CoursesIdPage() {
                   {course.variants[0]?.location.address &&
                     `,${course.variants[0].location.address}`}
                 </li>
-                <li className="flex lg:items-center justify-start">
+                <li className="flex lg:items-center justify-start mb-2">
                   <LocateFixed size={20} />
                   {course.variants[0]?.location.name}
                 </li>
               </ul>
-              <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6  w-full ">
+              <div className="bg-white dark:bg-background border border-gray-200 rounded-2xl p-6 mb-6  w-full ">
                 {/* 單雙板 */}
                 <div className="mb-6">
                   <h2 className="text-xl font-semibold">單/雙板</h2>
@@ -142,13 +142,15 @@ export default function CoursesIdPage() {
                 {/* 課程簡介 */}
                 <div className="mb-6">
                   <h2 className="text-xl font-semibold mb-2">課程簡介</h2>
-                  <p className="text-gray-700">{course.description}</p>
+                  <p className="text-gray-700 dark:text-white">
+                    {course.description}
+                  </p>
                 </div>
                 {/* 課程內容 */}
                 <div className="mb-6">
                   <h2 className="text-xl font-semibold mb-2">課程內容</h2>
                   <div
-                    className="text-gray-700"
+                    className="text-gray-700 dark:text-white"
                     dangerouslySetInnerHTML={{ __html: course.content }}
                   >
                     {/* {course.content} */}
@@ -159,11 +161,11 @@ export default function CoursesIdPage() {
             {/* <div className="px-8 py-6 space-y-6"></div> */}
 
             {/* ——— 右側側邊欄 ——— */}
-            <div className="w-80 md:p-0 px-6">
+            <div className="w-80 md:p-0 px-6 ">
               {/* sticky 直到距離頂端 6rem (= top-24) */}
               <div className="sticky top-24  space-y-4">
-                {/* 报名卡片 */}
-                <div className="bg-white p-6 rounded-2xl shadow-lg">
+                {/* 報名卡片 */}
+                <div className="bg-white  p-6 sm:ml-0 ml-17 rounded-2xl shadow-lg  ">
                   <div className="flex justify-center">
                     {/* Logo */}
                     <img
@@ -183,7 +185,7 @@ export default function CoursesIdPage() {
               </div>
             </div>
             {course.variants[0]?.location?.latitude && (
-              <div className="bg-white rounded-2xl shadow-lg mt-0 p-6 space-y-4">
+              <div className="bg-white dark:bg-background rounded-2xl shadow-lg mt-0 p-6 space-y-4">
                 <h2 className="text-xl font-semibold">課程地點地圖</h2>
                 <CourseMap
                   lat={course.variants[0].location.latitude}

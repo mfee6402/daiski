@@ -249,6 +249,7 @@ export default function ProfileCoupons(props) {
                   statusClass={statusClass}
                   buttonText={buttonText}
                   isUsed={isUsed}
+                  isExpired={isExpired}
                   // 互動
                   onUse={() => {
                     if (c.target === '課程') {
