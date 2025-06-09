@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation'; // 加入 useRouter
 import Image from 'next/image';
 import Link from 'next/link';
 import React, { useState } from 'react';
@@ -33,12 +34,10 @@ import {
 
 const base = process.env.NEXT_PUBLIC_API_BASE || '';
 
-/* ---------- 常數 ---------- */
 const COURSES_API = 'http://localhost:3005/api/coaches/me/courses';
 const DELETE_API = (coachId, courseId) =>
   `http://localhost:3005/api/coaches/${coachId}/courses/${courseId}`;
 
-/* ---------- 通用 fetcher ---------- */
 const fetcher = async (url) => {
   const res = await fetch(url, { credentials: 'include' });
   if (!res.ok) {
@@ -47,25 +46,16 @@ const fetcher = async (url) => {
     err.info = await res.text();
     throw err;
   }
-  return res.json(); // { asStudent, asCoach }
+  return res.json();
 };
 
 export default function ProfileCourses() {
-  /* === 會員狀態 === */
-  const { isAuth } = useAuth();
+  const router = useRouter(); // 使用 Next.js router
+  const { isAuth, user } = useAuth(); // 假設 useAuth 提供當前使用者資訊
   const { mutate } = useSWRConfig();
+  const [filter, setFilter] = useState('student');
+  const [pendingDelete, setPendingDelete] = useState(null);
 
-  /* === 篩選狀態 === */
-  const [filter, setFilter] = useState('student'); // 'student' | 'coach'
-
-  /* === 刪除確認視窗狀態 === */
-  const [pendingDelete, setPendingDelete] = useState(
-    /** @type null | { coachId: number|string, courseId: number|string, courseName: string } */ (
-      null
-    )
-  );
-
-  /* === 取課程資料 === */
   const { data, isLoading, error } = useSWR(
     isAuth ? COURSES_API : null,
     fetcher
@@ -78,11 +68,9 @@ export default function ProfileCourses() {
       <p className="text-sm text-destructive">讀取失敗（{error.status}）</p>
     );
 
-  /* === 依篩選取資料 === */
   const rawCourses =
     filter === 'student' ? data?.asStudent ?? [] : data?.asCoach ?? [];
 
-  /* === 轉成卡片所需欄位 === */
   const courses = rawCourses.map((c) => {
     const [startAt = '', endAt = ''] = (c.date ?? '').split(' ~ ');
     return {
@@ -91,12 +79,11 @@ export default function ProfileCourses() {
       startAt,
       endAt,
       image: c.photo,
-      location: '', // 後端未提供地點
+      location: '',
       coachId: c.coach_id ?? c.coachId,
     };
   });
 
-  /* === 真正刪除請求 === */
   const doDelete = async (coachId, courseId) => {
     try {
       const res = await fetch(DELETE_API(coachId, courseId), {
@@ -104,7 +91,7 @@ export default function ProfileCourses() {
         credentials: 'include',
       });
       if (!res.ok) throw new Error(await res.text());
-      mutate(COURSES_API); // 重新拉清單
+      mutate(COURSES_API);
     } catch (err) {
       console.error(err);
       alert('刪除失敗 - ' + err.message);
@@ -113,7 +100,6 @@ export default function ProfileCourses() {
 
   return (
     <>
-      {/* ---------- 主卡片 ---------- */}
       <Card className="w-full">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -123,17 +109,32 @@ export default function ProfileCourses() {
               </CardTitle>
               <CardDescription>共 {courses.length} 筆</CardDescription>
             </div>
+            <div className="flex items-center justify-end gap-2">
+              {filter === 'coach' && (
+                <Button
+                  onClick={() => {
+                    if (user?.id) {
+                      router.push(`/coaches/${user.id}/create`);
+                    } else {
+                      alert('無法取得使用者 ID');
+                    }
+                  }}
+                  className="flex flex-wrap items-center gap-2 md:flex-row"
+                >
+                  創立課程
+                </Button>
+              )}
 
-            {/* 篩選器 */}
-            <Select value={filter} onValueChange={setFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="篩選課程" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="student">參加課程</SelectItem>
-                <SelectItem value="coach">開辦課程</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={filter} onValueChange={setFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="篩選課程" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="student">參加課程</SelectItem>
+                  <SelectItem value="coach">開辦課程</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
 
@@ -147,7 +148,6 @@ export default function ProfileCourses() {
               key={`${c.id}-${idx}`}
               className="flex flex-col md:flex-row justify-between gap-4 rounded-lg border p-4 min-w-0"
             >
-              {/* 圖片 */}
               <Image
                 src={c.image?.startsWith('http') ? c.image : `${base}${c.image}`}
                 alt={c.name}
@@ -156,7 +156,6 @@ export default function ProfileCourses() {
                 className="w-full md:w-1/2 flex-shrink-0 aspect-[4/3] rounded-md object-cover"
               />
 
-              {/* 文字 */}
               <div className="flex flex-col md:w-1/2">
                 <div className="flex flex-col justify-center gap-3 flex-grow">
                   <div className="font-medium flex gap-2 items-center line-clamp-2">
@@ -175,9 +174,7 @@ export default function ProfileCourses() {
                   )}
                 </div>
 
-                {/* 按鈕列 */}
                 <div className="flex items-end justify-end gap-2">
-                  {/* 查看 / 編輯 */}
                   <Button asChild variant="outline">
                     <Link
                       href={
@@ -190,7 +187,6 @@ export default function ProfileCourses() {
                     </Link>
                   </Button>
 
-                  {/* 刪除：僅教練視圖顯示 */}
                   {filter === 'coach' && (
                     <Button
                       variant="destructive"
@@ -212,7 +208,6 @@ export default function ProfileCourses() {
         </CardContent>
       </Card>
 
-      {/* ---------- 刪除確認 Dialog ---------- */}
       <Dialog
         open={!!pendingDelete}
         onOpenChange={(open) => !open && setPendingDelete(null)}
@@ -227,10 +222,7 @@ export default function ProfileCourses() {
             」，此操作不可復原。
           </p>
           <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setPendingDelete(null)}
-            >
+            <Button variant="secondary" onClick={() => setPendingDelete(null)}>
               取消
             </Button>
             <Button
