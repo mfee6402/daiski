@@ -4,43 +4,36 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Clock5, MapPin, LocateFixed } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+// import L from 'leaflet';
+// import 'leaflet/dist/leaflet.css';
+import dynamic from 'next/dynamic';
+
 import Image from 'next/image';
 import { memo, useMemo } from 'react';
 import Container from '@/components/container';
 import Link from 'next/link';
-import CourseMap from '../_component/coursemap';
+// import CourseMap from '../_component/coursemap';
 
-// 解決 icon 不顯示的問題
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-  iconUrl: require('leaflet/dist/images/marker-icon.png'),
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+const CourseMap = dynamic(() => import('../_component/coursemap'), {
+  ssr: false,
+  loading: () => <p>地圖載入中…</p>,
 });
-// 修正 Leaflet 預設圖標路徑
-// if (typeof window !== 'undefined') {
-//   delete L.Icon.Default.prototype._getIconUrl;
-//   L.Icon.Default.mergeOptions({
-//     iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-//     iconUrl: require('leaflet/dist/images/marker-icon.png'),
-//     shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
-//   });
-// }
-// function CourseMap({ latitude, longitude, locName }) {
-//   const lat = Number(latitude) || 25.033;
-//   const lng = Number(longitude) || 121.5654;
-//   const center = useMemo(() => [lat, lng], [lat, lng]);
-// }
-
 export default function CoursesIdPage() {
+  // useEffect(() => {
+  //   // 解決 icon 不顯示的問題
+  //   delete L.Icon.Default.prototype._getIconUrl;
+  //   L.Icon.Default.mergeOptions({
+  //     iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  //     iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  //     shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+  //   });
+  // }, []);
+
   const { id } = useParams();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // const variant = course.variants?.[0];
-  // const coach = variant?.coach;
+
   const coaches = () => {
     if (!Array.isArray(course.variants)) return [];
     const map = new Map();
@@ -70,14 +63,6 @@ export default function CoursesIdPage() {
     return <p className="p-8 text-center text-red-600">錯誤：{error}</p>;
   if (!course) return <p className="p-8 text-center">找不到課程資料。</p>;
   const variant = coaches.length ? course.variants[0] : null;
-  // Array.isArray(course.variants) && course.variants.length
-  //   ? course.variants[0]
-  //   : null;
-  // 再安全取 location
-  // const loc = variant?.location || {};
-  // const latitude = loc.latitude;
-  // const longitude = loc.longitude;
-  // const locName = loc.name || '未提供地點名稱';
 
   return (
     <>
@@ -117,7 +102,7 @@ export default function CoursesIdPage() {
               <h1 className="text-2xl mb-2 font-bold">{course.name}</h1>
               <ul className="flex flex-col w-full">
                 {/* 課程日期 */}
-                <li className="flex items-center justify-star">
+                <li className="flex items-center justify-start mb-2">
                   <Clock5
                     size={20}
                     className="min-w-[20px] inline-block pr-0.5"
@@ -125,7 +110,7 @@ export default function CoursesIdPage() {
                   {course.period}
                 </li>
                 {/* 課程地點 */}
-                <li className="flex lg:items-center justify-start">
+                <li className="flex lg:items-center justify-start mb-2">
                   <MapPin size={20} className="min-w-[20px] inline-block " />
                   {course.variants[0]?.location.city}
                   {course.variants[0]?.location.country &&
@@ -133,7 +118,7 @@ export default function CoursesIdPage() {
                   {course.variants[0]?.location.address &&
                     `,${course.variants[0].location.address}`}
                 </li>
-                <li className="flex lg:items-center justify-start">
+                <li className="flex lg:items-center justify-start mb-2">
                   <LocateFixed size={20} />
                   {course.variants[0]?.location.name}
                 </li>

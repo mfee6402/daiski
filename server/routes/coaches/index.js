@@ -48,21 +48,6 @@ const storage = multer.diskStorage({
 // });
 const upload = multer({ storage: multer.memoryStorage() });
 
-// ckditor
-/* --- 貼在檔尾任何路由之前 (避免與 /:id 衝突)，或乾脆放最上方 --- */
-// router.post('/uploads/ckeditor', upload.single('image'), async (req, res) => {
-//   try {
-//     const dir = 'public/ckeditor';
-//     fs.mkdirSync(dir, { recursive: true });
-//     const fileName = `${Date.now()}-${req.file.originalname}`;
-//     fs.writeFileSync(path.join(dir, fileName), req.file.buffer);
-//     res.json({ url: `/ckeditor/${fileName}` });
-//   } catch (err) {
-//     console.error('CKEditor Upload Error:', err);
-//     res.status(500).json({ message: '上傳失敗' });
-//   }
-// });
-
 // 會員中心 已報名/已建立
 router.get('/me/courses', authenticate, async (req, res) => {
   const userId = req.user.id;
@@ -82,6 +67,8 @@ router.get('/me/courses', authenticate, async (req, res) => {
           select: {
             start_at: true,
             // coach: { select: { name: true } },
+            coach_id: true,
+
             course: {
               select: {
                 id: true,
@@ -120,6 +107,10 @@ router.get('/me/courses', authenticate, async (req, res) => {
     // ----------- 教練開課 -----------
     let asCoach = [];
     if (isCoach) {
+      // const isCoach = await prisma.coach.findUnique({
+
+      // })
+
       const coachCourses = await prisma.courseVariant.findMany({
         where: {
           coach_id: userId,
@@ -128,9 +119,11 @@ router.get('/me/courses', authenticate, async (req, res) => {
         orderBy: { start_at: 'asc' },
         select: {
           start_at: true,
+          coach_id: true,
           course: {
             select: {
               id: true,
+
               name: true,
               start_at: true,
               end_at: true,
@@ -156,11 +149,13 @@ router.get('/me/courses', authenticate, async (req, res) => {
             name: c.name,
             date: `${start} ~ ${end}`,
             photo: c.CourseImg?.[0]?.img || '/default.jpg',
+            coach_id: r.coach_id,
           };
         });
     }
 
     return res.json({ asStudent, asCoach });
+    // return res.json({ coachCourses });
   } catch (err) {
     console.error('取得會員課程錯誤:', err);
     return res.status(500).json({ message: '伺服器錯誤' });
@@ -507,16 +502,71 @@ router.post(
         //     });
         //   }
         // }
-        if (Array.isArray(tagList) && tagList.length) {
-          for (const t of tagList) {
-            let tag = await tx.tag.findFirst({ where: { name: t } });
-            if (!tag) {
-              tag = await tx.tag.create({ data: { name: t } });
-            }
-            await tx.courseTag.create({
-              data: { course_id: course.id, tag_id: tag.id },
-            });
+        // if (Array.isArray(tagList) && tagList.length) {
+        //   for (const t of tagList) {
+        //     let tag = await tx.tag.findFirst({ where: { name: t } });
+        //     if (!tag) {
+        //       tag = await tx.tag.create({ data: { name: t } });
+        //     }
+        //     await tx.courseTag.create({
+        //       data: { course_id: course.id, tag_id: tag.id },
+        //     });
+        //   }
+        // }
+        const existingCourseTags = await tx.courseTag.findMany({
+          where: { course_id: +courseId },
+          select: {
+            id: true, // courseTag 的主鍵
+            tag_id: true,
+            tag: { select: { name: true } }, // 預設你在 CourseTag model 有 relation 到 Tag
+          },
+        });
+        // existingCourseTags 範例：
+        // [
+        //   { id: 101, tag_id: 5, tag: { name: "粉雪" } },
+        //   { id: 102, tag_id: 8, tag: { name: "北海道" } },
+        //   …
+        // ]
+
+        // 建立兩個映射：舊有 tagName[]、舊有 courseTagIdByTagName
+        const oldTagNames = existingCourseTags.map((ct) => ct.tag.name);
+        const courseTagIdByTagName = {};
+        existingCourseTags.forEach((ct) => {
+          courseTagIdByTagName[ct.tag.name] = ct.id;
+        });
+
+        // 2.2 算出要刪除的標籤名稱：oldTagNames 中有但 new tagIds 裡沒有的
+        const toDeleteNames = oldTagNames.filter(
+          (name) => !tagList.includes(name)
+        );
+        // 2.3 算出要新增的標籤名稱：new tagIds 中有但 oldTagNames 裡沒有的
+        const toAddNames = tagList.filter(
+          (name) => !oldTagNames.includes(name)
+        );
+
+        // 2.4 處理刪除：把 toDeleteNames 對應的 courseTag 紀錄刪除
+        if (toDeleteNames.length) {
+          // 先拿到要刪除的 courseTag id 清單
+          const idsToDel = toDeleteNames.map(
+            (name) => courseTagIdByTagName[name]
+          );
+          await tx.courseTag.deleteMany({
+            where: { id: { in: idsToDel } },
+          });
+        }
+
+        // 2.5 處理新增：對於每個 toAddNames
+        for (const t of toAddNames) {
+          // 先用 findFirst 查有沒有同名的 Tag
+          let tag = await tx.tag.findFirst({ where: { name: t } });
+          if (!tag) {
+            // 如果不存在，就 create 一筆新的 Tag
+            tag = await tx.tag.create({ data: { name: t } });
           }
+          // 然後再在 CourseTag 建立關聯
+          await tx.courseTag.create({
+            data: { course_id: +courseId, tag_id: tag.id },
+          });
         }
         return course;
         // transaction 回傳

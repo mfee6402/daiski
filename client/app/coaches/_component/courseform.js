@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
+import Container from '@/components/container';
 
 // uploadImage 回傳時就附上 host
 function getCkImageUrl(path) {
@@ -511,7 +512,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
 
   /* ---- JSX ---- */
   return (
-    <main className="min-h-screen bg-slate-50 py-8 px-4 dark:bg-slate-900">
+    <Container className="min-h-screen bg-white py-8 px-4 dark:bg-slate-900">
       <div className="max-w-screen-2xl mx-auto">
         {/* Stepper */}
         <HorizontalStepper steps={STEPS} current={step} setCurrent={setStep} />
@@ -837,6 +838,6 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
           </aside>
         </div>
       </div>
-    </main>
+    </Container>
   );
 }

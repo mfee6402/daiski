@@ -19,30 +19,65 @@ import {
 } from '@/components/ui/card';
 
 import CouponCard from '@/app/coupons/_components/coupon-card';
-export default function Coupon({ isOrder = false, couponId = null }) {
+export default function Coupon({ isOrder = false, orderCoupon = {} }) {
   const { cart, setCart } = useCart();
+
   const applyCoupon = (id) => {
     const nextCoupon = cart.CartCoupon.map((coupon) => {
+      if (coupon.checked === true) {
+        return { ...coupon, checked: false };
+      }
+
       if (coupon.id === id) {
         return { ...coupon, checked: true };
       } else {
         return { ...coupon, checked: false };
       }
     });
+
     setCart({ ...cart, CartCoupon: nextCoupon });
   };
+
+  const sortedCoupons = [...(cart?.CartCoupon || [])].sort((a, b) => {
+    return (b.canUse ? 1 : 0) - (a.canUse ? 1 : 0);
+  });
+  if (Object.keys(orderCoupon).length > 0) {
+    console.log(new Date(orderCoupon.endAt).toLocaleString());
+  }
 
   return (
     <Card className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark  ">
       <CardHeader>
         <CardTitle className="text-lg font-semibold">優惠券</CardTitle>
       </CardHeader>
-      {/* {isOrder} */}
+      {/* 第三部分優惠券 */}
+      {isOrder && Object.keys(orderCoupon).length > 0 && (
+        <div className="w-full px-15">
+          <CouponCard
+            // 原始資料
+            type={orderCoupon.type}
+            target={orderCoupon.target}
+            amount={orderCoupon.amount}
+            minPurchase={orderCoupon.minPurchase}
+            name={orderCoupon.name}
+            // 時間顯示
+            displayTime={new Date(orderCoupon.endAt).toLocaleString()}
+            // 狀態
+            buttonText={'已使用'}
+            isChecked={false}
+            canUse={false}
+            // buttonClass={buttonClass}
+            // 互動
+            onUse={() => {}}
+          />
+        </div>
+      )}
+      {/* 第一部分優惠券 */}
       {!isOrder && cart?.CartCoupon?.length > 0 && (
         <div className="w-full px-15">
           <Carousel opts={{ align: 'start' }}>
             <CarouselContent className="">
-              {cart?.CartCoupon?.map((item) => {
+              {sortedCoupons?.map((item) => {
                 const id = item.id;
                 const name = item.name;
                 const type = item.type;
@@ -50,17 +85,11 @@ export default function Coupon({ isOrder = false, couponId = null }) {
                 const amount = item.amount;
                 const target = item.target;
                 const canUse = item.canUse;
+                const isChecked = item.checked;
                 const minPurchase = item.minPurchase;
-                {
-                  /* const buttonClass = canUse
-                ? 'hover:bg-secondary-800 hover:text-white'
-                : 'bg-secondary-800 text-white cursor-default'; */
-                }
+
                 return (
-                  <CarouselItem
-                    className={`2xl:basis-1/2 basis-1/1  ${item.checked && 'bg-secondary-500 '}`}
-                    key={id}
-                  >
+                  <CarouselItem className={`2xl:basis-1/2 basis-1/1`} key={id}>
                     <CouponCard
                       // 原始資料
                       type={type}
@@ -71,7 +100,9 @@ export default function Coupon({ isOrder = false, couponId = null }) {
                       // 時間顯示
                       displayTime={endAt}
                       // 狀態
-                      buttonText={canUse ? '使用' : '不滿足'}
+                      buttonText={canUse ? '可使用' : '不滿足'}
+                      isChecked={isChecked}
+                      canUse={canUse}
                       // buttonClass={buttonClass}
                       // 互動
                       onUse={() => canUse && applyCoupon(id)}
@@ -86,9 +117,14 @@ export default function Coupon({ isOrder = false, couponId = null }) {
           </Carousel>
         </div>
       )}
-      {cart?.CartCoupon?.length === 0 && (
+      {!isOrder && cart?.CartCoupon?.length === 0 && (
         <>
           <div className="px-5">沒有優惠券</div>
+        </>
+      )}
+      {isOrder && Object.keys(orderCoupon).length === 0 && (
+        <>
+          <div className="px-5">沒有使用優惠券</div>
         </>
       )}
     </Card>

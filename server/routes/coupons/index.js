@@ -109,6 +109,7 @@ router.post('/claimcoupon', authenticate, async function (req, res) {
 // 查詢某會員所有領取過的優惠券
 router.get('/usercoupon', authenticate, async function (req, res) {
   try {
+    console.log('ok');
     const userId = req.user.id;
 
     const usercoupons = await prisma.userCoupon.findMany({
