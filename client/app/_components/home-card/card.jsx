@@ -29,7 +29,7 @@ export default function Card({
           .filter(Boolean)
           .join(' ')}
       >
-        <h3 className="md:text-h5-tw text-p-tw  mb-4 font-tw">{title}</h3>
+        <h3 className="md:text-h5-tw  sm:mb-4 mb-1 font-tw">{title}</h3>
         <Button className=" md:px-4 md:py-2 p-1">
           <Link href={href}>了解更多</Link>
         </Button>

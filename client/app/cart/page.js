@@ -14,8 +14,11 @@ import { useCart } from '@/hooks/use-cart';
 
 export default function CartPage({ setProcess }) {
   const { user, isAuth, isLoading } = useAuth();
-  const { cart } = useCart();
+  const { cart, fetchSyncData } = useCart();
 
+  useEffect(() => {
+    fetchSyncData();
+  }, []);
   // useEffect(() => {
   //   async function fetchData() {
   //     try {
@@ -41,23 +44,26 @@ export default function CartPage({ setProcess }) {
     return (
       <>
         <Process step="1"></Process>
-        <div className="flex justify-between md:gap-6  ">
+        <div className="flex justify-between md:gap-6 ">
           <div className="flex flex-col w-full gap-6 min-w-0 justify-center item-center">
             <CartItemList
               key="CartProduct"
               category="CartProduct"
               data={cart}
             ></CartItemList>
+
             <CartItemList
               key="CartCourse"
               category="CartCourse"
               data={cart}
             ></CartItemList>
+
             <CartItemList
               key="CartGroup"
               category="CartGroup"
               data={cart}
             ></CartItemList>
+
             <Coupon></Coupon>
           </div>
           <div className="">

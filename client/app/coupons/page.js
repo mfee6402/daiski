@@ -283,8 +283,8 @@ export default function CouponsPage(props) {
           </div>
 
           {/* 分類 */}
-          <div className="flex flex-row gap-6 justify-between">
-            <div className="flex flex-row gap-6">
+          <div className="flex flex-row sm:gap-6 gap-2 sm:justify-between flex-wrap">
+            <div className="flex flex-row sm:gap-6 gap-1">
               {/* 分類 */}
               <Select
                 value={selectedTarget || '全部'}
@@ -296,7 +296,7 @@ export default function CouponsPage(props) {
                   }
                 }}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="sm:w-[180px] w-[150px]">
                   <SelectValue placeholder="請選擇分類" />
                 </SelectTrigger>
                 <SelectContent>
@@ -320,7 +320,7 @@ export default function CouponsPage(props) {
                   }
                 }}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="sm:w-[180px] w-[150px]">
                   <SelectValue placeholder="請選擇分類" />
                 </SelectTrigger>
                 <SelectContent>
@@ -371,7 +371,7 @@ export default function CouponsPage(props) {
             <p className="color-primary-800">多多關注我們隨時領取優惠券</p>
           </div>
         ) : (
-          <ul className="grid gap-5 lg:grid-cols-2 my-10 lg:mx-0 mx-2">
+          <ul className="grid gap-5 lg:grid-cols-2 my-10 lg:mx-0 mx-1">
             {pageData?.map((c) => {
               // 顯示狀態
               const isUpcoming = c.status === '尚未開始';
