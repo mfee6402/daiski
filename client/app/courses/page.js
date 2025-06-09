@@ -133,7 +133,7 @@ export default function CoursesPage() {
         {/* 使用黑色疊加和模糊效果 */}
         {/* 背景使用 bg-white 加上透明度，或者如果 :root 的 --background 是白色，用 bg-background/85 */}
       </section>
-      <Container className="bg-white ">
+      <Container>
         {/* 篩選列 */}
 
         <div className=" mx-auto p-8">
@@ -144,7 +144,7 @@ export default function CoursesPage() {
                 e.preventDefault();
                 handleSearch();
               }}
-              className="mx-auto p-8 flex flex-wrap items-end gap-4"
+              className="mx-auto sm:p-8 p-4 flex flex-wrap items-end gap-4"
             >
               {/* boardtype */}
               <Select
@@ -154,7 +154,7 @@ export default function CoursesPage() {
                   setDraft((d) => ({ ...d, boardtype: val }))
                 }
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="sm:w-[180px] w-[150px]">
                   <MountainSnow />
                   <SelectValue placeholder="單 / 雙板" />
                 </SelectTrigger>
@@ -175,7 +175,7 @@ export default function CoursesPage() {
                   setDraft((d) => ({ ...d, location: val }))
                 }
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="sm:w-[180px] w-[150px]">
                   <LocateFixed />
                   <SelectValue placeholder="雪場" />
                 </SelectTrigger>
@@ -196,7 +196,7 @@ export default function CoursesPage() {
                   setDraft((d) => ({ ...d, difficulty: val }))
                 }
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="sm:w-[180px] w-[150px]">
                   <Snowflake />
                   <SelectValue placeholder="難易度" />
                 </SelectTrigger>
@@ -212,7 +212,7 @@ export default function CoursesPage() {
 
               {/* Keyword */}
               <Input
-                className="w-[180px]"
+                className="sm:w-[180px] w-[150px]"
                 placeholder="請輸入關鍵字..."
                 value={draft.keyword}
                 onChange={(e) =>
@@ -226,7 +226,7 @@ export default function CoursesPage() {
                 }}
               />
               {/* 查詢 / 清除按鈕 */}
-              <div className="flex gap-2">
+              <div className="flex gap-2  ">
                 <Button type="submit">查詢</Button>
                 <Button type="button" variant="outline" onClick={clearFilters}>
                   清除
@@ -240,11 +240,11 @@ export default function CoursesPage() {
         {loading ? (
           <p className="text-center p-8">載入中…</p>
         ) : showCourse.length ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mt-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mt-8  sm:mx-0 mx-10 align-items-center ">
             {pageData.map((c) => (
               <div
                 key={c.id}
-                className="max-w-xs max-auto rounded-xl shadow-md overflow-hidden border"
+                className=" max-auto rounded-xl shadow-md overflow-hidden border bg-white"
               >
                 <Link href={`/courses/${c.id}`}>
                   <Image
