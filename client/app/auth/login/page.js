@@ -143,7 +143,7 @@ export default function UserPage() {
               <label className="">
                 密碼:
                 <input
-                  type="text"
+                  type="password"
                   name="password"
                   value={userInput.password}
                   onChange={handleFieldChange}
