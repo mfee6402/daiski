@@ -206,7 +206,10 @@ router.get('/', authenticate, async function (req, res) {
         id: item.courseVariant.id,
         price: item.courseVariant.price,
         name: item.courseVariant.course.name,
-        imageUrl: item.courseVariant.course.CourseImg[0].img,
+        imageUrl:
+          item.courseVariant.course.CourseImg[
+            item.courseVariant.course.CourseImg.length - 1
+          ].img,
         startAt: start_at,
         endAt: end_at,
         duration: duration,

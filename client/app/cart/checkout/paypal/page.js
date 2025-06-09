@@ -82,8 +82,7 @@ export default function PaypalPage() {
 
   return (
     <>
-      <p>{'帳號:sb-mfooi42868363@personal.example.com'}</p>
-      <p>{'密碼:w<_0X%tv'}</p>
+      <p>{'請點擊下方按鈕付款'}</p>
       <PayPalScriptProvider options={initialOptions}>
         <PayPalButtons
           style={styles}
