@@ -639,7 +639,11 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
                       <div className="flex items-end gap-1.5">
                         {m.user.id !== currentUser.id && (
                           <Image
-                            src={m.user.avatar || '/deadicon.png'}
+                            src={
+                              m.user.avatar
+                                ? `http://localhost:3005${m.user.avatar}`
+                                : '/deadicon.png'
+                            }
                             alt={m.user.name || '用戶'}
                             width={24}
                             height={24}
