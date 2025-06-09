@@ -17,8 +17,8 @@ export const serverConfig = {
   smtp: {
     provider: 'ethereal',
     host: 'smtp.ethereal.email',
-    user: 'mia.witting@ethereal.email',
-    pass: 'cZ4y38vryYmKUzRhza',
+    user: 'davin.willms8@ethereal.email',
+    pass: 'A6MFgv7Zk17Gcxkjkf',
   },
   // gmail
   // smtp: {

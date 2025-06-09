@@ -224,13 +224,13 @@ export default function Dino() {
         setScore(scoreRef.current);
       }
 
-      // 如果分數到達1000，強制結束遊戲
-      if (scoreRef.current > 1000 && posYRef.current === 0) {
+      // 如果分數到達500，強制結束遊戲
+      if (scoreRef.current > 500 && posYRef.current === 0) {
         setIsPaused(true);
         setGoalDialogOpen(true);
         reachedGoalRef.current = true;
 
-        // 如果當下 scoreRef.current > 1000，就拿這個分數去傳送
+        // 如果當下 scoreRef.current > 500，就拿這個分數去傳送
         try {
           const resp = await trigger({
             gameId: game_id,
@@ -261,7 +261,7 @@ export default function Dino() {
     return () => cancelAnimationFrame(rafId);
   }, [started, obstacles, isJumping]);
 
-  // 處理「Game Over（分數 < 1000）」視窗按鈕：點擊「重新開始」，把所有狀態清乾淨並回到開始 Dialog
+  // 處理「Game Over（分數 < 500）」視窗按鈕：點擊「重新開始」，把所有狀態清乾淨並回到開始 Dialog
   const handleGameOverConfirm = () => {
     setGameOverDialogOpen(false);
     // 重置所有參數
@@ -278,20 +278,20 @@ export default function Dino() {
     setStartDialogOpen(true);
   };
 
-  //處理「達到 1000 分」視窗按鈕：點擊「確定」，把所有狀態清乾淨並回到開始 Dialog
-  const handleGoalConfirm = () => {
-    setGoalDialogOpen(false);
-    scoreRef.current = 0;
-    setScore(0);
-    posYRef.current = 0;
-    vyRef.current = 0;
-    reachedGoalRef.current = false;
-    setStarted(false);
-    setObstacles([]);
-    setSpeed(1);
-    setIsPaused(false);
-    setStartDialogOpen(true);
-  };
+  //處理「達到 500 分」視窗按鈕：點擊「確定」，把所有狀態清乾淨並回到開始 Dialog
+  // const handleGoalConfirm = () => {
+  //   setGoalDialogOpen(false);
+  //   scoreRef.current = 0;
+  //   setScore(0);
+  //   posYRef.current = 0;
+  //   vyRef.current = 0;
+  //   reachedGoalRef.current = false;
+  //   setStarted(false);
+  //   setObstacles([]);
+  //   setSpeed(1);
+  //   setIsPaused(false);
+  //   setStartDialogOpen(true);
+  // };
 
   // 計算是否要把 CSS animation 暫停
   // const pauseStyle = { animationPlayState: 'paused' };
@@ -309,7 +309,7 @@ export default function Dino() {
               <br />
               • 躲避所有障礙物，撞到就會結算分數。
               <br />• 分數會隨時間累加，越久存活分數越高。
-              <br />• 滿1000分將得到一張全站優惠券。
+              <br />• 滿500分將得到一張全站優惠券。
               <br />• 每人限領一次。
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -335,7 +335,7 @@ export default function Dino() {
           <AlertDialogHeader>
             <AlertDialogTitle>Game Over</AlertDialogTitle>
             <AlertDialogDescription>
-              尚未達到 1000 分，請再接再厲！
+              尚未達到 500 分，請再接再厲！
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -353,13 +353,13 @@ export default function Dino() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 通關 (score ≥ 1000 且落地) */}
+      {/* 通關 (score ≥ 500 且落地) */}
       <AlertDialog open={goalDialogOpen} onOpenChange={setGoalDialogOpen}>
         <AlertDialogContent className="max-w-xs">
           <AlertDialogHeader>
             <AlertDialogTitle>恭喜通關！</AlertDialogTitle>
             <AlertDialogDescription>
-              恭喜達到1000分，將獲得一張全站優惠券，請至會員中心查看。
+              恭喜達到500分，將獲得一張全站優惠券，請至會員中心查看。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

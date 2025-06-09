@@ -69,30 +69,32 @@ export default function CoachIdPage(props) {
             </div>
             {/* 授課語言 */}
             <div className="">
-              <h2 className="text-lg mb-1 text-primary-600 font-semibold">
+              <h2 className="text-lg mb-1 text-primary-600 dark:text-white font-semibold">
                 授課語言
               </h2>
-              <p className="text-gray-700">
+              <p className="text-gray-700 dark:text-white">
                 {coach.languages.join('、') || '無資料'}
               </p>
             </div>
             {/* 個人經歷 */}
             <div className="">
-              <h2 className="text-lg mb-1 text-primary-600 font-semibold">
+              <h2 className="text-lg mb-1 text-primary-600 dark:text-white font-semibold">
                 個人經歷
               </h2>
-              <p className="text-gray-700">{coach.experience}</p>
+              <p className="text-gray-700 dark:text-white">
+                {coach.experience}
+              </p>
             </div>
             {/* 自我介紹 */}
             <div className="">
-              <h2 className="text-lg mb-1 text-primary-600 font-semibold">
+              <h2 className="text-lg mb-1 text-primary-600 dark:text-white font-semibold">
                 自我介紹
               </h2>
-              <p className="text-gray-700">{coach.bio}</p>
+              <p className="text-gray-700 dark:text-white">{coach.bio}</p>
             </div>
             {/* 證照 */}
             <div className="">
-              <h2 className="text-lg mb-1 text-primary-600 font-semibold">
+              <h2 className="text-lg mb-1 text-primary-600  dark:text-white font-semibold">
                 專業證照
               </h2>
               {coach.license.map((l, i) => {
@@ -115,13 +117,13 @@ export default function CoachIdPage(props) {
               className="flex flex-col sm:flex-row items-center bg-white  border border-gray-200 rounded-lg shadow-sm overflow-hidden mb-6"
             >
               {/* 課程封面 */}
-              <div className=" sm:w-1/4 h-40 relative">
+              <div className=" sm:w-1/4 w-full  h-40 relative overflow-hidden ">
                 <Image
                   src={`http://localhost:3005${c.photo}`}
                   alt={c.name}
-                  width={300}
-                  height={250}
-                  className="object-cover"
+                  width={500}
+                  height={200}
+                  className="object-cover  "
                 />
               </div>
               <div className="flex-1 p-2">
@@ -132,7 +134,7 @@ export default function CoachIdPage(props) {
                     day: '2-digit',
                   })}
                 </p>
-                <h3>{c.name}</h3>
+                <h3 className="dark:text-black">{c.name}</h3>
               </div>
               <div className="p-4">
                 <button className="m-8 px-4 py-2 bg-gray-800 text-white rounded-full hover:bg-gray-700">
