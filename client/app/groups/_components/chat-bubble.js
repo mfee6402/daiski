@@ -416,6 +416,7 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
     const content = text.trim();
     if (!content || !currentUser) return;
     const msg = {
+      // id: `temp-${Date.now()}`,
       user: {
         id: currentUser.id,
         name: currentUser.name,
@@ -424,8 +425,9 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
       type: 'text',
       content: content,
       time: Date.now(),
+      groupId: activeGroup?.id,
     };
-    sendMessage(msg);
+    setMsgs((prev) => [...prev, msg]);
     setText('');
   };
 
@@ -463,7 +465,9 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
         type: 'image',
         imageUrl: data.url,
         time: Date.now(),
+        groupId: activeGroup.id,
       };
+      setMsgs((prev) => [...prev, msg]);
       sendMessage(msg);
     } catch (err) {
       console.error('[uploadImage] Failed:', err); // 保留錯誤日誌
