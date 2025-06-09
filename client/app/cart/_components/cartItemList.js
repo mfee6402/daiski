@@ -27,19 +27,22 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 
-export default function CartItemList({ category = '' }) {
-  const { cart } = useCart();
-  // NOTE 測試用，等待會員製作完收藏資料庫再修正，用於決定收藏的愛心狀態(實心、空心)
-  const tmpWishListLeg = 3;
-  const initWishList = new Array(tmpWishListLeg).fill(false);
-
-  const [wishList, setWishList] = useState(initWishList);
-
-  const titleMap = {
-    CartProduct: '商品',
-    CartCourse: '課程',
-    CartGroup: '揪團',
-  };
+export default function CartItemList({
+  category = '',
+  isOrder = false,
+  data = {},
+}) {
+  const titleMap = isOrder
+    ? {
+        orderProduct: '商品',
+        orderCourse: '課程',
+        orderGroup: '揪團',
+      }
+    : {
+        CartProduct: '商品',
+        CartCourse: '課程',
+        CartGroup: '揪團',
+      };
   const toUTC8 = (utcString) => {
     const date = new Date(utcString);
     date.setHours(date.getHours() + 8); // 加上 8 小時
@@ -49,11 +52,10 @@ export default function CartItemList({ category = '' }) {
 
   return (
     <>
-      <Card className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark">
+      {/* 電腦版 */}
+      <Card className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark hidden md:block">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">
-            {titleMap[category]}
-          </CardTitle>
+          <CardTitle className="">{titleMap[category]}</CardTitle>
         </CardHeader>
 
         <CardContent>
@@ -64,16 +66,16 @@ export default function CartItemList({ category = '' }) {
                 <TableRow className="w-full">
                   <TableHead>圖片</TableHead>
                   <TableHead>名稱</TableHead>
-                  <TableHead className="text-center">{`${category === 'CartProduct' ? '尺寸' : '價格'}`}</TableHead>
-                  <TableHead className="text-center">{`${category === 'CartProduct' ? '總價' : '日期'}`}</TableHead>
-                  <TableHead className="text-center">{`${category === 'CartProduct' ? '數量' : ''}`}</TableHead>
+                  <TableHead className="text-center">{`${category === 'CartProduct' || category === 'orderProduct' ? '尺寸' : '價格'}`}</TableHead>
+                  <TableHead className="text-center">{`${category === 'CartProduct' || category === 'orderProduct' ? '總價' : '日期'}`}</TableHead>
+                  <TableHead className="text-center">{`${category === 'CartProduct' || category === 'orderProduct' ? '數量' : ''}`}</TableHead>
                   <TableHead className=""></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cart[category]?.map((item) => {
+                {data?.[category]?.map((item) => {
                   const totalPrice = (
-                    item.price * (item.quantity ? item.quantity : 1)
+                    item?.price * (item.quantity ? item.quantity : 1)
                   ).toLocaleString();
 
                   return (
@@ -82,7 +84,7 @@ export default function CartItemList({ category = '' }) {
                       {item.imageUrl && (
                         <TableCell>
                           <div
-                            className={`relative ${category === 'CartProduct' ? 'h-[96px] w-[96px]' : 'h-[96px] w-[168px]'}`}
+                            className={`relative ${category === 'CartProduct' || category === 'orderProduct' ? 'h-[96px] w-[96px]' : 'h-[96px] w-[168px]'}`}
                           >
                             <Image
                               // FIXME
@@ -106,10 +108,13 @@ export default function CartItemList({ category = '' }) {
                       </TableCell>
 
                       {/* 尺寸 */}
-                      {category === 'CartProduct' && (
+                      {(category === 'CartProduct' ||
+                        category === 'orderProduct') && (
                         <TableCell>
                           <div className="w-full flex justify-center items-center ">
-                            <p className="text-p-tw">{item?.size}</p>
+                            <p className="text-p-tw">
+                              {item?.size ? item.size : ''}
+                            </p>
                           </div>
                         </TableCell>
                       )}
@@ -120,56 +125,161 @@ export default function CartItemList({ category = '' }) {
                         </div>
                       </TableCell>
                       {/* 時間 */}
-                      {category !== 'CartProduct' && (
-                        <TableCell>
-                          <div className="w-full flex justify-center items-center flex-col ">
-                            <p className="flex flex-col">
-                              <span className="text-p-tw ">
-                                {toUTC8(item?.startAt)} ～ {toUTC8(item?.endAt)}
-                              </span>
-                            </p>
-                          </div>
-                        </TableCell>
-                      )}
+                      {category !== 'CartProduct' &&
+                        category !== 'orderProduct' && (
+                          <TableCell>
+                            <div className="w-full flex justify-center items-center flex-col ">
+                              <p className="flex flex-col">
+                                <span className="text-p-tw ">
+                                  {toUTC8(item?.startAt)} ～{' '}
+                                  {toUTC8(item?.endAt)}
+                                </span>
+                              </p>
+                            </div>
+                          </TableCell>
+                        )}
                       {/* 數量 */}
-                      {category === 'CartProduct' && (
+                      {(category === 'CartProduct' ||
+                        category === 'orderProduct') && (
                         <TableCell>
                           <div className="flex justify-center w-full items-center gap-6">
-                            <QuantityButton
-                              item={item}
-                              category={category}
-                              type="minus"
-                            ></QuantityButton>
+                            {category === 'CartProduct' && (
+                              <QuantityButton
+                                item={item}
+                                category={category}
+                                type="minus"
+                              ></QuantityButton>
+                            )}
+
                             <div className="flex justify-center">
                               <p className="">{item.quantity}</p>
                             </div>
-                            <QuantityButton
-                              item={item}
-                              category={category}
-                              type="plus"
-                            ></QuantityButton>
+                            {category === 'CartProduct' && (
+                              <QuantityButton
+                                item={item}
+                                category={category}
+                                type="plus"
+                              ></QuantityButton>
+                            )}
                           </div>
                         </TableCell>
                       )}
                       {/* 刪除 */}
-                      <TableCell>
-                        <div className="flex justify-center w-full gap-4">
-                          {/* FIXME 課程跟揪團也要 */}
-                          {/* FIXME 揪團刪除路由localhost:3005/api/group/members/${groupMemberId} */}
+                      {(category === 'CartProduct' ||
+                        category === 'CartCourse' ||
+                        category === 'CartGroup') && (
+                        <TableCell>
+                          <div className="flex justify-center w-full gap-4">
+                            {/* FIXME 課程跟揪團也要 */}
+                            {/* FIXME 揪團刪除路由localhost:3005/api/group/members/${groupMemberId} */}
 
-                          <Delete
-                            name={item.name}
-                            category={category}
-                            item={item}
-                          ></Delete>
-                        </div>
-                      </TableCell>
+                            <Delete
+                              name={item.name}
+                              category={category}
+                              item={item}
+                            ></Delete>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   );
                 })}
               </TableBody>
             </Table>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* 手機版 */}
+      <Card className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark block md:hidden">
+        <CardHeader>
+          <CardTitle className="">{titleMap[category]}</CardTitle>
+        </CardHeader>
+
+        <CardContent className="py-4">
+          {data?.[category]?.map((item) => {
+            const totalPrice = (
+              item?.price * (item.quantity ? item.quantity : 1)
+            ).toLocaleString();
+
+            return (
+              <div
+                key={item.id}
+                className="flex flex-col border rounded-xl p-4 gap-2"
+              >
+                {/* 圖片與名稱 */}
+                <div className="flex gap-4 items-center">
+                  <div
+                    className={`relative shrink-0 ${category === 'CartProduct' || category === 'orderProduct' ? 'h-[72px] w-[72px]' : 'h-[72px] w-[120px]'}`}
+                  >
+                    <Image
+                      fill
+                      src={
+                        item?.imageUrl
+                          ? `http://localhost:3005${item.imageUrl}`
+                          : ''
+                      }
+                      alt={item.imageUrl}
+                      className="rounded object-cover"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <p className="  line-clamp-2">{item.name}</p>
+                    {(category === 'CartProduct' ||
+                      category === 'orderProduct') && (
+                      <p className="">尺寸：{item.size}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* 價格 / 日期 */}
+                <div className="flex justify-between ">
+                  {category === 'CartProduct' || category === 'orderProduct' ? (
+                    <>
+                      <span>單價：${item.price.toLocaleString()}</span>
+                      <span>總價：${totalPrice}</span>
+                    </>
+                  ) : (
+                    <span>
+                      時間：{toUTC8(item?.startAt)} ～ {toUTC8(item?.endAt)}
+                    </span>
+                  )}
+                </div>
+
+                {/* 數量控制 */}
+                {(category === 'CartProduct' ||
+                  category === 'orderProduct') && (
+                  <div className="flex justify-between items-center">
+                    <span className="">數量：</span>
+                    <div className="flex items-center gap-3">
+                      {category === 'CartProduct' && (
+                        <QuantityButton
+                          item={item}
+                          category={category}
+                          type="minus"
+                        />
+                      )}
+                      <span>{item.quantity}</span>
+                      {category === 'CartProduct' && (
+                        <QuantityButton
+                          item={item}
+                          category={category}
+                          type="plus"
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* 刪除按鈕 */}
+                {category.startsWith('Cart') && (
+                  <div className="flex justify-end">
+                    <Delete name={item.name} category={category} item={item} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </CardContent>
       </Card>
     </>

@@ -377,8 +377,8 @@ for (const filename of filenames) {
 // 捕抓404錯誤處理
 app.use(function (req, res, next) {
   // NOTE 因圖片未同步，所以先不要createError(404)避免錯誤訊息過多
-  // next(createError(404));
-  res.status(404).send('找不到資源');
+  next(createError(404));
+  // res.status(404).send('找不到資源');
 });
 
 // 錯誤處理函式

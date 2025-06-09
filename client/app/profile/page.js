@@ -40,6 +40,8 @@ import ProfileWishlist from './_components/profile-wishlist';
 import ProfileGroups from './_components/profile-groups';
 //課程頁引入
 import ProfileCourses from './_components/profile-courses';
+//訂單頁面引入
+import ProfileOrders from './_components/profile-orders';
 
 //會員資訊的驗證 schema  限制字數上限
 const FormSchema = z.object({
@@ -61,10 +63,10 @@ export default function MemberPage() {
       bio: user?.bio ?? '',
     }, // 建議加上預設值，避免未定義警告
   });
-
+  const base = process.env.NEXT_PUBLIC_API_BASE || '';
   async function onSubmit(values) {
     try {
-      const res = await fetch(`http://localhost:3005/api/profile/${user.id}`, {
+      const res = await fetch(`${base}/api/profile/${user.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
@@ -230,12 +232,9 @@ export default function MemberPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>訂單紀錄</CardTitle>
-                  <CardDescription>查看並管理您的歷史訂單。</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-500">
-                    目前沒有任何訂單紀錄。
-                  </p>
+                <ProfileOrders />
                 </CardContent>
               </Card>
             </TabsContent>

@@ -37,6 +37,7 @@ export function CartProvider({ children }) {
     CartCourse: [],
   });
 
+  console.log(cart);
   // 代表是否完成第一次渲染呈現的布林狀態值(信號值)
   const [didMount, setDidMount] = useState(false);
 
@@ -55,6 +56,7 @@ export function CartProvider({ children }) {
   // 將資料傳給後端
   async function fetchData(category = '', item = {}, method = '') {
     try {
+      console.log(item);
       let url = '';
       if (method === 'POST') {
         url = 'http://localhost:3005/api/cart';
@@ -63,7 +65,18 @@ export function CartProvider({ children }) {
       }
       let data = {};
       if (method === 'POST') {
-        data = { itemId: item.id, category: category };
+        if (category === 'CartProduct') {
+          data = {
+            itemId: item.id,
+            category: category,
+            quantity: item.quantity ? item.quantity : 1,
+          };
+        } else {
+          data = {
+            itemId: item.id,
+            category: category,
+          };
+        }
       } else if (method === 'PUT' || method === 'DELETE') {
         data = { category, item };
       }
@@ -89,10 +102,17 @@ export function CartProvider({ children }) {
   // 處理遞增
   const onIncrease = (category, item) => {
     let nextItem;
+
     const nextList = cart[category].map((v) => {
       if (v.id === item.id) {
-        nextItem = { ...v, quantity: v.quantity + 1 };
-        return { ...v, quantity: v.quantity + 1 };
+        nextItem = {
+          ...v,
+          quantity: v.quantity + (item.quantity ? item.quantity : 1),
+        };
+        return {
+          ...v,
+          quantity: v.quantity + (item.quantity ? item.quantity : 1),
+        };
       } else {
         return v;
       }
@@ -131,11 +151,58 @@ export function CartProvider({ children }) {
   // 處理刪除
   const onRemove = (category, item) => {
     fetchData(category, item, 'DELETE');
+    console.log('刪除' + item.id);
+
+    if (category === 'CartGroup') {
+      async function fetchData() {
+        try {
+          const url = `http://localhost:3005/api/group/members/${item.id}`;
+          const res = await fetch(url, {
+            method: 'DELETE',
+            credentials: 'include',
+          });
+        } catch (err) {
+          throw new Error(err);
+        }
+      }
+      fetchData();
+    } else if (category === 'CartCourse') {
+      async function fetchData() {
+        try {
+          const url = `http://localhost:3005/api/coaches/cancel/${item.id}}`;
+          const res = await fetch(url, {
+            method: 'DELETE',
+            credentials: 'include',
+          });
+        } catch (err) {
+          throw new Error(err);
+        }
+      }
+      fetchData();
+    }
+  };
+
+  // 清空購物車
+  const onClear = () => {
+    async function fetchData() {
+      try {
+        const url = `http://localhost:3005/api/cart/items`;
+        const res = await fetch(url, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+        fetchSyncData();
+      } catch (err) {
+        throw new Error(err);
+      }
+    }
+    fetchData();
   };
 
   // 處理新增
   const onAdd = (category = '', item = {}) => {
     const categoryOptions = ['CartGroup', 'CartProduct', 'CartCourse'];
+    console.log(category);
 
     //  如果沒有該類別要return
     if (!categoryOptions.includes(category)) {
@@ -215,13 +282,17 @@ export function CartProvider({ children }) {
         // 如果傳出的值很多時，建議可以將數值/函式分組，然後依英文字母排序
         value={{
           cart,
+
           // totalAmount,
           totalQty,
           setCart,
+
           onAdd,
           onDecrease,
           onIncrease,
           onRemove,
+          onClear,
+          fetchSyncData,
         }}
       >
         {children}

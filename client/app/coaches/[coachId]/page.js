@@ -9,7 +9,7 @@ export default function CoachIdPage(props) {
   const [coach, setCoach] = useState(null); // 存放教練物件
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const coachesId = useParams().id;
+  const coachesId = useParams().coachId;
   console.log(coachesId);
   console.log(coach);
   useEffect(() => {
@@ -108,11 +108,11 @@ export default function CoachIdPage(props) {
           </div>
         </div>
         <div className="mt-12" id="courses">
-          <h2 className="text-2xl mb-6">課程資訊</h2>
+          <h2 className="text-2xl mb-6 ">課程資訊</h2>
           {coach.courses.map((c) => (
             <div
               key={c.id}
-              className="flex flex-col sm:flex-row items-center bg-white  border border-gray-200 rounded-lg shadow-sm overflow-hidden"
+              className="flex flex-col sm:flex-row items-center bg-white  border border-gray-200 rounded-lg shadow-sm overflow-hidden mb-6"
             >
               {/* 課程封面 */}
               <div className=" sm:w-1/4 h-40 relative">
@@ -133,13 +133,10 @@ export default function CoachIdPage(props) {
                   })}
                 </p>
                 <h3>{c.name}</h3>
-                {/* <p className="mt-1 text-sm text-gray-600">
-                班尾高原全新雪場 搶先曝光
-              </p> */}
               </div>
               <div className="p-4">
                 <button className="m-8 px-4 py-2 bg-gray-800 text-white rounded-full hover:bg-gray-700">
-                  <Link href={`/courses/${c.id}`}>立即報名</Link>
+                  <Link href={`/courses/${c.id}`}>查看課程</Link>
                 </button>
               </div>
             </div>
