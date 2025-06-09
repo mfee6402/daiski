@@ -416,7 +416,7 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
     const content = text.trim();
     if (!content || !currentUser) return;
     const msg = {
-      // id: `temp-${Date.now()}`,
+      id: `temp-${Date.now()}`,
       user: {
         id: currentUser.id,
         name: currentUser.name,
@@ -428,6 +428,7 @@ export function ChatBubble({ apiBase, currentUser, open, onOpenChange }) {
       groupId: activeGroup?.id,
     };
     setMsgs((prev) => [...prev, msg]);
+    sendMessage(msg);
     setText('');
   };
 
