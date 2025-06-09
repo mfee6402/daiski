@@ -296,7 +296,7 @@ export default function GroupsPage() {
             viewport={fadeInUp.viewport}
             transition={fadeInUp.transition}
           >
-            Daiski 幫你揪
+            DAISKI 幫你揪
           </motion.h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
             {[
