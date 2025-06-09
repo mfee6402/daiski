@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation'; // ← 新增這行
 import useSWR from 'swr';
 import {
   Table,
@@ -8,27 +9,21 @@ import {
   TableHead,
   TableBody,
   TableCell,
-  TableCaption,
 } from '@/components/ui/table';
 import { useAuth } from '@/hooks/use-auth';
-import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import Link from 'next/link';
-// import RateButton from '@/components/rate-button';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { PiStarThin } from 'react-icons/pi';
 import RateButton from '@/components/rate-button';
-import { Rat } from 'lucide-react';
-/* -------------------- 常數 -------------------- */
+import { Button } from '@/components/ui/button';
+
 const API_BASE_URL = 'http://localhost:3005/api';
 const ORDERS_API_URL = `${API_BASE_URL}/cart/orders`;
 
-/* -------------------- 通用 fetcher -------------------- */
 const fetcher = async (url) => {
   const res = await fetch(url, { credentials: 'include' });
   if (!res.ok) {
@@ -41,43 +36,35 @@ const fetcher = async (url) => {
     }
     throw err;
   }
-  return res.json(); // { status, orders }
+  return res.json();
 };
 
-/* -------------------- 動畫用 TableRow -------------------- */
-const MotionTableRow = motion(TableRow);
-
-/* -------------------- 元件 -------------------- */
 export default function ProfileOrders() {
+  const router = useRouter(); // ← 新增這行
   const { isAuth, isLoading: authLoading } = useAuth();
-
-  const {
-    data, // { status, orders }
-    error,
-    isLoading, // 訂單載入狀態
-  } = useSWR(isAuth ? ORDERS_API_URL : null, fetcher);
+  const { data, error, isLoading } = useSWR(
+    isAuth ? ORDERS_API_URL : null,
+    fetcher
+  );
 
   const orders = data?.orders ?? [];
   const base = process.env.NEXT_PUBLIC_API_BASE || '';
 
-  /* ---------- 介面狀態 ---------- */
   if (authLoading || isLoading) return <p className="p-4">載入中…</p>;
   if (error)
     return <p className="p-4 text-red-500">載入失敗：{error.message}</p>;
   if (orders.length === 0) return <p className="p-4">目前沒有訂單紀錄</p>;
 
-  /* ---------- 主畫面 ---------- */
   return (
     <div className="container mx-0 xl:mx-auto overflow-y-auto h-dvh p-4">
       <Accordion type="multiple" className="space-y-4">
         {orders.map((order) => (
           <AccordionItem key={order.id} value={`order-${order.id}`}>
-            {/* === 折疊列 – 訂單摘要 === */}
             <AccordionTrigger className="flex justify-self-start items-center pr-4 text-right">
-              <div className="">
+              <div>
                 <span className="font-semibold">訂單 #{order.id}</span>
               </div>
-              <div className="">
+              <div>
                 <span className="text-sm text-muted-foreground">
                   {new Date(order.createdAt).toLocaleString('zh-TW')}
                 </span>
@@ -86,10 +73,18 @@ export default function ProfileOrders() {
                 <span>NT$ {order.amount.toLocaleString()}</span>
               </div>
             </AccordionTrigger>
-
-            {/* === 展開內容 – 三張表格 === */}
+            <div className="flex justify-end p-4 space-x-2">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation(); // 避免與Accordion互動衝突
+                  localStorage.setItem('summaryOrderId', order.id);
+                  router.push('/cart/summary'); // 使用 Next.js Router
+                }}
+              >
+                訂單詳細
+              </Button>
+            </div>
             <AccordionContent className="space-y-8 pt-4">
-              {/* 1️⃣ 商品一覽 */}
               {order.OrderProduct?.length > 0 && (
                 <section>
                   <h3 className="mb-2 text-lg font-medium">商品</h3>
@@ -117,12 +112,7 @@ export default function ProfileOrders() {
                           <TableCell className="font-medium">
                             {p.name}
                           </TableCell>
-                          <TableCell className="text-center ">
-                            {/* 評價的button放這邊 */}
-                            {/* <button className="">
-                              <PiStarThin />
-                            </button> */}
-                            {console.log(p)}
+                          <TableCell className="text-center">
                             <RateButton
                               orderId={order.id}
                               productSkuId={p.id}
@@ -138,7 +128,6 @@ export default function ProfileOrders() {
                 </section>
               )}
 
-              {/* 2️⃣ 課程一覽 */}
               {order.OrderCourse?.length > 0 && (
                 <section>
                   <h3 className="mb-2 text-lg font-medium">課程</h3>
@@ -171,7 +160,6 @@ export default function ProfileOrders() {
                 </section>
               )}
 
-              {/* 3️⃣ 揪團一覽 */}
               {order.OrderGroup?.length > 0 && (
                 <section>
                   <h3 className="mb-2 text-lg font-medium">揪團</h3>
