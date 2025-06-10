@@ -139,7 +139,7 @@ export default function GroupDetailPage() {
   useEffect(() => {
     if (!group) return;
 
-    const deadline = group.registrationDeadline || group.endDate;
+    const deadline = group.registrationDeadline || group.startDate;
     if (!deadline) {
       setCountdown('未設定截止日期');
       return;
