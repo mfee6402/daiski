@@ -20,7 +20,11 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 
-export default function Checkout({ isOrder = false, data = {} }) {
+export default function Checkout({
+  isOrder = false,
+  isCheckout = false,
+  data = {},
+}) {
   const { cart, setCart } = useCart();
 
   const [checkedCoupon, setCheckedCoupon] = useState(null);
@@ -139,7 +143,7 @@ export default function Checkout({ isOrder = false, data = {} }) {
           <p className="text-red">${amount.toLocaleString()}</p>
         </div>
 
-        {!isOrder && amount > 0 && (
+        {!isOrder && !isCheckout && amount > 0 && (
           <Link
             href={'/cart/checkout'}
             className="text-p-tw text-secondary-200"

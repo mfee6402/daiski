@@ -11,6 +11,7 @@ import {
 import Process from '../_components/process';
 import ShippingMethod from './_components/shippingMethod';
 
+import Checkout from '../_components/checkout';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -147,59 +148,70 @@ export default function CheckoutPage() {
     <>
       <FormProvider {...methods}>
         <Process step="2"></Process>
-        <Card className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark">
-          <form onSubmit={methods.handleSubmit(onSubmit)}>
-            {/* 寄送方式 */}
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">寄送方式</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col w-full p-12 gap-5  ">
-                <ShippingMethod></ShippingMethod>
-              </div>
-            </CardContent>
-            {/* 付款方式 */}
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">付款方式</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col w-full p-12 gap-5  ">
-                {/* 貨到付款 */}
-                <PaymentOption
-                  optionName="貨到付款"
-                  radioValue="cashOnDelivery"
-                  // onChange={() => setSelectedPayment('cashOnDelivery')}
-                ></PaymentOption>
+        <div className="flex justify-between md:gap-6 ">
+          <div className="flex flex-col w-full gap-6 min-w-0 justify-center item-center">
+            <Card className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark">
+              <form onSubmit={methods.handleSubmit(onSubmit)}>
+                {/* 寄送方式 */}
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold">
+                    寄送方式
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col w-full p-12 gap-5  ">
+                    <ShippingMethod></ShippingMethod>
+                  </div>
+                </CardContent>
+                {/* 付款方式 */}
+                <CardHeader>
+                  <CardTitle className="text-lg font-semibold">
+                    付款方式
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col w-full p-12 gap-5  ">
+                    {/* 貨到付款 */}
+                    <PaymentOption
+                      optionName="貨到付款"
+                      radioValue="cashOnDelivery"
+                      // onChange={() => setSelectedPayment('cashOnDelivery')}
+                    ></PaymentOption>
 
-                {/* Paypal */}
-                <PaymentOption
-                  optionName="PayPal"
-                  radioValue="paypal"
-                  // onChange={() => setSelectedPayment('paypal')}
-                ></PaymentOption>
+                    {/* Paypal */}
+                    <PaymentOption
+                      optionName="PayPal"
+                      radioValue="paypal"
+                      // onChange={() => setSelectedPayment('paypal')}
+                    ></PaymentOption>
 
-                {/* 綠界 */}
-                <PaymentOption
-                  optionName="綠界"
-                  radioValue="ecpay"
-                  // checked={selectedPayment === 'ecpay'}
-                  // onChange={() => setSelectedPayment('ecpay')}
-                ></PaymentOption>
+                    {/* 綠界 */}
+                    <PaymentOption
+                      optionName="綠界"
+                      radioValue="ecpay"
+                      // checked={selectedPayment === 'ecpay'}
+                      // onChange={() => setSelectedPayment('ecpay')}
+                    ></PaymentOption>
 
-                {methods.formState.errors.payment && (
-                  <p className="text-red">請選擇一個配送方式</p>
-                )}
-              </div>
-              {/* FIXME改顏色 */}
+                    {methods.formState.errors.payment && (
+                      <p className="text-red">請選擇一個配送方式</p>
+                    )}
+                  </div>
+                  {/* FIXME改顏色 */}
 
-              <div className="flex justify-end ">
-                <Button type="submit" className="px-6 py-2.5 ">
-                  確認付款
-                </Button>
-              </div>
-            </CardContent>
-          </form>
-        </Card>
+                  <div className="flex justify-end ">
+                    <Button type="submit" className="px-6 py-2.5 ">
+                      確認付款
+                    </Button>
+                  </div>
+                </CardContent>
+              </form>
+            </Card>
+          </div>
+          <div>
+            <Checkout isCheckout={true}></Checkout>
+          </div>
+        </div>
       </FormProvider>
     </>
   );
