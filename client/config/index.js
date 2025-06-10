@@ -15,10 +15,10 @@ const local = {
 
 // 營運環境設定(部署至Vercel)
 const production = {
-  apiURL: 'https://xxxxx.vercel.app/api',
-  serverURL: 'https://xxxxx.vercel.app',
-  avatarURL: 'https://xxxxx.vercel.app/avatar',
-  nextUrl: 'https://xxxxx.vercel.app',
+  apiURL: 'http://localhost:3005/api',
+  serverURL: 'http://localhost:3005',
+  avatarURL: 'http://localhost:3005/avatar',
+  nextUrl: 'http://localhost:3000',
 };
 
 export const apiURL = isDev ? local.apiURL : production.apiURL;
@@ -56,7 +56,7 @@ export const protectedRoutesPatterns = [
 // 用pathname英文對照中文的名稱(類似關聯陣列的物件)
 // 使用方式需用 ex. pathnameLocale['home']
 // 下面是防止自動格式化使用註解
-/* eslint-disable */
+
 // prettier-ignore
 // export const pathsLocaleMap = {
 //   'cart':'購物車',
@@ -81,4 +81,3 @@ export const protectedRoutesPatterns = [
 //   'test':'測試',
 //   'user':'會員',
 // }
-/* eslint-enable */
