@@ -1,5 +1,5 @@
 'use client';
-
+import { apiURL } from '@/config';
 import React, { useState, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useShip711StoreOpener } from '../../../_hooks/use-ship-711-store';
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 export default function StorePickup({ checked = false }) {
   const { store711, openWindow } = useShip711StoreOpener(
-    `http://localhost:3005/api/shipment/711`,
+    `${apiURL}/shipment/711`,
     { autoCloseMins: 3 } // x分鐘沒完成選擇會自動關閉，預設5分鐘。
   );
   const {

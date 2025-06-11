@@ -1,5 +1,5 @@
 'use client';
-
+import { apiURL } from '@/config';
 import { useRouter } from 'next/navigation'; // 加入 useRouter
 import Image from 'next/image';
 import Link from 'next/link';
@@ -34,9 +34,9 @@ import {
 
 const base = process.env.NEXT_PUBLIC_API_BASE || '';
 
-const COURSES_API = 'http://localhost:3005/api/coaches/me/courses';
+const COURSES_API = `${apiURL}/coaches/me/courses`;
 const DELETE_API = (coachId, courseId) =>
-  `http://localhost:3005/api/coaches/${coachId}/courses/${courseId}`;
+  `${apiURL}/coaches/${coachId}/courses/${courseId}`;
 
 const fetcher = async (url) => {
   const res = await fetch(url, { credentials: 'include' });
@@ -69,7 +69,7 @@ export default function ProfileCourses() {
     );
 
   const rawCourses =
-    filter === 'student' ? data?.asStudent ?? [] : data?.asCoach ?? [];
+    filter === 'student' ? (data?.asStudent ?? []) : (data?.asCoach ?? []);
 
   const courses = rawCourses.map((c) => {
     const [startAt = '', endAt = ''] = (c.date ?? '').split(' ~ ');
@@ -149,7 +149,9 @@ export default function ProfileCourses() {
               className="flex flex-col md:flex-row justify-between gap-4 rounded-lg border p-4 min-w-0"
             >
               <Image
-                src={c.image?.startsWith('http') ? c.image : `${base}${c.image}`}
+                src={
+                  c.image?.startsWith('http') ? c.image : `${base}${c.image}`
+                }
                 alt={c.name}
                 width={20}
                 height={20}

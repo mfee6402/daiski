@@ -32,7 +32,7 @@ export default function ProfileGroups(props) {
   if (error) return <p className="text-sm text-destructive">讀取失敗</p>;
 
   const groups = data?.memberships ?? [];
-  console.log(groups);
+
   return (
     <>
       <Card className="w-full ">

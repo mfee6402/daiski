@@ -1,4 +1,5 @@
 'use client';
+import { apiURL } from '@/config';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import CourseForm from '@/app/coaches/_component/courseform';
@@ -14,7 +15,7 @@ export default function EditCoursePage() {
     (async () => {
       try {
         const res = await fetch(
-          `http://localhost:3005/api/coaches/${coachId}/courses/${courseId}/edit`,
+          `${apiURL}/coaches/${coachId}/courses/${courseId}/edit`,
           { credentials: 'include' }
         );
         if (!res.ok) throw new Error('找不到課程或無權限');

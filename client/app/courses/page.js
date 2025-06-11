@@ -1,5 +1,5 @@
 'use client';
-
+import { apiURL } from '@/config';
 import React, { useState, useEffect, useCallback } from 'react';
 import { PiPersonSimpleSki } from 'react-icons/pi';
 import { MapPinned } from 'lucide-react';
@@ -36,16 +36,14 @@ export default function CoursesPage() {
     keyword: '',
     boardtype: '',
   });
-  // 送出查詢的篩選條件
-  // const [filters, setFilters] = useState({});
-  // console.log(filters);
+
   /* -------- 後端載入下拉選單的選項 -------- */
   const [options, setOptions] = useState({
     boardTypes: [],
     locations: [],
     difficulties: [],
   });
-  console.log(options);
+
   const [course, setCourses] = useState([]);
   const [showCourse, setShowCourse] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +52,7 @@ export default function CoursesPage() {
 
   /* === A. 第一次載入先抓「可選條件」 === */
   useEffect(() => {
-    fetch('http://localhost:3005/api/courses/filters')
+    fetch(`${apiURL}/courses/filters`)
       .then((res) => res.json())
       .then(setOptions)
       .catch(() => setError('載入篩選清單失敗'));
@@ -62,7 +60,7 @@ export default function CoursesPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`http://localhost:3005/api/courses`)
+    fetch(`${apiURL}/courses`)
       .then((r) => r.json())
       .then((data) => {
         // ★ 後端回傳 { data, total }
@@ -78,7 +76,6 @@ export default function CoursesPage() {
     const kw = draft.keyword.trim();
     setPage(1); // ★ 新搜尋回到第 1 頁
     const btmap = { 1: '單板', 2: '雙板' };
-    console.log(draft);
 
     const result = course.filter((item) => {
       /* 如果某個篩選沒選，就略過該欄位的比較 */
@@ -92,7 +89,6 @@ export default function CoursesPage() {
     });
 
     setShowCourse(result);
-    console.log('fdkgj');
   };
 
   const [page, setPage] = useState(1);

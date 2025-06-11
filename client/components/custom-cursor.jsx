@@ -110,7 +110,7 @@ const CustomCursor = () => {
               Math.random() * (PARTICLE_LIFESPAN_MAX - PARTICLE_LIFESPAN_MIN) +
               PARTICLE_LIFESPAN_MIN,
           };
-          // console.log(`新粒子已建立，ID: ${newParticle.id}`);
+
           setParticles((prev) => {
             const next = [newParticle, ...prev];
             return next.slice(0, MAX_PARTICLES);

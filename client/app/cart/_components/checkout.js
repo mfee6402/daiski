@@ -20,7 +20,11 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 
-export default function Checkout({ isOrder = false, data = {} }) {
+export default function Checkout({
+  isOrder = false,
+  isCheckout = false,
+  data = {},
+}) {
   const { cart, setCart } = useCart();
 
   const [checkedCoupon, setCheckedCoupon] = useState(null);
@@ -30,7 +34,7 @@ export default function Checkout({ isOrder = false, data = {} }) {
   let totalProduct = 0;
   let totalCourse = 0;
   let totalGroup = 0;
-  console.log(data);
+
   // 第一部分
   if (!isOrder) {
     // 三項價格
@@ -96,7 +100,6 @@ export default function Checkout({ isOrder = false, data = {} }) {
   }, [cart]);
 
   const handleCheckout = () => {
-    console.log(amount);
     setCart({
       ...cart,
       amount,
@@ -139,7 +142,7 @@ export default function Checkout({ isOrder = false, data = {} }) {
           <p className="text-red">${amount.toLocaleString()}</p>
         </div>
 
-        {!isOrder && amount > 0 && (
+        {!isOrder && !isCheckout && amount > 0 && (
           <Link
             href={'/cart/checkout'}
             className="text-p-tw text-secondary-200"

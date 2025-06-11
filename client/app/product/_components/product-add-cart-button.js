@@ -21,15 +21,6 @@ export default function ProductAddCartButton({
     <Button
       className="h-12 bg-primary-600 text-white w-full cursor-none"
       onClick={() => {
-        // alert(`新增到購物車:${skuId}`);
-        // console.log({
-        //   id: skuId,
-        //   quantity: quantity,
-        //   price: price,
-        //   name: name,
-        //   imageUrl: imageUrl,
-        //   size: size,
-        // });
         if (isAuth) {
           onAdd('CartProduct', {
             id: skuId,

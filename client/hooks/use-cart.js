@@ -37,7 +37,6 @@ export function CartProvider({ children }) {
     CartCourse: [],
   });
 
-  console.log(cart);
   // 代表是否完成第一次渲染呈現的布林狀態值(信號值)
   const [didMount, setDidMount] = useState(false);
 
@@ -56,7 +55,6 @@ export function CartProvider({ children }) {
   // 將資料傳給後端
   async function fetchData(category = '', item = {}, method = '') {
     try {
-      console.log(item);
       let url = '';
       if (method === 'POST') {
         url = 'http://localhost:3005/api/cart';
@@ -91,7 +89,6 @@ export function CartProvider({ children }) {
       });
       const response = await res.json();
 
-      console.log(response);
       fetchSyncData();
       //  設定到狀態(第二次同步確認用，第一次為樂觀更新)
     } catch (err) {
@@ -151,7 +148,6 @@ export function CartProvider({ children }) {
   // 處理刪除
   const onRemove = (category, item) => {
     fetchData(category, item, 'DELETE');
-    console.log('刪除' + item.id);
 
     if (category === 'CartGroup') {
       async function fetchData() {
@@ -202,7 +198,6 @@ export function CartProvider({ children }) {
   // 處理新增
   const onAdd = (category = '', item = {}) => {
     const categoryOptions = ['CartGroup', 'CartProduct', 'CartCourse'];
-    console.log(category);
 
     //  如果沒有該類別要return
     if (!categoryOptions.includes(category)) {
