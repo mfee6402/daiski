@@ -5,131 +5,216 @@ import { useUserRegister } from '@/services/rest-client/use-user';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from '@/hooks/use-auth';
-
-// newUser資料範例(物件) 註: name改為在profile資料表中
-// {
-//     "username":"ginny",
-//     "password":"123456",
-//     "name":"金妮",
-//     "email":"ginny@test.com",
-// }
+import Link from 'next/link';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function RegisterPage() {
+  const router = useRouter();
   const { register } = useUserRegister();
   const [userInput, setUserInput] = useState({
     name: '',
-    email: '',
-    username: '',
+    account: '',
     password: '',
+    confirmPassword: '',
+    email: '',
+    phone: '',
+    birthday: '2000-01-01', // ← 設定預設值
+    is_coach: '',
   });
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const { isAuth } = useAuth();
 
-  // 輸入帳號 密碼用
   const handleFieldChange = (e) => {
-    setUserInput({ ...userInput, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setUserInput((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
   };
 
   const handleSubmit = async (e) => {
-    // 阻擋表單預設送出行為
     e.preventDefault();
-    // 檢查是否有登入，如果有登入就不能註冊
-    if (isAuth) {
-      toast.error('錯誤 - 會員已登入');
-      return;
+    if (isAuth) return toast.error('錯誤：請先登出再註冊');
+    if (userInput.password !== userInput.confirmPassword) {
+      return toast.error('錯誤：兩次密碼不一致');
     }
-
-    const res = await register(userInput);
-    const resData = await res.json();
-
-    // console.log(resData)
-    if (resData.status === 'success') {
-      toast.success('資訊 - 會員註冊成功');
-    } else {
-      toast.error(`錯誤 - 註冊失敗: ${resData.message}`);
+    try {
+      const payload = {
+        ...userInput,
+        is_coach: userInput.is_coach ? 1 : 0,
+      };
+      const res = await register(payload);
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.status === 'success') {
+        toast.success('註冊成功', {
+          onClose: () => router.push('/auth/login'),
+        });
+      } else {
+        toast.error(`註冊失敗：${data.message || res.statusText}`);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('無法連線伺服器，稍後再試');
     }
   };
 
   return (
     <>
-      <h1>會員註冊</h1>
-      <hr />
-      <p>
-        規則:
-        註冊時，username與email不能與目前資料庫有相同的值。name是屬於profile資料表。
-      </p>
-      <p>注意: 進行註冊時，應該要在會員登出狀態</p>
-      <p>會員狀態:{isAuth ? '已登入' : '未登入'}</p>
-      <p>
-        <a href="/user">會員登入認証&授權測試(JWT)</a>
-      </p>
-      <hr />
-      <form onSubmit={handleSubmit}>
-        <p>
-          <label>
-            姓名:
-            <input
-              type="text"
-              name="name"
-              value={userInput.name}
-              onChange={handleFieldChange}
-            />
-          </label>
-        </p>
-        <p>
-          <label>
-            電子郵件信箱:
-            <input
-              type="text"
-              name="email"
-              value={userInput.email}
-              onChange={handleFieldChange}
-            />
-          </label>
-        </p>
-        <p>
-          <label>
-            帳號:
-            <input
-              type="text"
-              name="username"
-              value={userInput.username}
-              onChange={handleFieldChange}
-            />
-          </label>
-        </p>
-        <p>
-          <label>
-            密碼:
-            <input
-              type="text"
-              name="password"
-              value={userInput.password}
-              onChange={handleFieldChange}
-            />
-          </label>
-        </p>
-        <br />
-        <button type="submit">註冊</button>
-        <br />
-        <button
-          type="button"
-          onClick={() => {
-            // 測試帳號 herry/11111
-            setUserInput({
-              name: '榮恩',
-              email: 'ron@test.com',
-              username: 'ron',
-              password: '99999',
-            });
-          }}
-        >
-          一鍵輸入範例
-        </button>
-      </form>
-      {/* 土司訊息視窗用 */}
-      <ToastContainer />
+      <div className="flex container justify-center mx-auto gap-1 min-h-screen">
+        <div className="hidden sm:block w-1/2 flex-1 min-w-0">
+          <Image
+            src="/register.png"
+            alt="register Image"
+            width={100}
+            height={100}
+            className="object-cover shadow-lg w-full"
+          />
+        </div>
+        <div className="relative w-full sm:w-1/2 py-12 left flex-1 min-w-0 bg-[url('/register.png')] bg-cover bg-center sm:bg-none px-4 sm:px-0">
+          <div className="absolute inset-0 bg-white/80 sm:hidden" />
+          <div className="relative z-10">
+            <div className="text-center">
+              <h1 className="text-h2-tw">會員註冊</h1>
+              <p>
+                已經有帳號？
+                <Link href="/auth/login">
+                  <span className="text-primary-500">前往登入！</span>
+                </Link>
+              </p>
+            </div>
+            <div className="max-w-md mx-auto mt-6">
+              <form
+                onSubmit={handleSubmit}
+                noValidate
+                className="flex flex-col gap-2"
+              >
+                <label>
+                  姓名:
+                  <input
+                    type="text"
+                    name="name"
+                    value={userInput.name}
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                  />
+                </label>
+
+                <label>
+                  帳號:
+                  <input
+                    type="text"
+                    name="account"
+                    value={userInput.account}
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                  />
+                </label>
+
+                <label className="block">
+                  密碼:
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      name="password"
+                      value={userInput.password}
+                      onChange={handleFieldChange}
+                      className="w-full px-4 py-3 rounded-lg border border-[#272b2e] pr-10 focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 "
+                      onClick={() => setShowPassword((prev) => !prev)}
+                    >
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
+                </label>
+
+                <label className="block">
+                  確認密碼:
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      name="confirmPassword"
+                      value={userInput.confirmPassword}
+                      onChange={handleFieldChange}
+                      className="w-full px-4 py-3 rounded-lg border border-[#272b2e] pr-10 focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                      onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff size={20} />
+                      ) : (
+                        <Eye size={20} />
+                      )}
+                    </button>
+                  </div>
+                </label>
+
+                <label>
+                  電子郵件信箱:
+                  <input
+                    type="text"
+                    name="email"
+                    value={userInput.email}
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                  />
+                </label>
+
+                <label>
+                  手機:
+                  <input
+                    type="text"
+                    name="phone"
+                    value={userInput.phone}
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                  />
+                </label>
+
+                <label>
+                  生日:
+                  <input
+                    type="date"
+                    name="birthday"
+                    value={userInput.birthday}
+                    onChange={handleFieldChange}
+                    className="w-full px-4 py-3 rounded-lg border border-[#272b2e] focus:outline-none focus:ring-2 focus:ring-[#2770ea]"
+                  />
+                </label>
+
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="is_coach"
+                    checked={userInput.is_coach}
+                    onChange={handleFieldChange}
+                  />
+                  我是教練
+                </label>
+
+                <button
+                  type="submit"
+                  className="w-full mt-16 px-4 py-3 hover:bg-primary-500 rounded-md text-white bg-primary-600"
+                >
+                  註冊
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ToastContainer position="bottom-right" autoClose={1000} closeOnClick />
     </>
   );
 }
-

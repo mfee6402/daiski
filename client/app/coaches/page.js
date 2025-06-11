@@ -1,167 +1,197 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { PiPersonSimpleSki } from 'react-icons/pi';
-import { Funnel, Globe, Send } from 'lucide-react';
+import { Send, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Image from 'next/image';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import Image from 'next/image';
+import Link from 'next/link';
+import { SelectTrigger } from '@radix-ui/react-select';
 
 export default function CoachesPage() {
-  // 篩選狀態
-  const [filters, setFilters] = useState({
-    keyword: '',
-    boardType: '', // '' | '單板' | '雙板'
-    language: '', // '' | '中文' | '日文' | '英文'
-  });
-
-  // 套用篩選邏輯
   const [coaches, setCoaches] = useState([]);
   const [filtered, setFiltered] = useState([]);
-  // loading & error 顯示
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // 排序／搜尋暫存 keyword
-  const [searchKeyword, setSearchKeyword] = useState('');
+
+  const [tempFilters, setTempFilters] = useState({
+    keyword: '',
+    boardTypes: [],
+    languages: [],
+  });
+  const [filters, setFilters] = useState({
+    keyword: '',
+    boardTypes: [],
+    languages: [],
+  });
 
   useEffect(() => {
     fetch('http://localhost:3005/api/coaches')
-      .then(async (res) => {
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(`錯誤`);
-        }
+      .then((res) => {
+        if (!res.ok) throw new Error('讀取失敗');
         return res.json();
       })
       .then((data) => {
         setCoaches(data);
         setFiltered(data);
       })
-      .catch((err) => setError(err.message))
+      .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
-  //  當 filters 或 coaches 改變，就重新做一次 filter
+
   useEffect(() => {
-    const result = coaches.filter((t) => {
-      const matchKeyword = !filters.keyword || t.name.includes(filters.keyword);
-      const matchBoard =
-        !filters.boardTypes || t.boardTypes.includes(filters.boardType);
-      const matchLang =
-        !filters.languages || t.languages.includes(filters.language);
-      return matchKeyword && matchBoard && matchLang;
-    });
-    setFiltered(result);
+    setFiltered(
+      coaches.filter((t) => {
+        const mk = !filters.keyword || t.name.includes(filters.keyword);
+        const mb =
+          filters.boardTypes.length === 0 ||
+          filters.boardTypes.some((bt) => t.boardtypes.includes(bt));
+        const ml =
+          filters.languages.length === 0 ||
+          filters.languages.some((lg) => t.languages.includes(lg));
+        return mk && mb && ml;
+      })
+    );
   }, [coaches, filters]);
-  console.log(filters);
-  //  按下「搜尋」按鈕才把暫存的 keyword 寫入 filters
-  const handleSearch = () => {
-    setFilters((f) => ({ ...f, keyword: searchKeyword }));
+
+  const handleSearch = () => setFilters({ ...tempFilters });
+  const handleClear = () => {
+    const empty = { keyword: '', boardTypes: [], languages: [] };
+    setTempFilters(empty);
+    setFilters(empty);
   };
 
-  //  Render
-  if (loading) {
-    return <p className="text-center p-4">載入中…</p>;
-  }
-  if (error) {
-    return (
-      <p className="text-center p-4 text-red-600">讀取資料失敗：{error}</p>
-    );
-  }
-  if (!filtered.length) {
-    return <p className="text-center p-4">目前沒有教練資料。</p>;
-  }
+  const toggleItem = (key, value) => {
+    setTempFilters((f) => {
+      const list = f[key].includes(value)
+        ? f[key].filter((x) => x !== value)
+        : [...f[key], value];
+      return { ...f, [key]: list };
+    });
+  };
+
+  if (loading) return <p className="text-center p-4">載入中…</p>;
+  if (error)
+    return <p className="text-center p-4 text-red-600">錯誤：{error}</p>;
+  if (!filtered.length)
+    return <p className="text-center p-4">找不到符合的教練。</p>;
 
   return (
-    <main className=" bg-white">
-      <div className=" mx-auto p-8">
-        {/* 篩選列 */}
-        <div className="flex items-center justify-center  gap-2 mb-4 relative">
-          {/* 語言選單*/}
-          <Select
-            value={filters.language}
-            onValueChange={(val) =>
-              setFilters((f) => ({ ...f, language: val }))
-            }
-          >
-            <SelectTrigger className="w-[180px]">
-              <Globe />
-              <SelectValue placeholder="授課語言" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="中文">中文</SelectItem>
-              <SelectItem value="日文">日文</SelectItem>
-              <SelectItem value="英文">英文</SelectItem>
-              <SelectItem value="韓文">韓文</SelectItem>
-              <SelectItem value="粵語">粵語</SelectItem>
-            </SelectContent>
-          </Select>
-          {/* 單雙板 */}
-          <Select
-            value={filters.boardType}
-            onValueChange={(val) =>
-              setFilters((f) => ({ ...f, boardType: val }))
-            }
-          >
-            <SelectTrigger className="w-[180px]">
-              <PiPersonSimpleSki />
-              <SelectValue placeholder="單/雙板" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="單板">單板</SelectItem>
-              <SelectItem value="雙板">雙板</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* 關鍵字 */}
-          <div className="flex w-100 max-w-sm items-center space-x-2">
+    <main className=" min-h-screen pb-8">
+      <div className="mx-auto p-8 ">
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {/* 板別 下拉多選 */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  單/雙板{' '}
+                  {tempFilters.boardTypes.length > 0
+                    ? `(${tempFilters.boardTypes.length})`
+                    : ''}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-40">
+                <DropdownMenuLabel></DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {['單板', '雙板'].map((bt) => (
+                  <DropdownMenuCheckboxItem
+                    key={bt}
+                    checked={tempFilters.boardTypes.includes(bt)}
+                    onCheckedChange={() => toggleItem('boardTypes', bt)}
+                  >
+                    {bt}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {/* 語言 下拉多選 */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  授課語言{' '}
+                  {tempFilters.languages.length > 0
+                    ? `(${tempFilters.languages.length})`
+                    : ''}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-40">
+                <DropdownMenuLabel>選擇語言</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {['中文', '日文', '英文', '韓文', '粵語'].map((lg) => (
+                  <DropdownMenuCheckboxItem
+                    key={lg}
+                    checked={tempFilters.languages.includes(lg)}
+                    onCheckedChange={() => toggleItem('languages', lg)}
+                  >
+                    {lg}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {/* 關鍵字 */}
             <Input
-              type="text"
-              placeholder="請輸入關鍵字..."
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
+              placeholder="請輸入關鍵字…"
+              value={tempFilters.keyword}
+              onChange={(e) =>
+                setTempFilters((f) => ({ ...f, keyword: e.target.value }))
+              }
+              className="flex-shrink-0 w-40"
             />
-            <Button type="submit" onClick={handleSearch}>
-              <Send />
-              搜尋
-            </Button>
+            {/* 按鈕 */}
+            <div className=" flex gap-2">
+              <Button size="sm" onClick={handleSearch}>
+                <Send className="mr-1" /> 搜尋
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleClear}>
+                <X className="mr-1" /> 清除
+              </Button>
+            </div>
           </div>
-        </div>
+        </CardContent>
       </div>
 
-      {/* 教練卡片列表 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mt-8">
+      {/* 教練列表 */}
+      <div className="mx-auto max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 p-8">
         {filtered.map((t) => (
           <div
             key={t.id}
-            className="w-75 mx-auto border-2 bordered rounded-2xl p-6 text-center"
+            className="bg-white rounded-2xl shadow p-6 text-center transform hover:scale-[1.02] transition"
           >
-            <Image
-              src={`http://localhost:3005/${t.profilephoto}`}
-              alt={t.name}
-              className="w-32 h-32 rounded-full mx-auto object-cover"
-              width={150}
-              height={150}
-            />
-            <h2 className="mt-4 text-xl font-semibold flex items-center justify-center">
-              <span className="mr-2">{t.name}</span>
-            </h2>
-            <p className="mt-2 text-gray-700">
-              {t.boardtypes.join('、') || '無資料'}
+            <Link href={`/coaches/${t.id}`}>
+              <Image
+                src={`http://localhost:3005/${t.profilephoto}`}
+                alt={t.name}
+                width={150}
+                height={150}
+                className="w-32 h-32 rounded-full mx-auto object-cover"
+              />
+            </Link>
+            <h2 className="mt-4 text-xl font-semibold">{t.name}</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              板別：{t.boardtypes.join('、') || '無'}
             </p>
-            <p className="mt-1 text-gray-700">
-              語言：{t.languages || '無資料'}
+            <p className="mt-1 text-sm text-gray-600">
+              語言：{t.languages.join('、') || '無'}
             </p>
-            {/* <p className="mt-1 text-gray-700">{t.intro}</p> */}
-            <button className="mt-6 bg-gray-800 text-white text-sm px-6 py-2 rounded-full hover:bg-gray-700 transition">
-              查看課程
-            </button>
+            {/* <Link href={`/coaches/${t.id}`}>
+              <Button className="mt-4 w-full">查看課程</Button>
+            </Link> */}
           </div>
         ))}
       </div>

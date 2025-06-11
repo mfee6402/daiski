@@ -610,6 +610,8 @@ import { Sliders } from 'lucide-react';
 import ProductList from './_components/product-list';
 import ProductPagination from './_components/product-pagination';
 import ProductSidebar from './_components/product-sidebar';
+import ProductSort from './_components/product-sort';
+import ProductHighlightCard from './_components/product-highlight-card';
 
 // 引入自定義 Hook，用於管理用戶認證狀態
 import { useAuth } from '@/hooks/use-auth';
@@ -621,10 +623,13 @@ import { useAuth } from '@/hooks/use-auth';
 // SWR 的數據獲取函式 (Fetcher)
 // 這個函式負責從指定的 URL 獲取數據並將其解析為 JSON 格式。
 // `credentials: 'include'` 確保在請求中包含憑證（例如 Cookie），用於處理需要驗證的 API。
+const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3005';
 const fetcher = (url) =>
-  fetch(`http://localhost:3005${url}`, { credentials: 'include' }).then((r) =>
-    r.json()
-  );
+  // fetch(`http://localhost:3005${url}`, { credentials: 'include' }).then((r) =>
+  //   r.json()
+  fetch(`${base}${url}`, {
+    credentials: 'include',
+  }).then((r) => r.json());
 
 // 商品頁面主元件
 export default function ProductPage() {
@@ -662,7 +667,7 @@ export default function ProductPage() {
         params.delete('search');
       }
       params.set('page', '1');
-      router.push(`?${params.toString()}`, undefined, { shallow: true });
+      router.push(`?${params.toString()}`, { scroll: false });
     }
   }, [debouncedSearch, router, searchParams]);
 
@@ -685,7 +690,7 @@ export default function ProductPage() {
     const params = new URLSearchParams(Array.from(searchParams.entries()));
     params.set('search', item.name);
     params.set('page', '1');
-    router.push(`?${params.toString()}`);
+    router.push(`?${params.toString()}`, { scroll: false });
   };
 
   // --- 篩選條件相關 State 管理 ---
@@ -753,7 +758,7 @@ export default function ProductPage() {
   // 2. **載入分類清單**
   //    這個 `useEffect` 在元件首次載入時執行，只會執行一次，用於獲取所有商品分類列表。
   useEffect(() => {
-    fetch('http://localhost:3005/api/products/categories')
+    fetch(`${base}/api/products/categories`)
       .then((r) => r.json())
       .then(setCategories)
       .catch(console.error);
@@ -765,7 +770,7 @@ export default function ProductPage() {
   //    並過濾掉 `selectedSizes` 中不屬於新列表的尺寸 ID。
   useEffect(() => {
     if (!pageInfo.category_id) return;
-    const url = new URL('http://localhost:3005/api/products/sizes');
+    const url = new URL(`${base}/api/products/sizes`);
     url.searchParams.set('category_id', String(pageInfo.category_id));
     fetch(url)
       .then((r) => r.json())
@@ -784,7 +789,7 @@ export default function ProductPage() {
   //    並過濾掉 `selectedBrands` 中不屬於新列表的品牌 ID。
   useEffect(() => {
     if (!pageInfo.category_id) return;
-    const url = new URL('http://localhost:3005/api/products/brands');
+    const url = new URL(`${base}/api/products/brands`);
     url.searchParams.set('category_id', String(pageInfo.category_id));
     fetch(url)
       .then((r) => r.json())
@@ -796,6 +801,16 @@ export default function ProductPage() {
       })
       .catch(console.error);
   }, [pageInfo.category_id]);
+
+  // 新增排序狀態，從 URL 讀取初始值，若無則使用預設值 (例如：依上架時間由新到舊)
+  const [sortOption, setSortOption] = useState(
+    () => searchParams.get('sort') || 'createdAt_desc'
+  );
+
+  // Effect Hook：當 URL 中的 'sort' 參數改變時，同步更新 sortOption state
+  useEffect(() => {
+    setSortOption(searchParams.get('sort') || 'createdAt_desc');
+  }, [searchParams]);
 
   // 5. **用 SWR 獲取商品列表**
   //    `productsKey` 函式根據當前 URL 參數動態生成 SWR 的 Key。
@@ -854,12 +869,12 @@ export default function ProductPage() {
 
       try {
         if (isFav) {
-          await fetch(
-            `http://localhost:3005/api/profile/favorites/${productId}`,
-            { method: 'DELETE', credentials: 'include' }
-          );
+          await fetch(`${base}/api/profile/favorites/${productId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+          });
         } else {
-          await fetch('http://localhost:3005/api/profile/favorites', {
+          await fetch(`${base}/api/profile/favorites`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -896,7 +911,7 @@ export default function ProductPage() {
     const p = new URLSearchParams(Array.from(searchParams.entries()));
     p.set('page', '1'); // 改變分類時重置頁碼
     p.set('category_id', String(cid));
-    router.push(`?${p.toString()}`);
+    router.push(`?${p.toString()}`, { scroll: false });
   };
 
   // 4. **切換分類展開/收起狀態**
@@ -917,7 +932,7 @@ export default function ProductPage() {
     p.set('page', '1'); // 改變品牌時重置頁碼
     if (next.length) p.set('brand_id', next.join(','));
     else p.delete('brand_id');
-    router.push(`?${p.toString()}`);
+    router.push(`?${p.toString()}`, { scroll: false });
     setSelectedBrands(next); // 立即更新 UI
   };
 
@@ -926,8 +941,22 @@ export default function ProductPage() {
     const p = new URLSearchParams(Array.from(searchParams.entries()));
     p.delete('brand_id');
     p.set('page', '1');
-    router.push(`?${p.toString()}`, undefined, { shallow: true });
+    router.push(`?${p.toString()}`, { scroll: false });
     setSelectedBrands([]); // 立即清空 UI
+  };
+
+  // 處理排序變更的函式
+  const handleSortChange = (newSortValue) => {
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    if (newSortValue) {
+      params.set('sort', newSortValue);
+    } else {
+      // 如果允許清除排序或回到 API 預設排序，可以刪除 'sort' 參數
+      params.delete('sort');
+    }
+    params.set('page', '1'); // 變更排序時，重置到第一頁
+    router.push(`?${params.toString()}`, { scroll: false });
+    // sortOption state 將通過 useEffect 因 searchParams 改變而更新
   };
 
   // --- 分類展開邏輯 ---
@@ -977,7 +1006,7 @@ export default function ProductPage() {
     p.set('page', '1'); // 改變尺寸時重置頁碼
     if (next.length) p.set('size_id', next.join(','));
     else p.delete('size_id');
-    router.push(`?${p.toString()}`);
+    router.push(`?${p.toString()}`, { scroll: false });
     setSelectedSizes(next); // 立即更新 UI
   };
 
@@ -986,7 +1015,7 @@ export default function ProductPage() {
     const p = new URLSearchParams(Array.from(searchParams.entries()));
     p.delete('size_id');
     p.set('page', '1');
-    router.push(`?${p.toString()}`, undefined, { shallow: true });
+    router.push(`?${p.toString()}`, { scroll: false });
     setSelectedSizes([]); // 立即清空 UI
   };
 
@@ -1012,7 +1041,7 @@ export default function ProductPage() {
     else p.delete('min_price');
     if (maxPrice) p.set('max_price', maxPrice);
     else p.delete('max_price');
-    router.push(`?${p.toString()}`, undefined, { shallow: true });
+    router.push(`?${p.toString()}`, { scroll: false });
   };
 
   // 2. **重置價格篩選**
@@ -1022,7 +1051,7 @@ export default function ProductPage() {
     p.delete('min_price');
     p.delete('max_price');
     p.set('page', '1');
-    router.push(`?${p.toString()}`, undefined, { shallow: true });
+    router.push(`?${p.toString()}`, { scroll: false });
     setMinPrice('');
     setMaxPrice('');
     setPriceError('');
@@ -1039,19 +1068,34 @@ export default function ProductPage() {
     <>
       {/* Hero Banner */}
       <section
-        className="relative bg-cover bg-[center_80%] bg-no-repeat h-[30vh] md:h-[50vh]  text-center"
-        style={{
-          backgroundImage: "url('/26852e04-a393-422d-bd61-8042373024da.png')", // 請確認此圖片路徑正確
-        }}
+        className="relative bg-cover bg-[center_80%] bg-no-repeat h-[30vh] md:h-[60vh]  text-center"
+        // style={{
+        //   backgroundImage: "url('/26852e04-a393-422d-bd61-8042373024da.png')", // 請確認此圖片路徑正確
+        // }}
       >
-        <div className="absolute inset-0 " /> {/* 使用黑色疊加和模糊效果 */}
+        <video
+          className="absolute w-full h-full object-cover "
+          src="/ProductHeroSection.mp4" // 把這裡改成影片檔路徑，放在 public 資料夾下即可用相對路徑引用
+          autoPlay
+          muted
+          loop
+          playsInline
+        />
+        <div className="absolute inset-0  "></div>
+        {/* 使用黑色疊加和模糊效果 */}
         {/* 背景使用 bg-white 加上透明度，或者如果 :root 的 --background 是白色，用 bg-background/85 */}
       </section>
+
       <Container className="z-10 pt-4 md:pt-10 pb-20">
+        <ProductHighlightCard />
         {/* 顯示用戶歡迎訊息和 Email (如果用戶已登入) */}
-        <div>
-          <h1>你好，{user?.name}！</h1>
-          <p>你的 Email 是：{user.email}</p>
+        <div className="hidden md:flex">
+          {/* <h1>你好，{user?.name}！</h1>
+          <p>你的 Email 是：{user.email}</p> */}
+          <ProductSort
+            currentSort={sortOption}
+            onSortChange={handleSortChange}
+          />
         </div>
 
         <main className="flex flex-col md:flex-row min-h-1/2 gap-4 md:gap-20 justify-between">
@@ -1102,7 +1146,7 @@ export default function ProductPage() {
           </div>
 
           {/* MD- 尺寸螢幕顯示篩選按鈕和 Sheet 彈出側邊欄 */}
-          <div className="flex md:hidden">
+          <div className="flex md:hidden justify-around">
             <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" className="m-4">
@@ -1110,7 +1154,10 @@ export default function ProductPage() {
                   篩選
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-full p-4 overflow-auto">
+              <SheetContent
+                side="left"
+                className="w-full p-4 overflow-auto z-99999"
+              >
                 <SheetHeader className="flex items-center justify-between">
                   <SheetTitle>篩選條件</SheetTitle>
                 </SheetHeader>
@@ -1153,6 +1200,11 @@ export default function ProductPage() {
                 />
               </SheetContent>
             </Sheet>
+
+            <ProductSort
+              currentSort={sortOption}
+              onSortChange={handleSortChange}
+            />
           </div>
 
           {/* 商品列表和分頁區域 */}
@@ -1163,6 +1215,7 @@ export default function ProductPage() {
               products={products}
               favIds={favIds}
               onToggleFavorite={toggleFavorite}
+              isAuth={isAuth}
             />
             {/* 如果載入商品時發生錯誤，顯示錯誤訊息 */}
             {productError && (

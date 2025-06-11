@@ -4,106 +4,284 @@ import React, { useState, useEffect } from 'react';
 import Delete from './delete-button';
 import WishList from './wish-list';
 import QuantityButton from './quantity-button';
-
+import Favorite from './favorite';
+import { useCart } from '@/hooks/use-cart';
 import Image from 'next/image';
+
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
+
 export default function CartItemList({
-  data = {},
-  setData = () => {},
   category = '',
+  isOrder = false,
+  data = {},
 }) {
-  // NOTE 測試用，等待會員製作完收藏資料庫再修正，用於決定收藏的愛心狀態(實心、空心)
-  const tmpWishListLeg = 3;
-  const initWishList = new Array(tmpWishListLeg).fill(false);
-
-  const [wishList, setWishList] = useState(initWishList);
-
-  const titleMap = {
-    product: '商品',
-    course: '課程',
-    group: '揪團',
+  const titleMap = isOrder
+    ? {
+        orderProduct: '商品',
+        orderCourse: '課程',
+        orderGroup: '揪團',
+      }
+    : {
+        CartProduct: '商品',
+        CartCourse: '課程',
+        CartGroup: '揪團',
+      };
+  const toUTC8 = (utcString) => {
+    const date = new Date(utcString);
+    date.setHours(date.getHours() + 8); // 加上 8 小時
+    const [d, t] = date.toISOString().split('T');
+    return `${d} ${t.split('.')[0].slice(0, 5)}`;
   };
 
   return (
     <>
-      {/* 商品 */}
-      {/* 課程 */}
-      {/* 揪團 */}
-      <div className="border-b-5 border-secondary-500">
-        <h6 className="text-h6-tw">商品內容</h6>
-      </div>
+      {/* 電腦版 */}
+      <Card className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark hidden md:block">
+        <CardHeader>
+          <CardTitle className="">{titleMap[category]}</CardTitle>
+        </CardHeader>
 
-      <div className="mt-10 flex flex-col gap-4">
-        {data?.cart?.[category].map((item, i) => {
-          return (
-            <div key={item.id} className="flex justify-between">
-              {/* 圖與名稱 */}
-              <div className="flex  w-full ">
-                {item.imageUrl && (
-                  <Image
-                    src={
-                      item?.imageUrl
-                        ? `http://localhost:3005${item.imageUrl}`
-                        : ''
-                    }
-                    alt="productImage"
-                    width={96}
-                    height={96}
-                    className="object-fill w-[96]"
-                  ></Image>
-                )}
-                <div>
-                  <p>{item.name}</p>
-                </div>
-              </div>
-              {/* 尺寸 */}
-              <div className="w-full flex justify-center items-center ">
-                <p className="text-h6-tw">{item?.size}</p>
-              </div>
-              {/* 價格 */}
-              <div className="w-full flex justify-center items-center ">
-                <p className="text-h6-tw">
-                  {(
-                    item.price * (item.quantity ? item.quantity : 1)
-                  ).toLocaleString()}
-                </p>
-              </div>
-              {/* 數量(只有商品有) */}
-              {category === 'CartProduct' && (
-                <div className="flex justify-center w-full items-center">
-                  <QuantityButton
-                    category={category}
-                    itemId={item.id}
-                    data={data}
-                    setData={setData}
-                    type="minus"
-                  ></QuantityButton>
-                  <div className="flex justify-center w-[50]">
-                    <p className="text-h6-tw">{item.quantity}</p>
+        <CardContent>
+          <div className=" ">
+            <Table>
+              {/* FIXME hover拿掉 */}
+              <TableHeader>
+                <TableRow className="w-full">
+                  <TableHead>圖片</TableHead>
+                  <TableHead>名稱</TableHead>
+                  <TableHead className="text-center">{`${category === 'CartProduct' || category === 'orderProduct' ? '尺寸' : '價格'}`}</TableHead>
+                  <TableHead className="text-center">{`${category === 'CartProduct' || category === 'orderProduct' ? '總價' : '日期'}`}</TableHead>
+                  <TableHead className="text-center">{`${category === 'CartProduct' || category === 'orderProduct' ? '數量' : ''}`}</TableHead>
+                  <TableHead className=""></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data?.[category]?.map((item) => {
+                  const totalPrice = (
+                    item?.price * (item.quantity ? item.quantity : 1)
+                  ).toLocaleString();
+
+                  return (
+                    <TableRow key={item.id}>
+                      {/* 圖片 */}
+                      {item.imageUrl && (
+                        <TableCell>
+                          <div
+                            className={`relative ${category === 'CartProduct' || category === 'orderProduct' ? 'h-[96px] w-[96px]' : 'h-[96px] w-[168px]'}`}
+                          >
+                            <Image
+                              // FIXME
+                              fill
+                              src={
+                                item?.imageUrl
+                                  ? `http://localhost:3005${item.imageUrl}`
+                                  : ''
+                              }
+                              alt={item.imageUrl}
+                              className=""
+                            ></Image>
+                          </div>
+                        </TableCell>
+                      )}
+                      {/* 品名 */}
+                      <TableCell className="whitespace-normal break-words">
+                        <div className="">
+                          <p className="text-p-tw line-clamp-3">{item.name}</p>
+                        </div>
+                      </TableCell>
+
+                      {/* 尺寸 */}
+                      {(category === 'CartProduct' ||
+                        category === 'orderProduct') && (
+                        <TableCell>
+                          <div className="w-full flex justify-center items-center ">
+                            <p className="text-p-tw">
+                              {item?.size ? item.size : ''}
+                            </p>
+                          </div>
+                        </TableCell>
+                      )}
+                      {/* 價格 */}
+                      <TableCell>
+                        <div className="w-full flex justify-center items-center ">
+                          <p className="text-p-tw">${totalPrice}</p>
+                        </div>
+                      </TableCell>
+                      {/* 時間 */}
+                      {category !== 'CartProduct' &&
+                        category !== 'orderProduct' && (
+                          <TableCell>
+                            <div className="w-full flex justify-center items-center flex-col ">
+                              <p className="flex flex-col">
+                                <span className="text-p-tw ">
+                                  {toUTC8(item?.startAt)} ～{' '}
+                                  {toUTC8(item?.endAt)}
+                                </span>
+                              </p>
+                            </div>
+                          </TableCell>
+                        )}
+                      {/* 數量 */}
+                      {(category === 'CartProduct' ||
+                        category === 'orderProduct') && (
+                        <TableCell>
+                          <div className="flex justify-center w-full items-center gap-6">
+                            {category === 'CartProduct' && (
+                              <QuantityButton
+                                item={item}
+                                category={category}
+                                type="minus"
+                              ></QuantityButton>
+                            )}
+
+                            <div className="flex justify-center">
+                              <p className="">{item.quantity}</p>
+                            </div>
+                            {category === 'CartProduct' && (
+                              <QuantityButton
+                                item={item}
+                                category={category}
+                                type="plus"
+                              ></QuantityButton>
+                            )}
+                          </div>
+                        </TableCell>
+                      )}
+                      {/* 刪除 */}
+                      {(category === 'CartProduct' ||
+                        category === 'CartCourse' ||
+                        category === 'CartGroup') && (
+                        <TableCell>
+                          <div className="flex justify-center w-full gap-4">
+                            {/* FIXME 課程跟揪團也要 */}
+                            {/* FIXME 揪團刪除路由localhost:3005/api/group/members/${groupMemberId} */}
+
+                            <Delete
+                              name={item.name}
+                              category={category}
+                              item={item}
+                            ></Delete>
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 手機版 */}
+      <Card className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark block md:hidden">
+        <CardHeader>
+          <CardTitle className="">{titleMap[category]}</CardTitle>
+        </CardHeader>
+
+        <CardContent className="py-4">
+          {data?.[category]?.map((item) => {
+            const totalPrice = (
+              item?.price * (item.quantity ? item.quantity : 1)
+            ).toLocaleString();
+
+            return (
+              <div
+                key={item.id}
+                className="flex flex-col border rounded-xl p-4 gap-2"
+              >
+                {/* 圖片與名稱 */}
+                <div className="flex gap-4 items-center">
+                  <div
+                    className={`relative shrink-0 ${category === 'CartProduct' || category === 'orderProduct' ? 'h-[72px] w-[72px]' : 'h-[72px] w-[120px]'}`}
+                  >
+                    <Image
+                      fill
+                      src={
+                        item?.imageUrl
+                          ? `http://localhost:3005${item.imageUrl}`
+                          : ''
+                      }
+                      alt={item.imageUrl}
+                      className="rounded object-cover"
+                    />
                   </div>
-                  <QuantityButton
-                    category={category}
-                    itemId={item.id}
-                    data={data}
-                    setData={setData}
-                    type="plus"
-                  ></QuantityButton>
+                  <div className="flex-1">
+                    <p className="  line-clamp-2">{item.name}</p>
+                    {(category === 'CartProduct' ||
+                      category === 'orderProduct') && (
+                      <p className="">尺寸：{item.size}</p>
+                    )}
+                  </div>
                 </div>
-              )}
-              {/* FIXME */}
-              {/* 活動日期(只有課程跟揪團有) */}
-              {/* 收藏、刪除 */}
-              <div className="flex justify-center w-full gap-4">
-                <WishList
-                  wishList={wishList}
-                  index={i}
-                  setWishList={setWishList}
-                ></WishList>
-                <Delete></Delete>
+
+                {/* 價格 / 日期 */}
+                <div className="flex justify-between ">
+                  {category === 'CartProduct' || category === 'orderProduct' ? (
+                    <>
+                      <span>單價：${item.price.toLocaleString()}</span>
+                      <span>總價：${totalPrice}</span>
+                    </>
+                  ) : (
+                    <span>
+                      時間：{toUTC8(item?.startAt)} ～ {toUTC8(item?.endAt)}
+                    </span>
+                  )}
+                </div>
+
+                {/* 數量控制 */}
+                {(category === 'CartProduct' ||
+                  category === 'orderProduct') && (
+                  <div className="flex justify-between items-center">
+                    <span className="">數量：</span>
+                    <div className="flex items-center gap-3">
+                      {category === 'CartProduct' && (
+                        <QuantityButton
+                          item={item}
+                          category={category}
+                          type="minus"
+                        />
+                      )}
+                      <span>{item.quantity}</span>
+                      {category === 'CartProduct' && (
+                        <QuantityButton
+                          item={item}
+                          category={category}
+                          type="plus"
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* 刪除按鈕 */}
+                {category.startsWith('Cart') && (
+                  <div className="flex justify-end">
+                    <Delete name={item.name} category={category} item={item} />
+                  </div>
+                )}
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </CardContent>
+      </Card>
     </>
   );
 }

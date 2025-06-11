@@ -22,7 +22,7 @@ export default function ProductFilter({
   priceError,
 }) {
   return (
-    <div className="flex flex-col md:max-w-48 xl:max-w-64 w-full mx-auto bg-[#ffffff] text-[#231815]">
+    <div className="flex flex-col md:max-w-48 xl:max-w-64 w-full mx-auto">
       {/* Filter Checkboxes */}
       <div className="px-4 py-2">
         {/* ====== 品牌篩選 ====== */}
@@ -44,7 +44,7 @@ export default function ProductFilter({
           </div>
           <Button
             onClick={onResetBrands}
-            className="w-full mt-4 hover:bg-primary-500 cursor-pointer"
+            className="w-full mt-4 hover:bg-primary-500 cursor-none"
           >
             重置品牌
           </Button>
@@ -97,7 +97,7 @@ export default function ProductFilter({
             <div className="text-center mt-2">
               <button
                 onClick={onToggleShowAllSizes}
-                className="text-sm font-medium text-primary-600 hover:underline"
+                className="text-sm font-medium text-primary-600 dark:text-blue-300 hover:underline cursor-none"
               >
                 {showAllSizes ? '收合尺寸' : '查看更多尺寸'}
               </button>
@@ -106,7 +106,7 @@ export default function ProductFilter({
 
           <Button
             onClick={onResetSizes}
-            className="w-full mt-4 hover:bg-primary-500"
+            className="w-full mt-4 hover:bg-primary-500 dark:hover:text-blue-300 cursor-none"
           >
             重置尺寸
           </Button>
@@ -139,7 +139,7 @@ export default function ProductFilter({
           </div>
           <Button
             onClick={onTriggerPriceFilter}
-            className="w-full mt-2 hover:bg-primary-500 cursor-pointer"
+            className="w-full mt-2 hover:bg-primary-500 cursor-none"
           >
             價格篩選
           </Button>
@@ -149,7 +149,7 @@ export default function ProductFilter({
           )}
 
           <Button
-            className="w-full mt-4 hover:bg-primary-500 cursor-pointer"
+            className="w-full mt-4 hover:bg-primary-500 cursor-none"
             onClick={onResetPrice}
           >
             重置價格

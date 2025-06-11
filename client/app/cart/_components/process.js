@@ -5,8 +5,10 @@ import { CircleCheckBig } from 'lucide-react';
 import clsx from 'clsx';
 
 export default function Process({ step }) {
-  const bgSize = 'flex items-center justify-center rounded-full w-25 h-25';
-  const iconSize = 'h-16 w-16 p-0 flex items-center justify-center stroke-1';
+  const bgSize =
+    'flex items-center justify-center rounded-full  w-16 h-16 flex-shrink-0';
+  const iconSize =
+    'h-8 w-8 p-0 flex items-center justify-center stroke-1 flex-shrink-0';
   const nowStepBgColor = `bg-primary-600`;
   const nowStepIconColor = `stroke-secondary-200`;
   const otherStepBgColor = `bg-secondary-500`;
@@ -15,8 +17,8 @@ export default function Process({ step }) {
   return (
     <>
       <div className="flex items-center justify-center flex-col">
-        <div>
-          <div className="flex items-center justify-center m-5">
+        <div className="m-5 w-full py-5 px-16 lg:px-50 ">
+          <div className="flex items-center justify-center  ">
             <div
               className={clsx(bgSize, {
                 [nowStepBgColor]: step === '1',
@@ -31,7 +33,7 @@ export default function Process({ step }) {
               />
             </div>
 
-            <div className="w-[150] h-[5] bg-secondary-500" />
+            <div className="w-full  h-[5] bg-secondary-500" />
 
             <div
               className={clsx(bgSize, {
@@ -47,7 +49,7 @@ export default function Process({ step }) {
               />
             </div>
 
-            <div className="w-[150] h-[5] bg-secondary-500" />
+            <div className="w-full h-[5] bg-secondary-500" />
 
             <div
               className={clsx(bgSize, {
@@ -63,15 +65,18 @@ export default function Process({ step }) {
               />
             </div>
           </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-p-tw">Step 1 確認訂購</p>
+          <div className="flex items-center justify-between ">
+            <div className="flex items-center justify-center flex-col">
+              <p className="text-p-tw">Step 1</p>
+              <p className="text-p-tw">確認訂購</p>
             </div>
-            <div>
-              <p className="text-p-tw">Step 2 確認訂購</p>
+            <div className="flex items-center justify-center flex-col">
+              <p className="text-p-tw">Step 2</p>
+              <p className="text-p-tw">填寫資料</p>
             </div>
-            <div>
-              <p className="text-p-tw">Step 3 確認訂購</p>
+            <div className="flex items-center justify-center flex-col">
+              <p className="text-p-tw">Step 3</p>
+              <p className="text-p-tw">完成訂購</p>
             </div>
           </div>
         </div>
