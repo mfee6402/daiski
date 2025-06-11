@@ -12,7 +12,9 @@ export const serverConfig = {
       ? 'http://localhost:3000'
       : 'https://daiski-ispan-is17.vercel.app',
   // 後端伺服器佈置後的網域名稱，與cookie有關
-  domain: env === 'development' ? '' : 'xxxxxx.vercel.app',
+  domain:
+    env === 'development' ? '' : 'express-vercel-daiski-ispan-is17.vercel.app',
+
   // ethereal
   smtp: {
     provider: 'ethereal',
@@ -54,7 +56,8 @@ export const serverConfig = {
       callbackUrl: 'http://localhost:3000/cart/checkout/callback',
     },
     production: {
-      callbackUrl: 'https://xxxxx.vercel.app/cart/checkout/callback',
+      callbackUrl:
+        'https://daiski-ispan-is17.vercel.app/cart/checkout/callback',
     },
   },
   linePay: {
