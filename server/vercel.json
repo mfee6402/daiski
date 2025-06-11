@@ -8,7 +8,7 @@
         { "key": "Access-Control-Allow-Credentials", "value": "true" },
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "http://daiski-ispan-is17.vercel.app/"
+          "value": "http://daiski-ispan-is17.vercel.app"
         },
         {
           "key": "Access-Control-Allow-Methods",
