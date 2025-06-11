@@ -1,5 +1,6 @@
 'use client';
-// FIXME 要把資料表單放入localStore嗎?方便重新整理的時候保留資料
+
+import { apiURL } from '@/config';
 import React, { useState, useEffect } from 'react';
 import {
   useForm,
@@ -67,9 +68,6 @@ export default function CheckoutPage() {
     // 設定到狀態
     setCart(nextCart);
 
-    console.log('更新後的車車:');
-    console.log(nextCart);
-
     const orderData = {
       shipping: nextCart.shippingInfo.shippingMethod,
       payment: nextCart.payment,
@@ -82,10 +80,9 @@ export default function CheckoutPage() {
       CartCourse: nextCart.CartCourse,
       CartProduct: nextCart.CartProduct,
     };
-    console.log('訂單:');
-    console.log(orderData);
+
     // 建立訂單
-    const responseOrder = await fetch('http://localhost:3005/api/cart/order', {
+    const responseOrder = await fetch(`${apiURL}/cart/order`, {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -100,7 +97,7 @@ export default function CheckoutPage() {
     // 揪團付錢
     if (cart.CartGroup[0]?.id) {
       const responseGroupPaid = await fetch(
-        `http://localhost:3005/api/group/members/${cart.CartGroup[0].id}/payment`,
+        `${apiURL}/group/members/${cart.CartGroup[0].id}/payment`,
         {
           method: 'PUT',
           credentials: 'include',
@@ -116,7 +113,7 @@ export default function CheckoutPage() {
     // 寫入已使用優惠券時間
     if (couponUsedId) {
       const responseCouponUsed = await fetch(
-        `http://localhost:3005/api/cart/couponUsed/${couponUsedId}`,
+        `${apiURL}/cart/couponUsed/${couponUsedId}`,
         {
           method: 'PUT',
           credentials: 'include',
@@ -134,9 +131,7 @@ export default function CheckoutPage() {
       // 清空購物車
       onClear();
       // 可傳金額當 query 參數
-      router.push(
-        `http://localhost:3005/api/cart/ecpay-test-only?amount=${orderData.amount}`
-      );
+      router.push(`${apiURL}/cart/ecpay-test-only?amount=${orderData.amount}`);
     } else {
       // 清空購物車
       onClear();

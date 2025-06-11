@@ -41,9 +41,6 @@ export default function Coupon({ isOrder = false, orderCoupon = {} }) {
   const sortedCoupons = [...(cart?.CartCoupon || [])].sort((a, b) => {
     return (b.canUse ? 1 : 0) - (a.canUse ? 1 : 0);
   });
-  if (Object.keys(orderCoupon).length > 0) {
-    console.log(new Date(orderCoupon.endAt).toLocaleString());
-  }
 
   return (
     <Card className="shadow-lg bg-card text-card-foreground dark:bg-card-dark dark:text-card-foreground-dark border border-border dark:border-border-dark  ">

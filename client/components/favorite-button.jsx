@@ -82,7 +82,6 @@ export default function FavoriteButton({
     if (isAuth) {
       onToggle();
     } else {
-      // router.push('/auth/not-login');
       console.log('沒登入');
     }
   };

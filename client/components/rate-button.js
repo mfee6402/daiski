@@ -48,7 +48,6 @@ export default function RateButton({ orderId, productSkuId }) {
       : null,
     fetcher
   );
-  console.log('商品ID:', productId);
 
   // Dialog 開關
   const [open, setOpen] = useState(false);

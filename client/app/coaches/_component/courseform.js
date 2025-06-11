@@ -1,5 +1,5 @@
 'use client';
-
+import { apiURL } from '@/config';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -279,7 +279,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
 
   // 取得雪場清單
   useEffect(() => {
-    fetch('http://localhost:3005/api/location')
+    fetch(`${apiURL}/location`)
       .then((r) => r.json())
       .then(setLocations)
       .catch(console.error);
@@ -356,8 +356,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
 
   const onChange = (e) => {
     const { name, value, type, files } = e.target;
-    console.log('欄位變更', name, value);
-    console.log(type);
+
     if (type === 'file') {
       const f = files[0];
       setForm((p) => ({ ...p, course_imgs: f }));
@@ -407,27 +406,11 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
     const isCreate = mode === 'create';
     const targetCoachId = coachId || user.id;
 
-    // fd.append('images', form.course_imgs);
-    // console.log(form.course_imgs);
-    // (Array.isArray(form.course_imgs) ? form.course_imgs : [form.course_imgs])
-    //   .filter(Boolean) // 避免 null
-    //   .forEach((file) => fd.append('images', file));
-    // console.log([...fd.entries()]);
-    console.log('-------' + coverFile);
     if (Array.isArray(form.course_imgs)) {
       form.course_imgs.forEach((file) => fd.append('images', file));
-    }
-    // else if (form.course_imgs) {
-    //   fd.append('images', form.course_imgs);
-    // }
-    else if (coverFile) {
+    } else if (coverFile) {
       fd.append('images', coverFile);
     }
-
-    // if (coverFile) {
-    //   // 把這個 File 直接 append 成 'cover'
-    //   fd.append('cover', coverFile);
-    // }
 
     // 文字欄位
     fd.append('name', form.name.trim());
@@ -447,7 +430,6 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
 
     fd.append('coach_id', +user.id);
 
-    console.log(fd.get('price'));
     if (form.location_id === 'other') {
       fd.append('new_name', form.newLoc.name);
       fd.append('new_country', form.newLoc.country);
@@ -466,27 +448,14 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
     }
 
     // **印出 FormData 裡的所有 key、value （不包括檔案二進位，只列 key）**
-    console.log('>>> FormData keys:');
-    for (let pair of fd.entries()) {
-      console.log('    ', pair[0], pair[1]);
-    }
+
     setIsSubmitting(true);
 
     try {
-      // await fetch(`http://localhost:3005/api/coaches/${user.id}/create`, { … })
-      console.log(user.id);
-      //   const res = await fetch(
-      //     `http://localhost:3005/api/coaches/${user.id}/create`,
-      //     {
-      //       method: 'POST',
-      //       body: fd,
-      //       credentials: 'include',
-      //     }
-      //   );
       const url = isCreate
-        ? `http://localhost:3005/api/coaches/${targetCoachId}/create`
-        : `http://localhost:3005/api/coaches/${targetCoachId}/courses/${courseId}`;
-      console.log(url);
+        ? `${apiURL}/coaches/${targetCoachId}/create`
+        : `${apiURL}/coaches/${targetCoachId}/courses/${courseId}`;
+
       const res = await fetch(url, {
         method: isCreate ? 'POST' : 'PUT',
         body: fd,
@@ -495,7 +464,7 @@ export default function CourseForm({ mode = 'create', initialData = null }) {
 
       // 確定拿到 JSON
       const payload = await res.json();
-      console.log('okay');
+
       if (!res.ok) {
         console.error('🛑 後端錯誤明細：', payload);
         throw new Error(payload.message || '伺服器錯誤');

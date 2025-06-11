@@ -34,7 +34,7 @@ export default function Checkout({
   let totalProduct = 0;
   let totalCourse = 0;
   let totalGroup = 0;
-  console.log(data);
+
   // 第一部分
   if (!isOrder) {
     // 三項價格
@@ -100,7 +100,6 @@ export default function Checkout({
   }, [cart]);
 
   const handleCheckout = () => {
-    console.log(amount);
     setCart({
       ...cart,
       amount,
