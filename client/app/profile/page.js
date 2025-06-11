@@ -78,11 +78,7 @@ export default function MemberPage() {
       toast.error(err.message ?? '發生錯誤');
     }
   }
-  const [src, setSrc] = useState(
-    // user.avatar ? `http://localhost:3005${user.avatar}` : '/avatar.webp'
-    user.avatar
-    // `http://localhost:3005/api/profile/avatar/${user.id}`
-  ); // 當前顯示的頭像 URL
+  const [src, setSrc] = useState(user.avatar); // 當前顯示的頭像 URL
 
   return (
     <div className="min-h-screen w-full bg-fixed bg-cover pt-8 bg-[url('/home-images/layer2.png')]  dark: bg-no-repeat relative">

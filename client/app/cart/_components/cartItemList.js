@@ -2,10 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Delete from './delete-button';
-import WishList from './wish-list';
+
 import QuantityButton from './quantity-button';
-import Favorite from './favorite';
-import { useCart } from '@/hooks/use-cart';
+
 import Image from 'next/image';
 
 import {
@@ -170,9 +169,6 @@ export default function CartItemList({
                         category === 'CartGroup') && (
                         <TableCell>
                           <div className="flex justify-center w-full gap-4">
-                            {/* FIXME 課程跟揪團也要 */}
-                            {/* FIXME 揪團刪除路由localhost:3005/api/group/members/${groupMemberId} */}
-
                             <Delete
                               name={item.name}
                               category={category}
