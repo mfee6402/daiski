@@ -2,9 +2,13 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// datasource db {
+//   provider = "mysql"
+//   url      = env("DATABASE_URL")
+// }
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
 }
 
 // 會員 
@@ -69,7 +73,7 @@ model UserCoupon {
   id        Int       @id @default(autoincrement())
   userId    Int       @map("user_id")
   couponId  Int       @map("coupon_id")
-  createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(0)
+  createdAt DateTime  @default(now()) @map("created_at")
   usedAt    DateTime? @map("used_at")
 
   coupon Coupon @relation(fields: [couponId], references: [id])
@@ -91,11 +95,11 @@ model Product {
   min_price        Int?
   introduction     String?          @db.Text
   spec             String?          @db.Text
-  created_at       DateTime         @default(now()) @db.DateTime(0)
-  publish_at       DateTime?        @db.DateTime(0)
-  unpublish_at     DateTime?        @db.DateTime(0)
-  deleted_at       DateTime?        @db.DateTime(0)
-  product_brand    ProductBrand?    @relation(fields: [brand_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_product_brand")
+  created_at       DateTime         @default(now())
+  publish_at       DateTime?
+  unpublish_at     DateTime?
+  deleted_at       DateTime?
+  product_brand    ProductBrand?    @relation(fields: [brand_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
   product_category ProductCategory? @relation(fields: [category_id], references: [id], onUpdate: Restrict, map: "product_ibfk_1")
   product_image    ProductImage[]
   product_sku      ProductSku[]
@@ -109,11 +113,11 @@ model Product {
 
 model ProductBrand {
   id         Int       @id @default(autoincrement())
-  name       String    @unique(map: "name") @db.VarChar(255)
+  name       String    @unique @db.VarChar(255)
   sort_order Int?      @default(0)
-  created_at DateTime  @default(now()) @db.DateTime(0)
-  updated_at DateTime  @default(now()) @db.DateTime(0)
-  deleted_at DateTime? @db.DateTime(0)
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
   product    Product[]
 
   @@map("product_brand")
@@ -123,10 +127,10 @@ model ProductCategory {
   id                                                                       Int                   @id @default(autoincrement())
   name                                                                     String                @db.VarChar(100)
   parent_id                                                                Int?
-  gender                                                                   Int                   @default(0) @db.TinyInt
+  gender                                                                   Int                   @default(0)
   created_at                                                               DateTime              @default(now()) @db.Timestamp(0)
-  updated_at                                                               DateTime              @default(now()) @db.DateTime(0)
-  deleted_at                                                               DateTime?             @db.DateTime(0)
+  updated_at                                                               DateTime              @default(now())
+  deleted_at                                                               DateTime?
   product                                                                  Product[]
   product_category                                                         ProductCategory?      @relation("product_categoryToproduct_category", fields: [parent_id], references: [id], onUpdate: Restrict, map: "product_category_ibfk_1")
   other_product_category                                                   ProductCategory[]     @relation("product_categoryToproduct_category")
@@ -154,9 +158,9 @@ model ProductImage {
   product_id Int
   url        String    @db.VarChar(255)
   sort_order Int?      @default(0)
-  created_at DateTime  @default(now()) @db.DateTime(0)
-  updated_at DateTime  @default(now()) @db.DateTime(0)
-  deleted_at DateTime? @db.DateTime(0)
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now())
+  deleted_at DateTime?
   product    Product   @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "product_image_ibfk_1")
 
   @@index([product_id], map: "product_id")
@@ -170,9 +174,9 @@ model ProductRating {
   product_id  Int
   rating      Decimal   @db.Decimal(2, 1)
   review_text String?   @db.Text
-  created_at  DateTime  @default(now()) @db.DateTime(0)
-  updated_at  DateTime  @default(now()) @db.DateTime(0)
-  deleted_at  DateTime? @db.DateTime(0)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @default(now())
+  deleted_at  DateTime?
 
   @@unique([order_id, product_id], map: "ux_order_product_rating")
   @@map("product_rating")
@@ -194,9 +198,9 @@ model ProductSku {
   sku_code     String         @unique(map: "uq_sku_code") @db.VarChar(100)
   stock        Int?           @default(0)
   price        Int
-  created_at   DateTime?      @default(now()) @db.DateTime(0)
-  updated_at   DateTime?      @default(now()) @db.DateTime(0)
-  deleted_at   DateTime?      @db.DateTime(0)
+  created_at   DateTime?      @default(now())
+  updated_at   DateTime?      @default(now())
+  deleted_at   DateTime?
   product      Product        @relation(fields: [product_id], references: [id], onUpdate: Restrict, map: "product_sku_ibfk_1")
   product_size ProductSize?   @relation(fields: [size_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "product_sku_ibfk_2")
   CartProduct  CartProduct[]

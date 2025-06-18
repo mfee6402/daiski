@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './use-auth';
+import { apiURL } from '@/config';
+
 // context套用第1步: 建立context
 // createContext的傳入參數defaultValue也有備援值(context套用失敗或錯誤出現的值)
 // 以下為jsdoc的註解，這個註解是用來描述這個context的值的結構
@@ -43,7 +45,7 @@ export function CartProvider({ children }) {
   // 資料庫與狀態同步
   async function fetchSyncData() {
     try {
-      const url = 'http://localhost:3005/api/cart';
+      const url = `${apiURL}/cart`;
       const res = await fetch(url, { credentials: 'include' });
       const json = await res.json();
       setCart(json.cart);
@@ -57,9 +59,9 @@ export function CartProvider({ children }) {
     try {
       let url = '';
       if (method === 'POST') {
-        url = 'http://localhost:3005/api/cart';
+        url = `${apiURL}/cart`;
       } else if (method === 'PUT' || method === 'DELETE') {
-        url = `http://localhost:3005/api/cart/${item.id}`;
+        url = `${apiURL}/cart/${item.id}`;
       }
       let data = {};
       if (method === 'POST') {
@@ -152,7 +154,7 @@ export function CartProvider({ children }) {
     if (category === 'CartGroup') {
       async function fetchData() {
         try {
-          const url = `http://localhost:3005/api/group/members/${item.id}`;
+          const url = `${apiURL}/group/members/${item.id}`;
           const res = await fetch(url, {
             method: 'DELETE',
             credentials: 'include',
@@ -165,7 +167,7 @@ export function CartProvider({ children }) {
     } else if (category === 'CartCourse') {
       async function fetchData() {
         try {
-          const url = `http://localhost:3005/api/coaches/cancel/${item.id}}`;
+          const url = `${apiURL}/coaches/cancel/${item.id}}`;
           const res = await fetch(url, {
             method: 'DELETE',
             credentials: 'include',
@@ -182,7 +184,7 @@ export function CartProvider({ children }) {
   const onClear = () => {
     async function fetchData() {
       try {
-        const url = `http://localhost:3005/api/cart/items`;
+        const url = `${apiURL}/cart/items`;
         const res = await fetch(url, {
           method: 'DELETE',
           credentials: 'include',

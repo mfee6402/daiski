@@ -19,26 +19,6 @@ export default function CartPage({ setProcess }) {
   useEffect(() => {
     fetchSyncData();
   }, []);
-  // useEffect(() => {
-  //   async function fetchData() {
-  //     try {
-  //       const url = 'http://localhost:3005/api/cart';
-  //       const res = await fetch(url, { credentials: 'include' });
-  //       const json = await res.json();
-  //       setData(json);
-  //       setLoading(false);
-  //     } catch (err) {
-  //       setError(err);
-  //       setLoading(false);
-  //     }
-  //   }
-  //   fetchData();
-  // }, []);
-
-  // 以上測試區
-  // if (loading) {
-  // return <p>載入中</p>;
-  // }
 
   if (isAuth) {
     return (

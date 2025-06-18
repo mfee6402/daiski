@@ -15,14 +15,14 @@ const local = {
 
 // 營運環境設定(部署至Vercel)
 const production = {
-  // apiURL: 'https://xxxxx.vercel.app/api',
-  // serverURL: 'https://xxxxx.vercel.app',
-  // avatarURL: 'https://xxxxx.vercel.app/avatar',
-  // nextUrl: 'https://xxxxx.vercel.app',
-  apiURL: 'http://localhost:3005/api',
-  serverURL: 'http://localhost:3005',
-  avatarURL: 'http://localhost:3005/avatar',
-  nextUrl: 'http://localhost:3000',
+  apiURL: 'https://daiski-ispan-is17.vercel.app/api',
+  serverURL: 'https://daiski-ispan-is17.vercel.app',
+  avatarURL: 'https://daiski-ispan-is17.vercel.app/avatar',
+  nextUrl: 'https://daiski-ispan-is17.vercel.app',
+  // apiURL: 'http://localhost:3005/api',
+  // serverURL: 'http://localhost:3005',
+  // avatarURL: 'http://localhost:3005/avatar',
+  // nextUrl: 'http://localhost:3000',
 };
 
 export const apiURL = isDev ? local.apiURL : production.apiURL;
