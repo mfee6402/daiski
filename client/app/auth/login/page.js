@@ -1,5 +1,5 @@
 'use client';
-
+import { apiURL } from '@/config';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
@@ -29,7 +29,7 @@ import { Input } from '@/components/ui/input';
 
 export default function UserPage() {
   const base = process.env.NEXT_PUBLIC_API_BASE || '';
-  
+
   // 輸入表單用的狀態
   const [userInput, setUserInput] = useState({ account: '', password: '' });
 
@@ -40,7 +40,6 @@ export default function UserPage() {
   const [fpOtp, setFpOtp] = useState(''); // 使用者輸入的 OTP
   const [fpNewPwd, setFpNewPwd] = useState(''); // 新密碼
   const [fpLoading, setFpLoading] = useState(false); // 送出 loading
-  
 
   // 登入後設定全域的會員資料用
   const { mutate } = useAuthGet();
@@ -66,8 +65,6 @@ export default function UserPage() {
 
     const res = await login(userInput);
     const resData = await res.json();
-
-    console.log(resData);
 
     if (resData?.status === 'success') {
       // 呼叫useAuthGet的mutate方法
@@ -237,14 +234,11 @@ export default function UserPage() {
                   if (!fpEmail) return toast.error('請輸入 Email');
                   setFpLoading(true);
                   try {
-                    const r = await fetch(
-                      'http://localhost:3005/api/auth/otp',
-                      {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: fpEmail }),
-                      }
-                    );
+                    const r = await fetch(`${apiURL}/auth/otp`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email: fpEmail }),
+                    });
                     const data = await r.json();
                     if (r.ok && data.status === 'success') {
                       toast.success('OTP 已寄出，請收信！');
@@ -293,18 +287,15 @@ export default function UserPage() {
 
                   setFpLoading(true);
                   try {
-                    const r = await fetch(
-                      'http://localhost:3005/api/auth/reset-password',
-                      {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          email: fpEmail, // ✔ 必填
-                          token: fpOtp, // ✔ 後端要 token
-                          password: fpNewPwd, // ✔ 後端要 password
-                        }),
-                      }
-                    );
+                    const r = await fetch(`${apiURL}/auth/reset-password`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        email: fpEmail, // ✔ 必填
+                        token: fpOtp, // ✔ 後端要 token
+                        password: fpNewPwd, // ✔ 後端要 password
+                      }),
+                    });
                     const data = await r.json();
 
                     if (r.ok && data.status === 'success') {

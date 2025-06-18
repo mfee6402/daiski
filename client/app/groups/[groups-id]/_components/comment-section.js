@@ -106,7 +106,6 @@ export default function CommentSection({
       let parsedResult;
       try {
         parsedResult = JSON.parse(responseText);
-        console.log(parsedResult);
       } catch (parseError) {
         console.error(parseError);
         throw new Error();

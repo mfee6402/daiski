@@ -1,5 +1,5 @@
 'use client';
-
+import { apiURL } from '@/config';
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
@@ -10,11 +10,10 @@ export default function CoachIdPage(props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const coachesId = useParams().coachId;
-  console.log(coachesId);
-  console.log(coach);
+
   useEffect(() => {
     if (!coachesId) return;
-    fetch(`http://localhost:3005/api/coaches/${coachesId}`)
+    fetch(`${apiURL}/coaches/${coachesId}`)
       .then(async (res) => {
         if (!res.ok) {
           throw new Error(`錯誤`);
@@ -32,7 +31,7 @@ export default function CoachIdPage(props) {
         setLoading(false);
       });
   }, [coachesId]);
-  console.log(coach);
+
   if (loading) {
     return <p className="text-center p-4">載入中…</p>;
   }
@@ -44,7 +43,7 @@ export default function CoachIdPage(props) {
   if (!coach) {
     return <p className="text-center p-4">找不到教練資料。</p>;
   }
-  console.log(coach.license);
+
   return (
     <>
       <main className="mx-auto p-8">

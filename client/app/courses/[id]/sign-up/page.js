@@ -1,5 +1,5 @@
 'use client';
-
+import { apiURL } from '@/config';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Card,
@@ -39,9 +39,7 @@ export default function SignUpPage({ params }) {
   useEffect(() => {
     async function fetchCourse() {
       try {
-        const res = await fetch(
-          `http://localhost:3005/api/courses/${id}/sign-up`
-        );
+        const res = await fetch(`${apiURL}/courses/${id}/sign-up`);
         if (!res.ok) throw new Error('不ok');
         const data = await res.json();
         setCourse(data);
@@ -75,21 +73,18 @@ export default function SignUpPage({ params }) {
     }
     setSubmitting(true);
     try {
-      const res = await fetch(
-        `http://localhost:3005/api/courses/${id}/sign-up`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: form.name,
-            phone: form.phone,
-            email: form.email,
-            birthday: form.birthday,
-            user_id: user.id,
-            course_variant_id: variant.id,
-          }),
-        }
-      );
+      const res = await fetch(`${apiURL}/courses/${id}/sign-up`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          phone: form.phone,
+          email: form.email,
+          birthday: form.birthday,
+          user_id: user.id,
+          course_variant_id: variant.id,
+        }),
+      });
       const json = await res.json();
       if (!res.ok || json.status !== 'success') {
         throw new Error(json.message || '報名失敗');

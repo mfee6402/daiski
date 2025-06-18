@@ -215,9 +215,9 @@ function InfoAndActionsSection({
       <div className="text-sm text-red-600 dark:text-red-400">
         <p>
           截止報名：
-          {isClient && (group.registrationDeadline || group.endDate)
+          {isClient && (group.registrationDeadline || group.startDate)
             ? new Date(
-                group.registrationDeadline || group.endDate
+                group.registrationDeadline || group.startDate
               ).toLocaleDateString('zh-TW', {
                 year: 'numeric',
                 month: '2-digit',

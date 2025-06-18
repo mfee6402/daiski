@@ -5,32 +5,15 @@ import { useCart } from '@/hooks/use-cart';
 import { CloudCog } from 'lucide-react';
 import Delete from './delete-button';
 import { Button } from '@/components/ui/button';
+import { apiURL } from '@/config';
 export default function QuantityButton({
   item = {},
   category = '',
   type = '',
 }) {
-  const url = `http://localhost:3005/api/cart/${item.id}`;
+  const url = `${apiURL}/cart/${item.id}`;
   const { cart, setCart, onAdd, onDecrease } = useCart();
 
-  // FIXME 使用useCart鉤子，避免程式碼重複
-  // 將更新傳回後端
-  // async function fetchData(updateQuantity) {
-  //   try {
-  //     await fetch(url, {
-  //       method: 'PUT',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify({
-  //         updateQuantity: updateQuantity,
-  //       }),
-  //     });
-  //   } catch (err) {
-  //     console.log(err);
-  //   }
-  // }
-  // console.log(object);
   const nextItem = { ...item };
   nextItem.quantity = 1;
   return (
@@ -38,9 +21,6 @@ export default function QuantityButton({
       <Button
         variant="outline"
         className=" disabled:border-secondary-200 "
-        // onClick={() => {
-        //   console.log({ item });
-        // }}
         onClick={() => {
           const nextCart = produce(cart, (draft) => {
             draft.CartProduct.map((product) => {

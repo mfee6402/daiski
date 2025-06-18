@@ -1,5 +1,5 @@
 'use client';
-
+import { apiURL } from '@/config';
 import React, { useState, useEffect } from 'react';
 import CouponCard from './_components/coupon-card';
 import Container from '@/components/container';
@@ -44,7 +44,7 @@ export default function CouponsPage(props) {
     isLoading,
     mutate: mutateCoupons,
   } = useSWR(
-    `http://localhost:3005/api/coupons`,
+    `${apiURL}/coupons`,
     // 這就是 inline fetcher：直接用 fetch 回傳 Promise
     (url) =>
       fetch(url, {
@@ -56,11 +56,9 @@ export default function CouponsPage(props) {
   );
   const coupons = data?.coupons || [];
 
-  // console.log(data);
-
   // 使用useSWRMutation來管理讀取post
   const { trigger } = useSWRMutation(
-    'http://localhost:3005/api/coupons/claimcoupon',
+    `${apiURL}/coupons/claimcoupon`,
     (url, { arg }) => {
       return fetch(url, {
         method: 'POST',

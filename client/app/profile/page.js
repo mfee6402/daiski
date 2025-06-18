@@ -83,7 +83,7 @@ export default function MemberPage() {
     user.avatar
     // `http://localhost:3005/api/profile/avatar/${user.id}`
   ); // 當前顯示的頭像 URL
-  console.log(src);
+
   return (
     <div className="min-h-screen w-full bg-fixed bg-cover pt-8 bg-[url('/home-images/layer2.png')]  dark: bg-no-repeat relative">
       <div className="absolute inset-0  dark:bg-black/60 hidden dark:block" />
@@ -234,7 +234,7 @@ export default function MemberPage() {
                   <CardTitle>訂單紀錄</CardTitle>
                 </CardHeader>
                 <CardContent>
-                <ProfileOrders />
+                  <ProfileOrders />
                 </CardContent>
               </Card>
             </TabsContent>

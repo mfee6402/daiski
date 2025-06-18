@@ -16,9 +16,6 @@ export function useShip711StoreOpener(
     keyLocalStorage = 'store711', // localStorage中的key
   } = {}
 ) {
-  // 除錯用
-  //console.log(serverCallbackUrl, title, h, w, autoCloseMins, enableLocalStorage,keyLocalStorage )
-
   // 設定LocalStorage初始化
   // eslint-disable-next-line
   const [storedValue, setValue] = useLocalStorage(keyLocalStorage, {

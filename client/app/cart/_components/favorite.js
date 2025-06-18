@@ -1,4 +1,5 @@
 'use client';
+import { apiURL } from '@/config';
 import useSWR from 'swr';
 import { useAuth } from '@/hooks/use-auth';
 import FavoriteButton from '@/components/favorite-button';
@@ -41,12 +42,12 @@ export default function Favorite({ cart }) {
       try {
         // 根據收藏狀態發送 API 請求
         if (isFav) {
-          await fetch(
-            `http://localhost:3005/api/profile/favorites/${productId}`,
-            { method: 'DELETE', credentials: 'include' }
-          );
+          await fetch(`${apiURL}/profile/favorites/${productId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+          });
         } else {
-          await fetch('http://localhost:3005/api/profile/favorites', {
+          await fetch(`${apiURL}/profile/favorites`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
