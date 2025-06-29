@@ -5,16 +5,14 @@ const env = process.env.NODE_ENV || 'development';
 export const serverConfig = {
   // 如果要使用redis session store類型，必需要在 .env 檔案中設定 REDIS_URL
   // 這裡判斷是否為開發環境，如果是開發環境，就使用file session store
-  // sessionStoreType: env === 'development' ? 'file' : 'redis', // file | redis
-  sessionStoreType: env === 'development' ? 'file' : 'file', // file | redis
-
+  sessionStoreType: env === 'development' ? 'file' : 'redis', // file | redis
   // 前端網址
   nextUrl:
-    env === 'development' ? 'http://localhost:3000' : 'http://localhost:3000',
+    env === 'development'
+      ? 'http://localhost:3000'
+      : 'https://xxxxx.vercel.app',
   // 後端伺服器佈置後的網域名稱，與cookie有關
-  // domain: env === 'development' ? '' : 'xxxxxx.vercel.app',
-  domain: env === 'development' ? '' : '',
-
+  domain: env === 'development' ? '' : 'xxxxxx.vercel.app',
   // ethereal
   smtp: {
     provider: 'ethereal',
@@ -56,7 +54,7 @@ export const serverConfig = {
       callbackUrl: 'http://localhost:3000/cart/checkout/callback',
     },
     production: {
-      callbackUrl: 'http://localhost:3000/cart/checkout/callback',
+      callbackUrl: 'https://xxxxx.vercel.app/cart/checkout/callback',
     },
   },
   linePay: {
