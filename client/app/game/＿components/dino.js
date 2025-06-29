@@ -1,5 +1,5 @@
 'use client';
-
+import { apiURL } from '@/config';
 import React, { useEffect, useRef, useState } from 'react';
 import './styles/dino.css';
 import {
@@ -27,7 +27,7 @@ export default function Dino() {
     trigger,
     isMutating: isClaiming,
     error: claimError,
-  } = useSWRMutation('http://localhost:3005/api/game', (url, { arg }) => {
+  } = useSWRMutation(`${apiURL}/game`, (url, { arg }) => {
     return fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -165,7 +165,6 @@ export default function Dino() {
       if (isJumping && time - jumpStartRef.current < max_hold_time) {
         vyRef.current += jump_power * 0.02;
       }
-      console.log(time);
 
       // 重力
       vyRef.current += gravity;

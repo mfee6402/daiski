@@ -48,7 +48,6 @@ export default function GroupDetailPage() {
       import('add-to-calendar-button')
         .then(() => {
           setCalendarButtonLoaded(true);
-          // console.log('add-to-calendar-button loaded'); // 開發時調試用
         })
         .catch((err) =>
           console.error('Failed to load add-to-calendar-button', err)
@@ -404,16 +403,6 @@ export default function GroupDetailPage() {
         <p>{error}</p>
       </div>
     ) : null;
-  console.log(
-    '[Render] isOrganizer:',
-    isOrganizer,
-    'isClient:',
-    isClient,
-    'currentUser ID:',
-    currentUser?.id,
-    'group.creator.id:',
-    group?.creator?.id
-  );
 
   return (
     <div className="bg-secondary-200 text-secondary-800 min-h-screen dark:bg-background">

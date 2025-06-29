@@ -1,5 +1,5 @@
 'use client';
-
+import { apiURL } from '@/config';
 import React, { useState, useEffect } from 'react';
 import { useCart } from '@/hooks/use-cart';
 import Process from '../_components/process';
@@ -26,7 +26,7 @@ export default function SummaryPage() {
     const orderId = localStorage.getItem('summaryOrderId');
     async function fetchData() {
       try {
-        const url = `http://localhost:3005/api/cart/order/${orderId}`;
+        const url = `${apiURL}/cart/order/${orderId}`;
         const res = await fetch(url, { credentials: 'include' });
         const data = await res.json();
         setOrder(data.order);
@@ -46,7 +46,6 @@ export default function SummaryPage() {
     cashOnDelivery: '貨到付款',
     ecpay: 'ECPay',
   };
-  console.log(order);
 
   return (
     <>

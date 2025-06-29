@@ -1,5 +1,5 @@
 'use client';
-
+import { apiURL } from '@/config';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import CouponCard from '@/app/coupons/_components/coupon-card';
@@ -37,7 +37,7 @@ export default function ProfileCoupons(props) {
     isLoading,
     mutate: mutateCoupons,
   } = useSWR(
-    'http://localhost:3005/api/coupons/usercoupon',
+    `${apiURL}/coupons/usercoupon`,
     // 這就是 inline fetcher：直接用 fetch 回傳 Promise
     (url) =>
       fetch(url, {
@@ -71,7 +71,6 @@ export default function ProfileCoupons(props) {
     // const start = new Date(coupon.startAt).getTime();
     const end = new Date(coupon.endAt).getTime();
 
-    console.log(coupon);
     if (coupon.usedAt !== null) return '已使用';
     if (now > end) return '已過期';
     return '使用';

@@ -450,7 +450,7 @@ export default function CreateGroupPageWithAuth() {
       }
 
       const responseData = await res.json(); // 後端應回傳包含 groupMemberId 的完整揪團資訊
-      console.log(responseData);
+
       // **關鍵：檢查後端是否回傳了 groupMemberId**
       if (responseData && responseData.id && responseData.groupMemberId) {
         const imageUrlForCart =
@@ -466,9 +466,9 @@ export default function CreateGroupPageWithAuth() {
           endDate: responseData.endDate, // 確保後端回傳這些
           groupId: responseData.id, // 原始揪團 ID
         });
-        
+
         alert('揪團建立成功！您的參與資格已加入購物車，請完成付款。');
-        console.log(`揪團建立成功，已加入購物車：`, responseData);
+
         router.push(`/groups/${responseData.id}`); // 導向新揪團的詳細頁面
       } else {
         // 如果後端沒有回傳 groupMemberId，表示後端邏輯可能有問題，或回傳格式不符預期

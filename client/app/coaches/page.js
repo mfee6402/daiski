@@ -1,5 +1,5 @@
 'use client';
-
+import { apiURL } from '@/config';
 import React, { useEffect, useState } from 'react';
 import { Send, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,7 @@ export default function CoachesPage() {
   });
 
   useEffect(() => {
-    fetch('http://localhost:3005/api/coaches')
+    fetch(`${apiURL}/coaches`)
       .then((res) => {
         if (!res.ok) throw new Error('讀取失敗');
         return res.json();

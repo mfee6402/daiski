@@ -1,5 +1,5 @@
 'use client';
-
+import { apiURL } from '@/config';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -35,7 +35,7 @@ export default function PaypalPage() {
 
   const onCreateOrder = async () => {
     try {
-      const url = 'http://localhost:3005/api/paypal';
+      const url = `${apiURL}/paypal`;
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -58,7 +58,7 @@ export default function PaypalPage() {
     try {
       onClear();
       if (!data?.orderID) throw new Error('無效的訂單ID');
-      const url = `http://localhost:3005/api/paypal/${data.orderID}`;
+      const url = `${apiURL}/paypal/${data.orderID}`;
       const response = await fetch(url, {
         method: 'GET',
         headers: {

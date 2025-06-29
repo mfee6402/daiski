@@ -1,5 +1,5 @@
 'use client';
-
+import { apiURL } from '@/config';
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Clock5, MapPin, LocateFixed } from 'lucide-react';
@@ -45,7 +45,7 @@ export default function CoursesIdPage() {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`http://localhost:3005/api/courses/${id}`)
+    fetch(`${apiURL}/courses/${id}`)
       .then(async (res) => {
         if (!res.ok) {
           const txt = await res.text();
