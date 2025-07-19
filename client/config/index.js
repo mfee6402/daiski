@@ -37,16 +37,16 @@ export const loginRoute = '/auth/not-login';
 // 隱私頁面路由，未登入時會，檢查後跳轉至登入頁路由
 export const protectedRoutes = [
   // 這代表/dashboard/底下的所有路由都會被保護
-  '/dashboard/',
+  // '/dashboard/',
   // 設定各別的路由
-  '/user/status',
-  '/user/profile',
-  '/user/profile-password',
-  '/cart',
-  '/coupons',
+  // '/user/status',
+  // '/user/profile',
+  // '/user/profile-password',
+  // '/cart',
+  // '/coupons',
   // '/groups/create',
-  '/profile',
-  '/game',
+  // '/profile',
+  // '/game',
 ];
 
 export const protectedRoutesPatterns = [
